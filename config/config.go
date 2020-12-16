@@ -25,17 +25,29 @@ type InitConfig struct {
 
 	// Rank determines the pairminters initial rank on startup.
 	Rank int `mapstructure:"rank"`
-}
 
-// ConnectionConfig defines tcp addresses pairmint keeps a connection to.
-type ConnectionConfig struct {
 	// ValidatorAddr is the TCP socket address of the Tendermint validator node
 	// for Pairmint to connect to.
 	ValidatorAddr string `mapstructure:"validator_addr"`
+}
 
+// ExPrivValConfig defines address of an external PrivValidator process for Pairmint to
+// connect to.
+type ExPrivValConfig struct {
 	// PrivValidatorListenAddr is the TCP socket address to listen on for connections
 	// from an external PrivValidator process.
 	PrivValidatorListenAddr string `mapstructure:"priv_validator_laddr"`
+}
+
+// FilePVConfig defines file paths for the file-based signer.
+type FilePVConfig struct {
+	// KeyFilePath is the absolute path to the priv_validator_key.json file
+	// needed to run the file-based signer.
+	KeyFilePath string `mapstructure:"key_file_path"`
+
+	// StateFilePath is the absolute path to the priv_validator_state.json file
+	// needed to run the file-based signer.
+	StateFilePath string `mapstructure:"state_file_path"`
 }
 
 // Config defines the structure of the pairmint.toml file.
@@ -43,8 +55,11 @@ type Config struct {
 	// Init defines the section for the initialization parameters.
 	Init InitConfig `mapstructure:"init"`
 
-	// Connection defines the section for addresses.
-	Connection ConnectionConfig `mapstructure:"connection"`
+	// Tmkms defines the section for tmkms configuration parameters.
+	ExPrivVal ExPrivValConfig `mapstructure:"ex_priv_val"`
+
+	// FilePV defines the section for the file-based signer's file paths.
+	FilePV FilePVConfig `mapstructure:"file_pv"`
 }
 
 // InitConfigDir creates the pairmint configuration directory according
@@ -81,6 +96,9 @@ func (c *Config) validateInitConfig() error {
 			errs += "\tlog_level must be either DEBUG, INFO, WARN or ERR\n"
 		}
 	}
+	if !strings.HasPrefix(c.Init.ValidatorAddr, "tcp://") { // TODO: Improve tcp address validation
+		errs += "\tvalidator_addr must start with prefix tcp://\n"
+	}
 	if errs != "" {
 		return fmt.Errorf("%v", errs)
 	}
@@ -88,17 +106,33 @@ func (c *Config) validateInitConfig() error {
 	return nil
 }
 
-// validateConnectionConfig validates the ConnectionConfig.
-func (c *Config) validateConnectionConfig() error {
+// validateExPrivValConfig validates the ExPrivValConfig.
+func (c *Config) validateExPrivValConfig() error {
 	errs := ""
-	if !strings.HasPrefix(c.Connection.ValidatorAddr, "tcp://") {
-		errs += "\tvalidator_addr must start with prefix tcp://\n"
-	}
-	if !strings.HasPrefix(c.Connection.PrivValidatorListenAddr, "tcp://") {
+	if !strings.HasPrefix(c.ExPrivVal.PrivValidatorListenAddr, "tcp://") {
 		errs += "\tpriv_validator_laddr must start with prefix tcp://\n"
 	}
 
 	// TODO: Properly validate the addresses! Maybe with regex?
+
+	if errs != "" {
+		return fmt.Errorf("%v", errs)
+	}
+
+	return nil
+}
+
+// validateFilePVConfig validates the FilePVConfig.
+func (c *Config) validateFilePVConfig() error {
+	errs := ""
+	keyFile, err := os.Stat(c.FilePV.KeyFilePath)
+	if err != nil && !keyFile.IsDir() {
+		errs += "\tkey_file_path is not a valid path\n"
+	}
+	stateFile, err := os.Stat(c.FilePV.StateFilePath)
+	if err != nil && !stateFile.IsDir() {
+		errs += "\tstate_file_path is not a valid path\n"
+	}
 
 	if errs != "" {
 		return fmt.Errorf("%v", errs)
@@ -113,7 +147,10 @@ func (c *Config) validate() error {
 	if err := c.validateInitConfig(); err != nil {
 		errs += err.Error()
 	}
-	if err := c.validateConnectionConfig(); err != nil {
+	if err := c.validateExPrivValConfig(); err != nil {
+		errs += err.Error()
+	}
+	if err := c.validateFilePVConfig(); err != nil {
 		errs += err.Error()
 	}
 

@@ -33,15 +33,27 @@ threshold = <int>
 # Must be 1 or higher.
 rank = <int>
 
-[connection]
-
 # The TCP socket address of the validator node for Pairmint to
 # connect to.
 validator_addr = "tcp://127.0.0.1:26658"
 
+[ex_priv_val]
+
+# Use ex_priv_val if you are using an external PrivValidator process.
+
 # The TCP socket address for Pairmint to listen on for connections
 # from an external PrivValidator process.
 priv_validator_laddr = "tcp://"
+
+[file_pv]
+
+# Use file_pv if you are using a file-based signer.
+
+# The path to the priv_validator_key.json file.
+key_file_path = ""
+
+# The path to the priv_validator_state.json file.
+state_file_path = ""
 `
 
 // BuildConfigTemplate creates a pairmint.toml with a configuration template.
