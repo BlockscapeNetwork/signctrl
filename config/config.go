@@ -91,10 +91,10 @@ func (c *Config) validateInitConfig() error {
 // validateConnectionConfig validates the ConnectionConfig.
 func (c *Config) validateConnectionConfig() error {
 	errs := ""
-	if strings.HasPrefix(c.Connection.ValidatorAddr, "tcp://") {
+	if !strings.HasPrefix(c.Connection.ValidatorAddr, "tcp://") {
 		errs += "\tvalidator_addr must start with prefix tcp://\n"
 	}
-	if strings.HasPrefix(c.Connection.PrivValidatorListenAddr, "tcp://") {
+	if !strings.HasPrefix(c.Connection.PrivValidatorListenAddr, "tcp://") {
 		errs += "\tpriv_validator_laddr must start with prefix tcp://\n"
 	}
 
