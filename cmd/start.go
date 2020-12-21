@@ -6,9 +6,12 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 
+	"github.com/BlockscapeNetwork/pairmint/config"
 	"github.com/BlockscapeNetwork/pairmint/privval"
 	"github.com/BlockscapeNetwork/pairmint/utils"
 
+	"github.com/tendermint/tendermint/crypto/ed25519"
+	p2pconn "github.com/tendermint/tendermint/p2p/conn"
 	privvalproto "github.com/tendermint/tendermint/proto/tendermint/privval"
 
 	"github.com/spf13/cobra"
@@ -39,10 +42,25 @@ var (
 			conn := utils.RetryDial("tcp", pm.Config.Init.ValidatorAddr, pm.Logger)
 			defer conn.Close()
 
+			// Load the keypair from the pm-identity.key file. The keypair is necessary for
+			// establishing a secret connection to Tendermint.
+			priv, _, err := utils.LoadKeypair(configDir + "/pm-identity.key")
+			if err != nil {
+				pm.Logger.Printf("[ERR] pairmint: error while loading keypair: %v\n", err)
+				os.Exit(1)
+			}
+
+			// Make a secret connection using the connection to Tendermint and
+			secretConn, err := p2pconn.MakeSecretConnection(conn, ed25519.PrivKey(priv))
+			if err != nil {
+				pm.Logger.Printf("[ERR] pairmint: error while establishing secret connection: %v\n", err)
+				os.Exit(1)
+			}
+
 			// Keep the application running.
 			for {
 				data := make([]byte, 16<<10)
-				dataLen, err := conn.Read(data)
+				dataLen, err := secretConn.Read(data)
 				if err != nil {
 					pm.Logger.Printf("[ERR] pairmint: error while reading data: %v\n", err)
 					continue
@@ -53,7 +71,7 @@ var (
 					pm.Logger.Printf("[ERR] pairmint: error while unmarshaling: %v\n", err)
 					os.Exit(1) // TODO: continue
 
-					// This currently returns an error because pairmint can't decrypt the message.
+					// TODO: Find out why it throws this error.
 				}
 
 				switch msg.GetSum().(type) {
