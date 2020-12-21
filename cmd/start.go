@@ -25,10 +25,8 @@ var (
 		Short: "Start the pairmint application",
 		Long:  "",
 		Run: func(cmd *cobra.Command, args []string) {
-			// If no custom configuration directory is set, always use the default one.
-			if os.Getenv("PAIRMINT_CONFIG_DIR") == "" {
-				os.Setenv("PAIRMINT_CONFIG_DIR", os.Getenv("HOME")+"/.pairmint")
-			}
+			// Get the configuration directory.
+			configDir := config.GetConfigDir()
 
 			// Create new PairmintFilePV instance.
 			pm, err := privval.NewPairmintFilePV()

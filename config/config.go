@@ -79,6 +79,17 @@ func InitConfigDir(configDir string) error {
 	return nil
 }
 
+// GetConfigDir returns the configuration directory for pairmint from the
+// PAIRMINT_CONFIG_DIR environment variable. If the env var is not set
+// to a custom directory, it will default to $HOME/.pairmint.
+func GetConfigDir() string {
+	if os.Getenv("PAIRMINT_CONFIG_DIR") == "" {
+		os.Setenv("PAIRMINT_CONFIG_DIR", os.Getenv("HOME")+"/.pairmint")
+	}
+
+	return os.Getenv("PAIRMINT_CONFIG_DIR")
+}
+
 // validateInitConfig validates the InitConfig.
 func (c *Config) validateInitConfig() error {
 	errs := ""
