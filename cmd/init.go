@@ -26,13 +26,13 @@ var initCmd = &cobra.Command{
 		// Initialize the config directory.
 		configDir := os.Getenv("PAIRMINT_CONFIG_DIR")
 		if err := config.InitConfigDir(configDir); err != nil {
-			fmt.Printf("couldn't initialize configuration directory: %v\n", err.Error())
+			fmt.Printf("couldn't initialize configuration directory: %v\n", err)
 			os.Exit(1)
 		}
 
 		// Build the configuration template.
 		if err := builder.BuildConfigTemplate(configDir); err != nil {
-			fmt.Printf("couldn't build config template: %v\n", err.Error())
+			fmt.Printf("couldn't build config template: %v\n", err)
 			os.Exit(1)
 		}
 
@@ -40,7 +40,7 @@ var initCmd = &cobra.Command{
 		seedPath := os.Getenv("PAIRMINT_CONFIG_DIR") + "/pm-identity.key"
 		if _, err := os.Stat(seedPath); os.IsNotExist(err) {
 			if err := utils.GenSeed(seedPath); err != nil {
-				fmt.Printf("couldn't generate seed: %v\n", err.Error())
+				fmt.Printf("couldn't generate seed: %v\n", err)
 				os.Exit(1)
 			}
 		} else {
