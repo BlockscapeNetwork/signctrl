@@ -1,4 +1,4 @@
-package connection
+package privval
 
 // MakeSecretConnection is
 func MakeSecretConnection(host string, port int) {

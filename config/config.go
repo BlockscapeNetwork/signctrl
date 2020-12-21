@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"regexp"
 	"strings"
@@ -31,9 +32,9 @@ type InitConfig struct {
 	ValidatorAddr string `mapstructure:"validator_addr"`
 }
 
-// ExPrivValConfig defines address of an external PrivValidator process for Pairmint to
+// ExtPVConfig defines address of an external PrivValidator process for Pairmint to
 // connect to.
-type ExPrivValConfig struct {
+type ExtPVConfig struct {
 	// PrivValidatorListenAddr is the TCP socket address to listen on for connections
 	// from an external PrivValidator process.
 	PrivValidatorListenAddr string `mapstructure:"priv_validator_laddr"`
@@ -41,6 +42,9 @@ type ExPrivValConfig struct {
 
 // FilePVConfig defines file paths for the file-based signer.
 type FilePVConfig struct {
+	// The chain ID the FilePV signs votes/proposals for.
+	ChainID string `mapstructure:"chain_id"`
+
 	// KeyFilePath is the absolute path to the priv_validator_key.json file
 	// needed to run the file-based signer.
 	KeyFilePath string `mapstructure:"key_file_path"`
@@ -56,7 +60,7 @@ type Config struct {
 	Init InitConfig `mapstructure:"init"`
 
 	// Tmkms defines the section for tmkms configuration parameters.
-	ExPrivVal ExPrivValConfig `mapstructure:"ex_priv_val"`
+	ExtPV ExtPVConfig `mapstructure:"ext_pv"`
 
 	// FilePV defines the section for the file-based signer's file paths.
 	FilePV FilePVConfig `mapstructure:"file_pv"`
@@ -96,8 +100,15 @@ func (c *Config) validateInitConfig() error {
 			errs += "\tlog_level must be either DEBUG, INFO, WARN or ERR\n"
 		}
 	}
-	if !strings.HasPrefix(c.Init.ValidatorAddr, "tcp://") { // TODO: Improve tcp address validation
-		errs += "\tvalidator_addr must start with prefix tcp://\n"
+	if c.Init.ValidatorAddr != "" {
+		host, _, err := net.SplitHostPort(c.Init.ValidatorAddr)
+		if err != nil {
+			errs += "\tvalidator_addr is not in the host:port format\n"
+		} else {
+			if ip := net.ParseIP(host); ip == nil {
+				errs += "\tvalidator_addr is not a valid IPv4\n"
+			}
+		}
 	}
 	if errs != "" {
 		return fmt.Errorf("%v", errs)
@@ -106,14 +117,19 @@ func (c *Config) validateInitConfig() error {
 	return nil
 }
 
-// validateExPrivValConfig validates the ExPrivValConfig.
-func (c *Config) validateExPrivValConfig() error {
+// validateExtPVConfig validates the ExtPVConfig.
+func (c *Config) validateExtPVConfig() error {
 	errs := ""
-	if !strings.HasPrefix(c.ExPrivVal.PrivValidatorListenAddr, "tcp://") {
-		errs += "\tpriv_validator_laddr must start with prefix tcp://\n"
+	if c.ExtPV.PrivValidatorListenAddr != "" {
+		host, _, err := net.SplitHostPort(c.ExtPV.PrivValidatorListenAddr)
+		if err != nil {
+			errs += "\tpriv_validator_laddr is not in the host:port format\n"
+		} else {
+			if ip := net.ParseIP(host); ip == nil {
+				errs += "\tpriv_validator_laddr is not a valid IPv4\n"
+			}
+		}
 	}
-
-	// TODO: Properly validate the addresses! Maybe with regex?
 
 	if errs != "" {
 		return fmt.Errorf("%v", errs)
@@ -125,12 +141,13 @@ func (c *Config) validateExPrivValConfig() error {
 // validateFilePVConfig validates the FilePVConfig.
 func (c *Config) validateFilePVConfig() error {
 	errs := ""
-	keyFile, err := os.Stat(c.FilePV.KeyFilePath)
-	if err != nil && !keyFile.IsDir() {
+	if c.FilePV.ChainID == "" {
+		errs += "\tchain_id must not be empty\n"
+	}
+	if keyFile, err := os.Stat(c.FilePV.KeyFilePath); err != nil && !keyFile.IsDir() {
 		errs += "\tkey_file_path is not a valid path\n"
 	}
-	stateFile, err := os.Stat(c.FilePV.StateFilePath)
-	if err != nil && !stateFile.IsDir() {
+	if stateFile, err := os.Stat(c.FilePV.StateFilePath); err != nil && !stateFile.IsDir() {
 		errs += "\tstate_file_path is not a valid path\n"
 	}
 
@@ -147,7 +164,7 @@ func (c *Config) validate() error {
 	if err := c.validateInitConfig(); err != nil {
 		errs += err.Error()
 	}
-	if err := c.validateExPrivValConfig(); err != nil {
+	if err := c.validateExtPVConfig(); err != nil {
 		errs += err.Error()
 	}
 	if err := c.validateFilePVConfig(); err != nil {

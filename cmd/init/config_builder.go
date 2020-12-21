@@ -35,19 +35,22 @@ rank = <int>
 
 # The TCP socket address of the validator node for Pairmint to
 # connect to.
-validator_addr = "tcp://127.0.0.1:26658"
+validator_addr = "127.0.0.1:26658"
 
-[ex_priv_val]
+[ext_pv]
 
-# Use ex_priv_val if you are using an external PrivValidator process.
+# Use ext_pv if you are using an external PrivValidator process.
 
 # The TCP socket address for Pairmint to listen on for connections
 # from an external PrivValidator process.
-priv_validator_laddr = "tcp://"
+priv_validator_laddr = ""
 
 [file_pv]
 
 # Use file_pv if you are using a file-based signer.
+
+# The chain ID the signer should sign for.
+chain_id = ""
 
 # The path to the priv_validator_key.json file.
 key_file_path = ""
