@@ -75,8 +75,7 @@ var (
 				if err = proto.Unmarshal(data[:dataLen], &msg); err != nil {
 					pm.Logger.Printf("[ERR] pairmint: error while unmarshaling: %v\n", err)
 					os.Exit(1) // TODO: continue
-
-					// TODO: Find out why it throws this error.
+					// TODO: Find out why it throws this error: "proto: wrong wireType = 6 for field PubKeyRequest"
 				}
 
 				switch msg.GetSum().(type) {
