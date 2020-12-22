@@ -27,7 +27,7 @@ threshold = <int>
 
 # The nodes rank on startup. It is used to determine which node
 # in the set is currently signing and which nodes line up as
-# backups. Rank 1 is always the signer, while ranke 2 and above
+# backups. Rank 1 is always the signer, while rank 2 and above
 # move up one rank each time the threshold of missed blocks in
 # a row is reached and thus a new signer is determined.
 # Must be 1 or higher.
