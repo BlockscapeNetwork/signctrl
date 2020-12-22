@@ -37,10 +37,7 @@ var (
 				pm.Logger.Printf("[ERR] pairmint: couldn't initialize pairminter: %v", err)
 				os.Exit(1)
 			}
-
-			// Dial the Tendermint validator.
-			conn := utils.RetryDial("tcp", pm.Config.Init.ValidatorAddr, pm.Logger)
-			defer conn.Close()
+			pm.Logger.Println("[DEBUG] pairmint: Created new PairmintFilePV successfully. ✓")
 
 			// Load the keypair from the pm-identity.key file. The keypair is necessary for
 			// establishing a secret connection to Tendermint.
@@ -49,13 +46,21 @@ var (
 				pm.Logger.Printf("[ERR] pairmint: error while loading keypair: %v\n", err)
 				os.Exit(1)
 			}
+			pm.Logger.Println("[DEBUG] pairmint: Loaded keypair successfully. ✓")
 
-			// Make a secret connection using the connection to Tendermint and
+			// Establish a connection to the Tendermint validator.
+			conn := utils.RetryDial("tcp", pm.Config.Init.ValidatorAddr, pm.Logger)
+			defer conn.Close()
+			pm.Logger.Println("[DEBUG] pairmint: Dialed Tendermint validator successfully. ✓")
+
+			// Make the connection to the Tendermint validator secret.
 			secretConn, err := p2pconn.MakeSecretConnection(conn, ed25519.PrivKey(priv))
 			if err != nil {
 				pm.Logger.Printf("[ERR] pairmint: error while establishing secret connection: %v\n", err)
 				os.Exit(1)
 			}
+			defer secretConn.Close()
+			pm.Logger.Println("[DEBUG] pairmint: Established secret connection with Tendermint validator successfully. ✓")
 
 			// Keep the application running.
 			for {
