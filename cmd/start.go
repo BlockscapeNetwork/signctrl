@@ -82,18 +82,24 @@ var (
 				switch msg.GetSum().(type) {
 				case *privvalproto.Message_PingRequest:
 					req := msg.GetPingRequest()
+					// TODO: Reply with pong.
 					pm.Logger.Printf("[DEBUG] pairmint: Received PingRequest: %v\n", req)
 
 				case *privvalproto.Message_PubKeyRequest:
 					req := msg.GetPubKeyRequest()
+					// TODO: Reply with pubkey.
 					pm.Logger.Printf("[DEBUG] pairmint: Received PubKeyRequest: %v\n", req)
 
 				case *privvalproto.Message_SignVoteRequest:
 					req := msg.GetSignVoteRequest()
+					// TODO: Sign vote if node is primary, and reply with signed vote.
+					// TODO: Else, reply with an error.
 					pm.Logger.Printf("[DEBUG] pairmint: Received SignVoteRequest: %v\n", req)
 
 				case *privvalproto.Message_SignProposalRequest:
 					req := msg.GetSignProposalRequest()
+					// TODO: Sign proposal if node is primary, and reply with signed vote.
+					// TODO: Else, reply with an error.
 					pm.Logger.Printf("[DEBUG] pairmint: Received SignProposalRequest: %v\n", req)
 
 				default:
