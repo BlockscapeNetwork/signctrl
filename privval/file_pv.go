@@ -1,26 +1,31 @@
 package privval
 
 import (
+	"errors"
 	"log"
 	"os"
 
 	"github.com/tendermint/tendermint/privval"
 
 	"github.com/hashicorp/logutils"
+	p2pconn "github.com/tendermint/tendermint/p2p/conn"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
-
-	"github.com/BlockscapeNetwork/pairmint/types"
 
 	"github.com/BlockscapeNetwork/pairmint/config"
 	"github.com/tendermint/tendermint/crypto"
 )
 
-var _ types.Pairminter = new(PairmintFilePV)
+var _ Pairminter = new(PairmintFilePV)
 var _ tmtypes.PrivValidator = new(PairmintFilePV)
 
 // PairmintFilePV is a wrapper for Tendermint's FilePV.
+// Implements the Pairminter and PrivValidator interfaces.
 type PairmintFilePV struct {
+	// SecretConn holds the secret connection for communication between
+	// Pairmint and Tendermint.
+	SecretConn *p2pconn.SecretConnection
+
 	// Logger is the logger used to print log messages.
 	Logger *log.Logger
 
@@ -37,13 +42,14 @@ type PairmintFilePV struct {
 	// MissedInARow is the counter used to count missed blocks in a row.
 	MissedInARow int
 
-	// FilePV is Tendermint's file-based PrivValidator.
+	// FilePV is Tendermint's file-based signer.
 	FilePV *privval.FilePV
 }
 
 // NewPairmintFilePV returns a new instance of PairmintFilePV.
 func NewPairmintFilePV() (*PairmintFilePV, error) {
 	pm := &PairmintFilePV{
+		SecretConn:   new(p2pconn.SecretConnection),
 		Logger:       log.New(os.Stderr, "", 0),
 		Config:       new(config.Config),
 		Rank:         0,
@@ -67,29 +73,24 @@ func NewPairmintFilePV() (*PairmintFilePV, error) {
 	return pm, nil
 }
 
-// Missed adds an entry for a missed block to the frame's list.
-// Returns true if the threshold was reached and a rank update
-// needs to be done, and false if the threshold has not yet been
-// reached.
-func (p *PairmintFilePV) Missed() bool {
+// Missed implements the Pairminter interface.
+func (p *PairmintFilePV) Missed() error {
 	p.MissedInARow++
 	if p.MissedInARow == p.Config.Init.Threshold {
 		p.MissedInARow = 0
-		return true
+		return errors.New("[ERR] pairmint: too many missed blocks in a row")
 	}
 
-	return false
+	return nil
 }
 
-// Reset resets the frame's missed block counter.
+// Reset implements the Pairminter interface.
 func (p *PairmintFilePV) Reset() {
 	p.MissedInARow = 0
 }
 
-// Promote moves the node up one rank. Since there is no explicit
-// node demotion, the current rank #1 is automatically demoted to
-// the last rank.
-func (p *PairmintFilePV) Promote() {
+// Update implements the Pairminter interface.
+func (p *PairmintFilePV) Update() {
 	if p.Rank > 1 {
 		p.Logger.Printf("[INFO] pairmint: Updating rank (%v -> %v)", p.Rank, p.Rank-1)
 		p.Rank--
@@ -115,4 +116,11 @@ func (p *PairmintFilePV) SignVote(chainID string, vote *tmproto.Vote) error {
 // the chainID. Implements the PrivValidator interface.
 func (p *PairmintFilePV) SignProposal(chainID string, proposal *tmproto.Proposal) error {
 	return p.FilePV.SignProposal(chainID, proposal)
+}
+
+// --------------------------------------------------------------------------
+
+// Run runs the routine for the file-based signer.
+func (p *PairmintFilePV) Run() {
+	// TODO
 }

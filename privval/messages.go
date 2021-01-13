@@ -7,31 +7,32 @@ import (
 	privvalproto "github.com/tendermint/tendermint/proto/tendermint/privval"
 )
 
-func wrapMsg(pb proto.Message) privvalproto.Message {
-	msg := privvalproto.Message{}
+// WrapPrivvalMsg wraps a protobuf message into a privval proto message.
+func WrapPrivvalMsg(pb proto.Message) privvalproto.Message {
+	wrapperMsg := privvalproto.Message{}
 
 	switch pb := pb.(type) {
 	case *privvalproto.Message:
-		msg = *pb
+		wrapperMsg = *pb
 	case *privvalproto.PubKeyRequest:
-		msg.Sum = &privvalproto.Message_PubKeyRequest{PubKeyRequest: pb}
+		wrapperMsg.Sum = &privvalproto.Message_PubKeyRequest{PubKeyRequest: pb}
 	case *privvalproto.PubKeyResponse:
-		msg.Sum = &privvalproto.Message_PubKeyResponse{PubKeyResponse: pb}
+		wrapperMsg.Sum = &privvalproto.Message_PubKeyResponse{PubKeyResponse: pb}
 	case *privvalproto.SignVoteRequest:
-		msg.Sum = &privvalproto.Message_SignVoteRequest{SignVoteRequest: pb}
+		wrapperMsg.Sum = &privvalproto.Message_SignVoteRequest{SignVoteRequest: pb}
 	case *privvalproto.SignedVoteResponse:
-		msg.Sum = &privvalproto.Message_SignedVoteResponse{SignedVoteResponse: pb}
+		wrapperMsg.Sum = &privvalproto.Message_SignedVoteResponse{SignedVoteResponse: pb}
 	case *privvalproto.SignedProposalResponse:
-		msg.Sum = &privvalproto.Message_SignedProposalResponse{SignedProposalResponse: pb}
+		wrapperMsg.Sum = &privvalproto.Message_SignedProposalResponse{SignedProposalResponse: pb}
 	case *privvalproto.SignProposalRequest:
-		msg.Sum = &privvalproto.Message_SignProposalRequest{SignProposalRequest: pb}
+		wrapperMsg.Sum = &privvalproto.Message_SignProposalRequest{SignProposalRequest: pb}
 	case *privvalproto.PingRequest:
-		msg.Sum = &privvalproto.Message_PingRequest{PingRequest: pb}
+		wrapperMsg.Sum = &privvalproto.Message_PingRequest{PingRequest: pb}
 	case *privvalproto.PingResponse:
-		msg.Sum = &privvalproto.Message_PingResponse{PingResponse: pb}
+		wrapperMsg.Sum = &privvalproto.Message_PingResponse{PingResponse: pb}
 	default:
 		panic(fmt.Errorf("unknown message type %T", pb))
 	}
 
-	return msg
+	return wrapperMsg
 }
