@@ -8,5 +8,6 @@ require (
 	github.com/pelletier/go-toml v1.8.1 // indirect
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/viper v1.7.1
-	github.com/tendermint/tendermint v0.34.0
+	github.com/tendermint/tendermint v0.34.1
+	google.golang.org/protobuf v1.25.0
 )
