@@ -84,14 +84,7 @@ var (
 				case *privvalproto.Message_PingRequest:
 					pm.Logger.Println("[DEBUG] pairmint: Received PingRequest")
 
-					// Construct proto message for PingResponse.
-					res := &privvalproto.Message{
-						Sum: &privvalproto.Message_PingResponse{
-							PingResponse: &privvalproto.PingResponse{},
-						},
-					}
-
-					if _, err := protoWriter.WriteMsg(res); err != nil {
+					if _, err := protoWriter.WriteMsg(utils.WrapMsg(&privvalproto.PingResponse{})); err != nil {
 						pm.Logger.Printf("[ERR] pairmint: error while writing PingResponse: %v\n", err)
 						continue
 					}
@@ -107,20 +100,12 @@ var (
 						os.Exit(1)
 					}
 
-					// Construct proto message for PubKeyResponse.
-					res := &privvalproto.Message{
-						Sum: &privvalproto.Message_PubKeyResponse{
-							PubKeyResponse: &privvalproto.PubKeyResponse{
-								PubKey: cryptoproto.PublicKey{
-									Sum: &cryptoproto.PublicKey_Ed25519{
-										Ed25519: pubkey.Bytes(),
-									},
-								},
+					if _, err = protoWriter.WriteMsg(utils.WrapMsg(&privvalproto.PubKeyResponse{
+						PubKey: cryptoproto.PublicKey{
+							Sum: &cryptoproto.PublicKey_Ed25519{
+								Ed25519: pubkey.Bytes(),
 							},
-						},
-					}
-
-					if _, err = protoWriter.WriteMsg(res); err != nil {
+						}})); err != nil {
 						pm.Logger.Printf("[ERR] pairmint: error while writing PubKeyResponse: %v\n", err)
 						continue
 					}
@@ -138,16 +123,7 @@ var (
 						continue
 					}
 
-					// Construct proto message for SignedVoteResponse.
-					res := &privvalproto.Message{
-						Sum: &privvalproto.Message_SignedVoteResponse{
-							SignedVoteResponse: &privvalproto.SignedVoteResponse{
-								Vote: *req.Vote,
-							},
-						},
-					}
-
-					if _, err = protoWriter.WriteMsg(res); err != nil {
+					if _, err = protoWriter.WriteMsg(utils.WrapMsg(&privvalproto.SignedVoteResponse{Vote: *req.Vote})); err != nil {
 						pm.Logger.Printf("[ERR] pairmint: error while writing SignedVoteResponse: %v\n", err)
 						continue
 					}
@@ -165,16 +141,7 @@ var (
 						continue
 					}
 
-					// Construct proto message for SignProposalResponse.
-					res := &privvalproto.Message{
-						Sum: &privvalproto.Message_SignedProposalResponse{
-							SignedProposalResponse: &privvalproto.SignedProposalResponse{
-								Proposal: *req.Proposal,
-							},
-						},
-					}
-
-					if _, err = protoWriter.WriteMsg(res); err != nil {
+					if _, err = protoWriter.WriteMsg(utils.WrapMsg(&privvalproto.SignedProposalResponse{Proposal: *req.Proposal})); err != nil {
 						pm.Logger.Printf("[ERR] pairmint: error while writing SignedProposalResponse: %v\n", err)
 						continue
 					}
@@ -182,7 +149,6 @@ var (
 				default:
 					panic(fmt.Sprintf("unknown sum type: %T", msg.GetSum()))
 				}
-
 			}
 
 		},
