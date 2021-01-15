@@ -3,11 +3,13 @@ package cmd
 import (
 	"log"
 	"os"
+	"os/signal"
 
 	"github.com/hashicorp/logutils"
 	"github.com/tendermint/tendermint/libs/protoio"
 
 	"github.com/BlockscapeNetwork/pairmint/config"
+	"github.com/BlockscapeNetwork/pairmint/connection"
 	"github.com/BlockscapeNetwork/pairmint/privval"
 	"github.com/BlockscapeNetwork/pairmint/utils"
 
@@ -27,15 +29,22 @@ var (
 		Short: "Start the pairmint application",
 		Long:  "",
 		Run: func(cmd *cobra.Command, args []string) {
-			configDir := config.GetConfigDir()  // Get the configuration directory.
-			logger := log.New(os.Stderr, "", 0) // Create a logger.
-			pv := privval.NewPairmintFilePV()   // Initialize new PairmintFilePV instance.
+			// Initialize configuration directory.
+			configDir := config.GetDir()
 
-			// Load the configuration parameters.
+			// Create a logger.
+			logger := log.New(os.Stderr, "", 0)
+
+			// Configure the PrivValidator.
+			pv := privval.NewPairmintFilePV()
+			logger.Println("[INFO] pairmint: Loading configuration...")
+
 			if err := pv.Config.Load(); err != nil {
 				logger.Printf("[ERR] pairmint: error while loading configuration: %v\n", err)
 				os.Exit(1)
 			}
+			logger.Println("[INFO] pairmint: Successfully loaded configuration. ✓")
+
 			pv.FilePV = tmprivval.LoadOrGenFilePV(pv.Config.FilePV.KeyFilePath, pv.Config.FilePV.StateFilePath)
 
 			// Configure minimum log level for logger.
@@ -52,28 +61,33 @@ var (
 				logger.Printf("[ERR] pairmint: error while loading keypair: %v\n", err)
 				os.Exit(1)
 			}
-			logger.Println("[DEBUG] pairmint: Loaded keypair successfully. ✓")
+			logger.Println("[DEBUG] pairmint: Successfully loaded keypair. ✓")
 
 			// Establish a secret connection to the Tendermint validator.
+			rwc := connection.NewReadWriteConn()
 			logger.Println("[INFO] pairmint: Dialing Tendermint validator...")
-			pv.SecretConn, err = utils.RetrySecretDial("tcp", pv.Config.Init.ValidatorAddr, priv)
+
+			rwc.SecretConn, err = connection.RetrySecretDial("tcp", pv.Config.Init.ValidatorAddr, priv)
 			if err != nil {
 				logger.Printf("[ERR] pairmint: error while establishing secret connection: %v\n", err)
 				os.Exit(1)
 			}
-			defer pv.SecretConn.Close()
+			defer rwc.SecretConn.Close()
 			logger.Println("[DEBUG] pairmint: Successfully dialed Tendermint validator. ✓")
 
-			pv.Reader = protoio.NewDelimitedReader(pv.SecretConn, 64<<10)
-			pv.Writer = protoio.NewDelimitedWriter(pv.SecretConn)
+			rwc.Reader = protoio.NewDelimitedReader(rwc.SecretConn, 64<<10)
+			rwc.Writer = protoio.NewDelimitedWriter(rwc.SecretConn)
 
 			// Run the routine for reading and writing messages.
-			go pv.Run(pv.SecretConn, logger)
+			go pv.Run(rwc, logger)
 
-			// Keep the application running.
-			for {
-				select {}
-			}
+			// Block until SIGINT is fired.
+			osCh := make(chan os.Signal, 1)
+			signal.Notify(osCh, os.Interrupt)
+
+			<-osCh
+			logger.Println("\nExiting pairmint")
+			os.Exit(1)
 		},
 	}
 )
