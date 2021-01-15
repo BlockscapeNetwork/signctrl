@@ -66,9 +66,9 @@ type Config struct {
 	FilePV FilePVConfig `mapstructure:"file_pv"`
 }
 
-// InitConfigDir creates the pairmint configuration directory according
+// InitDir creates the pairmint configuration directory according
 // to the `PAIRMINT_CONFIG_DIR` encironment variable.
-func InitConfigDir(configDir string) error {
+func InitDir(configDir string) error {
 	if _, err := os.Stat(configDir); os.IsNotExist(err) {
 		if err := os.MkdirAll(configDir, 0744); err != nil {
 			return err
@@ -79,10 +79,10 @@ func InitConfigDir(configDir string) error {
 	return nil
 }
 
-// GetConfigDir returns the configuration directory for pairmint from the
+// GetDir returns the configuration directory for pairmint from the
 // PAIRMINT_CONFIG_DIR environment variable. If the env var is not set
 // to a custom directory, it will default to $HOME/.pairmint.
-func GetConfigDir() string {
+func GetDir() string {
 	if os.Getenv("PAIRMINT_CONFIG_DIR") == "" {
 		os.Setenv("PAIRMINT_CONFIG_DIR", os.Getenv("HOME")+"/.pairmint")
 	}
