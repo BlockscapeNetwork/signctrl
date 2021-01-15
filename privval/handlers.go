@@ -33,7 +33,7 @@ func wrapMsg(pb proto.Message) *privvalproto.Message {
 }
 
 // handlePingRequest handles incoming ping requests.
-func (p *PairmintFilePV) handlePingRequest(req *privvalproto.PingRequest, rwc *connection.ReadWriteConn) error {
+func (p *PairmintFilePV) handlePingRequest(rwc *connection.ReadWriteConn) error {
 	if _, err := rwc.Writer.WriteMsg(wrapMsg(&privvalproto.PingResponse{})); err != nil {
 		return err
 	}
@@ -89,20 +89,29 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 func (p *PairmintFilePV) HandleMessage(msg *privvalproto.Message, rwc *connection.ReadWriteConn) error {
 	switch msg.GetSum().(type) {
 	case *privvalproto.Message_PingRequest:
-		p.handlePingRequest(msg.GetPingRequest(), rwc)
+		p.Logger.Printf("[DEBUG] pairmint: Received PingRequest")
+		p.handlePingRequest(rwc)
 
 	case *privvalproto.Message_PubKeyRequest:
+		req := msg.GetPubKeyRequest()
+		p.Logger.Printf("[DEBUG] pairmint: Received PubKeyRequest: %v\n", req)
+
 		pubkey, err := p.GetPubKey()
 		if err != nil {
 			return ErrMissingPubKey
 		}
-		p.handlePubKeyRequest(msg.GetPubKeyRequest(), pubkey, rwc)
+
+		p.handlePubKeyRequest(req, pubkey, rwc)
 
 	case *privvalproto.Message_SignVoteRequest:
-		p.handleSignVoteRequest(msg.GetSignVoteRequest(), rwc)
+		req := msg.GetSignVoteRequest()
+		p.Logger.Printf("[DEBUG] pairmint: Received SignVoteRequest: %v\n", req)
+		p.handleSignVoteRequest(req, rwc)
 
 	case *privvalproto.Message_SignProposalRequest:
-		p.handleSignProposalRequest(msg.GetSignProposalRequest(), rwc)
+		req := msg.GetSignProposalRequest()
+		p.Logger.Printf("[DEBUG] pairmint: Received SignProposalRequest: %v\n", req)
+		p.handleSignProposalRequest(req, rwc)
 
 	default:
 		panic(fmt.Errorf("unknown message type: %T", msg.GetSum()))
