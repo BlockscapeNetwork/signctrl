@@ -94,7 +94,7 @@ func (p *PairmintFilePV) HandleMessage(msg *privvalproto.Message, rwc *connectio
 
 	case *privvalproto.Message_PubKeyRequest:
 		req := msg.GetPubKeyRequest()
-		p.Logger.Printf("[DEBUG] pairmint: Received PubKeyRequest: %v\n", req)
+		p.Logger.Printf("[DEBUG] pairmint: PubKeyRequest for chain ID %v\n", req.ChainId)
 
 		pubkey, err := p.GetPubKey()
 		if err != nil {
@@ -105,12 +105,14 @@ func (p *PairmintFilePV) HandleMessage(msg *privvalproto.Message, rwc *connectio
 
 	case *privvalproto.Message_SignVoteRequest:
 		req := msg.GetSignVoteRequest()
-		p.Logger.Printf("[DEBUG] pairmint: Received SignVoteRequest: %v\n", req)
+		p.Logger.Printf("[DEBUG] pairmint: SignVoteRequest for %v on height %v, round %v\n",
+			req.Vote.Type.String(), req.Vote.Height, req.Vote.Round)
 		p.handleSignVoteRequest(req, rwc)
 
 	case *privvalproto.Message_SignProposalRequest:
 		req := msg.GetSignProposalRequest()
-		p.Logger.Printf("[DEBUG] pairmint: Received SignProposalRequest: %v\n", req)
+		p.Logger.Printf("[DEBUG] pairmint: SignProposalRequest for %v on height %v, round %v\n",
+			req.Proposal.Type.String(), req.Proposal.Height, req.Proposal.Round)
 		p.handleSignProposalRequest(req, rwc)
 
 	default:
