@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"log"
+	"os"
 
 	"github.com/tendermint/tendermint/privval"
 
@@ -22,6 +23,9 @@ var _ tmtypes.PrivValidator = new(PairmintFilePV)
 // PairmintFilePV is a wrapper for Tendermint's FilePV.
 // Implements the Pairminter and PrivValidator interfaces.
 type PairmintFilePV struct {
+	// Logger is the logger used to log pairmint messages.
+	Logger *log.Logger
+
 	// Config is the node's configuration from the pairmint.toml file.
 	Config *config.Config
 
@@ -35,6 +39,7 @@ type PairmintFilePV struct {
 // NewPairmintFilePV returns a new instance of PairmintFilePV.
 func NewPairmintFilePV() *PairmintFilePV {
 	return &PairmintFilePV{
+		Logger:       log.New(os.Stderr, "", 0),
 		Config:       new(config.Config),
 		MissedInARow: 0,
 		FilePV:       new(privval.FilePV),
@@ -85,7 +90,7 @@ func (p *PairmintFilePV) SignProposal(chainID string, proposal *tmproto.Proposal
 }
 
 // Run runs the routine for the file-based signer.
-func (p *PairmintFilePV) Run(rwc *connection.ReadWriteConn, logger *log.Logger) {
+func (p *PairmintFilePV) Run(rwc *connection.ReadWriteConn) {
 	for {
 		msg := privvalproto.Message{}
 		if _, err := rwc.Reader.ReadMsg(&msg); err != nil {
@@ -93,11 +98,11 @@ func (p *PairmintFilePV) Run(rwc *connection.ReadWriteConn, logger *log.Logger) 
 				// Prevent the console log from being spammed with EOF errors.
 				continue
 			}
-			logger.Printf("[ERR] pairmint: error while reading message: %v\n", err)
+			p.Logger.Printf("[ERR] pairmint: error while reading message: %v\n", err)
 		}
 
 		if err := p.HandleMessage(&msg, rwc); err != nil {
-			logger.Printf("[ERR] pairmint: %v\n", err)
+			p.Logger.Printf("[ERR] pairmint: %v\n", err)
 		}
 	}
 }

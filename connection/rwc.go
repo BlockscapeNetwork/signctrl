@@ -2,6 +2,7 @@ package connection
 
 import (
 	"crypto/ed25519"
+	"log"
 	"net"
 
 	tmcrypto "github.com/tendermint/tendermint/crypto/ed25519"
@@ -31,12 +32,15 @@ func NewReadWriteConn() *ReadWriteConn {
 
 // RetrySecretDial dials the given address until success and returns
 // a secret connection.
-func RetrySecretDial(protocol, address string, privkey ed25519.PrivateKey) (*p2pconn.SecretConnection, error) {
+func RetrySecretDial(protocol, address string, privkey ed25519.PrivateKey, logger *log.Logger) (*p2pconn.SecretConnection, error) {
+	logger.Println("[INFO] pairmint: Dialing Tendermint validator...")
+
 	var conn net.Conn
 	var err error
 
 	for {
 		if conn, err = net.Dial(protocol, address); err == nil {
+			logger.Println("[DEBUG] pairmint: Successfully dialed Tendermint validator. ✓")
 			break
 		}
 	}
@@ -45,6 +49,8 @@ func RetrySecretDial(protocol, address string, privkey ed25519.PrivateKey) (*p2p
 	if err != nil {
 		return nil, err
 	}
+
+	logger.Println("[DEBUG] pairmint: Successfully established a secret connection with the Tendermint validator. ✓")
 
 	return secretConn, nil
 }
