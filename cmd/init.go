@@ -19,10 +19,10 @@ var initCmd = &cobra.Command{
 	Long:  "Create a pairmint.toml configuration template and generate a pm-identity.key seed.",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Get the configuration directory.
-		configDir := config.GetConfigDir()
+		configDir := config.GetDir()
 
 		// Initialize the config directory.
-		if err := config.InitConfigDir(configDir); err != nil {
+		if err := config.InitDir(configDir); err != nil {
 			fmt.Printf("couldn't initialize configuration directory: %v\n", err)
 			os.Exit(1)
 		}
