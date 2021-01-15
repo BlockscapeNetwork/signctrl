@@ -12,7 +12,7 @@ type Pairminter interface {
 	// Reset resets the counter for missed blocks in a row.
 	Reset()
 
-	// Update performs a rank update, moving all backup nodes up one rank
-	// and the current signer to the last rank.
+	// Update performs a rank update, moving all backup nodes up one
+	// rank and the current signer to the last rank.
 	Update()
 }
