@@ -54,7 +54,7 @@ var (
 			}
 			logger.Println("[DEBUG] pairmint: Loaded keypair successfully. ✓")
 
-			// Establish a connection to the Tendermint validator.
+			// Establish a secret connection to the Tendermint validator.
 			logger.Println("[INFO] pairmint: Dialing Tendermint validator...")
 			pv.SecretConn, err = utils.RetrySecretDial("tcp", pv.Config.Init.ValidatorAddr, priv)
 			if err != nil {
@@ -67,6 +67,7 @@ var (
 			pv.Reader = protoio.NewDelimitedReader(pv.SecretConn, 64<<10)
 			pv.Writer = protoio.NewDelimitedWriter(pv.SecretConn)
 
+			// Run the routine for reading and writing messages.
 			go pv.Run(pv.SecretConn, logger)
 
 			// Keep the application running.
