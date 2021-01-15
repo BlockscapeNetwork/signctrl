@@ -89,7 +89,7 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 func (p *PairmintFilePV) HandleMessage(msg *privvalproto.Message, rwc *connection.ReadWriteConn) error {
 	switch msg.GetSum().(type) {
 	case *privvalproto.Message_PingRequest:
-		p.Logger.Printf("[DEBUG] pairmint: Received PingRequest")
+		p.Logger.Printf("[DEBUG] pairmint: PingRequest")
 		p.handlePingRequest(rwc)
 
 	case *privvalproto.Message_PubKeyRequest:
