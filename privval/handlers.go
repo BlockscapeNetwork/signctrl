@@ -56,14 +56,47 @@ func (p *PairmintFilePV) handlePubKeyRequest(req *privvalproto.PubKeyRequest, pu
 }
 
 // handleSignVoteRequest handles incoming vote signing requests.
-func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest, rwc *connection.ReadWriteConn) error {
-	// TODO: Sign vote if node is primary, and reply with signed vote.
-	// TODO: Else, reply with an error.
-
-	if err := p.FilePV.SignVote(p.Config.FilePV.ChainID, req.Vote); err != nil {
+func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest, pubkey crypto.PubKey, rwc *connection.ReadWriteConn) error {
+	// Get commit signatures from the last height.
+	commitsigs, err := connection.GetCommitSigs(req.Vote.Height - 1)
+	if err != nil {
 		return err
 	}
-	if _, err := rwc.Writer.WriteMsg(wrapMsg(&privvalproto.SignedVoteResponse{Vote: *req.Vote})); err != nil {
+
+	// Prepare empty response.
+	resp := &privvalproto.SignedVoteResponse{}
+
+	// Check if the commitsigs have an entry with our validator's address and
+	// a signature in it.
+	if hasSignedCommit(pubkey.Address().Bytes(), commitsigs) {
+		if p.Config.Init.Rank == 1 {
+			// Validator is ranked #1, so it has permission to sign the vote.
+			if err := p.FilePV.SignVote(p.Config.FilePV.ChainID, req.Vote); err != nil {
+				resp.Error.Description = err.Error() // Something went wrong in the signing process.
+			} else {
+				resp.Vote = *req.Vote // Populate prepared response with signed vote.
+			}
+		} else {
+			// Validator is ranked too low, so it has no signing permission.
+			// Reply with a RemoteSignerError.
+			resp.Error.Description = ErrNoSigner.Error()
+		}
+	} else {
+		// None of the commitsigs had an entry with our validator's address and
+		// a signature in them which means that this block was missed.
+		if err := p.Missed(); err != nil {
+			// If an error is thrown it means that the threshold of too many missed
+			// blocks in a row has been exceeded. Now, a rank update is done in order
+			// to replace the signer.
+			p.Update()
+
+			// Populate the prepared response with the error.
+			resp.Error.Description = err.Error()
+		}
+	}
+
+	// Send response to Tendermint.
+	if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
 		return err
 	}
 
