@@ -14,4 +14,8 @@ var (
 	// ErrUninitialized is thrown if pairmint has not yet been initialized in
 	// terms of missing a pairmint.toml and the pm-identity.key.
 	ErrUninitialized = errors.New("pairmint is not initialized")
+
+	// ErrTooManyMissedBlocks is thrown if pairmint exceeds the threshold of
+	// too many missed blocks in a row.
+	ErrTooManyMissedBlocks = errors.New("too many missed blocks in a row")
 )
