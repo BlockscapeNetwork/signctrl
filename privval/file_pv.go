@@ -1,7 +1,6 @@
 package privval
 
 import (
-	"errors"
 	"io"
 	"log"
 	"os"
@@ -49,9 +48,11 @@ func NewPairmintFilePV() *PairmintFilePV {
 // Missed implements the Pairminter interface.
 func (p *PairmintFilePV) Missed() error {
 	p.MissedInARow++
+	p.Logger.Printf("[DEBUG] pairmint: Missed a block (total: %v)\n", p.MissedInARow)
+
 	if p.MissedInARow == p.Config.Init.Threshold {
 		p.MissedInARow = 0
-		return errors.New("[ERR] pairmint: too many missed blocks in a row")
+		return ErrTooManyMissedBlocks
 	}
 
 	return nil
@@ -60,14 +61,17 @@ func (p *PairmintFilePV) Missed() error {
 // Reset implements the Pairminter interface.
 func (p *PairmintFilePV) Reset() {
 	p.MissedInARow = 0
+	p.Logger.Println("[DEBUG] pairmint: Reset counter for missed blocks in a row")
 }
 
 // Update implements the Pairminter interface.
 func (p *PairmintFilePV) Update() {
 	if p.Config.Init.Rank > 1 {
 		p.Config.Init.Rank--
+		p.Logger.Printf("[DEBUG] pairmint: Updating rank from %v to %v\n", p.Config.Init.Rank+1, p.Config.Init.Rank)
 	} else {
 		p.Config.Init.Rank = p.Config.Init.SetSize
+		p.Logger.Printf("[DEBUG] pairmint: Updating rank from 1 to %v\n", p.Config.Init.Rank)
 	}
 }
 
