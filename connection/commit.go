@@ -41,7 +41,5 @@ func GetCommitSigs(height int64) (*[]types.CommitSig, error) {
 		return nil, err
 	}
 
-	// var commitsigs []types.CommitSig
-
 	return &rpcresp.Result.Commit.Signatures, nil
 }
