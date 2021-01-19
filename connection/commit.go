@@ -17,7 +17,7 @@ import (
 type CommitRPCResponse struct {
 	jsonrpc string
 	id      uint64
-	Result  coretypes.ResultCommit `json:"result"`
+	Result  *coretypes.ResultCommit `json:"result"`
 }
 
 // GetCommitSigs gets the commit signatures of the specified height.
@@ -36,10 +36,14 @@ func GetCommitSigs(height int64) (*[]types.CommitSig, error) {
 		return nil, err
 	}
 
-	var rpcresp CommitRPCResponse
-	if err = json.Unmarshal(bytes, &rpcresp); err != nil {
+	var rpc CommitRPCResponse
+	if err = json.Unmarshal(bytes, &rpc); err != nil {
 		return nil, err
 	}
 
-	return &rpcresp.Result.Commit.Signatures, nil
+	if rpc.Result == nil {
+		return nil, ErrNoCommitSigs
+	}
+
+	return &rpc.Result.Commit.Signatures, nil
 }
