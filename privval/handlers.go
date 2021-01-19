@@ -71,7 +71,7 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 }
 
 // handleSignProposalRequest handles incoming proposal signing requests.
-func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposalRequest, rwc *connection.ReadWriteConn) error {
+func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposalRequest, pubkey crypto.PubKey, rwc *connection.ReadWriteConn) error {
 	// TODO: Sign proposal if node is primary, and reply with signed proposal.
 	// TODO: Else, reply with an error.
 
@@ -86,7 +86,7 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 }
 
 // HandleMessage handles all incoming messages from Tendermint.
-func (p *PairmintFilePV) HandleMessage(msg *privvalproto.Message, rwc *connection.ReadWriteConn) error {
+func (p *PairmintFilePV) HandleMessage(msg *privvalproto.Message, pubkey crypto.PubKey, rwc *connection.ReadWriteConn) error {
 	switch msg.GetSum().(type) {
 	case *privvalproto.Message_PingRequest:
 		p.Logger.Printf("[DEBUG] pairmint: PingRequest")
@@ -95,25 +95,24 @@ func (p *PairmintFilePV) HandleMessage(msg *privvalproto.Message, rwc *connectio
 	case *privvalproto.Message_PubKeyRequest:
 		req := msg.GetPubKeyRequest()
 		p.Logger.Printf("[DEBUG] pairmint: PubKeyRequest for chain ID %v\n", req.ChainId)
-
-		pubkey, err := p.GetPubKey()
-		if err != nil {
-			return ErrMissingPubKey
-		}
-
 		p.handlePubKeyRequest(req, pubkey, rwc)
 
 	case *privvalproto.Message_SignVoteRequest:
 		req := msg.GetSignVoteRequest()
 		p.Logger.Printf("[DEBUG] pairmint: SignVoteRequest for %v on height %v, round %v\n",
 			req.Vote.Type.String(), req.Vote.Height, req.Vote.Round)
-		p.handleSignVoteRequest(req, rwc)
+
+		// TODO: Need to repeat in order to make sure Tendermint gets a response?
+		if err := p.handleSignVoteRequest(req, pubkey, rwc); err != nil {
+			return err
+		}
 
 	case *privvalproto.Message_SignProposalRequest:
 		req := msg.GetSignProposalRequest()
 		p.Logger.Printf("[DEBUG] pairmint: SignProposalRequest for %v on height %v, round %v\n",
 			req.Proposal.Type.String(), req.Proposal.Height, req.Proposal.Round)
-		p.handleSignProposalRequest(req, rwc)
+
+		p.handleSignProposalRequest(req, pubkey, rwc)
 
 	default:
 		panic(fmt.Errorf("unknown message type: %T", msg.GetSum()))

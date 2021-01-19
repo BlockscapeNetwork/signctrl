@@ -101,7 +101,13 @@ func (p *PairmintFilePV) Run(rwc *connection.ReadWriteConn) {
 			p.Logger.Printf("[ERR] pairmint: error while reading message: %v\n", err)
 		}
 
-		if err := p.HandleMessage(&msg, rwc); err != nil {
+		pubkey, err := p.GetPubKey()
+		if err != nil {
+			p.Logger.Printf("[ERR] pairmint: %v", ErrMissingPubKey.Error())
+			continue
+		}
+
+		if err := p.HandleMessage(&msg, pubkey, rwc); err != nil {
 			p.Logger.Printf("[ERR] pairmint: %v\n", err)
 		}
 	}
