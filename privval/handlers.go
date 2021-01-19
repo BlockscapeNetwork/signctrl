@@ -123,12 +123,18 @@ func (p *PairmintFilePV) HandleMessage(msg *privvalproto.Message, pubkey crypto.
 	switch msg.GetSum().(type) {
 	case *privvalproto.Message_PingRequest:
 		p.Logger.Printf("[DEBUG] pairmint: PingRequest")
-		p.handlePingRequest(rwc)
+
+		if err := p.handlePingRequest(rwc); err != nil {
+			return err
+		}
 
 	case *privvalproto.Message_PubKeyRequest:
 		req := msg.GetPubKeyRequest()
 		p.Logger.Printf("[DEBUG] pairmint: PubKeyRequest for chain ID %v\n", req.ChainId)
-		p.handlePubKeyRequest(req, pubkey, rwc)
+
+		if err := p.handlePubKeyRequest(req, pubkey, rwc); err != nil {
+			return err
+		}
 
 	case *privvalproto.Message_SignVoteRequest:
 		req := msg.GetSignVoteRequest()
@@ -145,7 +151,9 @@ func (p *PairmintFilePV) HandleMessage(msg *privvalproto.Message, pubkey crypto.
 		p.Logger.Printf("[DEBUG] pairmint: SignProposalRequest for %v on height %v, round %v\n",
 			req.Proposal.Type.String(), req.Proposal.Height, req.Proposal.Round)
 
-		p.handleSignProposalRequest(req, pubkey, rwc)
+		if err := p.handleSignProposalRequest(req, pubkey, rwc); err != nil {
+			return err
+		}
 
 	default:
 		panic(fmt.Errorf("unknown message type: %T", msg.GetSum()))
