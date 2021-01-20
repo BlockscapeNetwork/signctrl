@@ -3,7 +3,6 @@ package privval
 import (
 	"io"
 	"log"
-	"os"
 
 	"github.com/tendermint/tendermint/privval"
 
@@ -38,7 +37,7 @@ type PairmintFilePV struct {
 // NewPairmintFilePV returns a new instance of PairmintFilePV.
 func NewPairmintFilePV() *PairmintFilePV {
 	return &PairmintFilePV{
-		Logger:       log.New(os.Stderr, "", 0),
+		Logger:       new(log.Logger),
 		Config:       new(config.Config),
 		MissedInARow: 0,
 		FilePV:       new(privval.FilePV),

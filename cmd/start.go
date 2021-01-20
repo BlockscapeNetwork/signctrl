@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"log"
 	"os"
 	"os/signal"
 
@@ -33,6 +34,7 @@ var (
 
 			// Configure the PrivValidator.
 			pv := privval.NewPairmintFilePV()
+			pv.Logger = log.New(os.Stderr, "", 0)
 			if err := pv.Config.Load(); err != nil {
 				pv.Logger.Printf("[ERR] pairmint: error while loading configuration: %v\n", err)
 				os.Exit(1)
