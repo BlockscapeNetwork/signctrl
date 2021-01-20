@@ -111,7 +111,7 @@ func (p *PairmintFilePV) Run(rwc *connection.ReadWriteConn) {
 		}
 
 		if err := p.HandleMessage(&msg, pubkey, rwc); err != nil {
-			p.Logger.Printf("[ERR] pairmint: %v\n", err)
+			p.Logger.Printf("[ERR] pairmint: couldn't handle message: %v\n", err)
 		}
 	}
 }
