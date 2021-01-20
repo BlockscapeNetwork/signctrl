@@ -16,27 +16,33 @@ type InitConfig struct {
 	LogLevel string `mapstructure:"log_level"`
 
 	// SetSize determines the fixed size of the pairminter set.
-	// The current signer needs to know the set size in order to know which rank to fall
-	// back to if it fails.
+	// The current signer needs to know the set size in order to know which
+	// rank to fall back to if it fails.
 	SetSize int `mapstructure:"set_size"`
 
-	// Threshold determines the threshold value of consecutive missed block signatures for
-	// rank updates.
+	// Threshold determines the threshold value of consecutive missed block
+	// signatures for rank updates.
 	Threshold int `mapstructure:"threshold"`
 
 	// Rank determines the pairminters initial rank on startup.
 	Rank int `mapstructure:"rank"`
 
-	// ValidatorAddr is the TCP socket address of the Tendermint validator node
-	// for Pairmint to connect to.
-	ValidatorAddr string `mapstructure:"validator_addr"`
+	// ValidatorListenAddr is the TCP socket address the Tendermint validator
+	// listens on for an external PrivValidator process. Pairmint dials this
+	// address to establish a connection to the validator and receive signing
+	// requests.
+	ValidatorListenAddr string `mapstructure:"validator_laddr"`
+
+	// ValidatorListenAddrRPC is the TCP socket address the validator's RPC
+	// server listens on.
+	ValidatorListenAddrRPC string `mapstructure:"validator_laddr_rpc"`
 }
 
-// ExtPVConfig defines address of an external PrivValidator process for Pairmint to
-// connect to.
+// ExtPVConfig defines address of an external PrivValidator process for Pairmint
+// to connect to.
 type ExtPVConfig struct {
-	// PrivValidatorListenAddr is the TCP socket address to listen on for connections
-	// from an external PrivValidator process.
+	// PrivValidatorListenAddr is the TCP socket address to listen on for
+	// connections from an external PrivValidator process.
 	PrivValidatorListenAddr string `mapstructure:"priv_validator_laddr"`
 }
 
@@ -49,8 +55,8 @@ type FilePVConfig struct {
 	// needed to run the file-based signer.
 	KeyFilePath string `mapstructure:"key_file_path"`
 
-	// StateFilePath is the absolute path to the priv_validator_state.json file
-	// needed to run the file-based signer.
+	// StateFilePath is the absolute path to the priv_validator_state.json
+	// file needed to run the file-based signer.
 	StateFilePath string `mapstructure:"state_file_path"`
 }
 
@@ -111,16 +117,27 @@ func (c *Config) validateInitConfig() error {
 			errs += "\tlog_level must be either DEBUG, INFO, WARN or ERR\n"
 		}
 	}
-	if c.Init.ValidatorAddr != "" {
-		host, _, err := net.SplitHostPort(c.Init.ValidatorAddr)
+	if c.Init.ValidatorListenAddr != "" {
+		host, _, err := net.SplitHostPort(c.Init.ValidatorListenAddr)
 		if err != nil {
-			errs += "\tvalidator_addr is not in the host:port format\n"
+			errs += "\tvalidator_laddr is not in the host:port format\n"
 		} else {
 			if ip := net.ParseIP(host); ip == nil {
-				errs += "\tvalidator_addr is not a valid IPv4\n"
+				errs += "\tvalidator_laddr is not a valid IPv4\n"
 			}
 		}
 	}
+	if c.Init.ValidatorListenAddrRPC != "" {
+		host, _, err := net.SplitHostPort(c.Init.ValidatorListenAddrRPC)
+		if err != nil {
+			errs += "\tvalidator_laddr_rpc is not in the host:port format\n"
+		} else {
+			if ip := net.ParseIP(host); ip == nil {
+				errs += "\tvalidator_laddr_rpc is not a valid IPv4\n"
+			}
+		}
+	}
+
 	if errs != "" {
 		return fmt.Errorf("%v", errs)
 	}

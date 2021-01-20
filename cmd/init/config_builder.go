@@ -33,9 +33,14 @@ threshold = <int>
 # Must be 1 or higher.
 rank = <int>
 
-# The TCP socket address of the validator node for Pairmint to
-# connect to.
-validator_addr = "127.0.0.1:26658"
+# The TCP socket address the Tendermint validator listens on for
+# an external PrivValidator process. Pairmint dials this address
+# to establish a connection to the validator and receive signing
+# requests.
+validator_laddr = "127.0.0.1:26658"
+
+# The TCP socket address the validator's RPC server listens on.
+validator_laddr_rpc = "127.0.0.1:26657"
 
 [ext_pv]
 

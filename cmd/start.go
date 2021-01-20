@@ -58,7 +58,7 @@ var (
 
 			// Establish a secret connection to the Tendermint validator.
 			rwc := connection.NewReadWriteConn()
-			rwc.SecretConn, err = connection.RetrySecretDial("tcp", pv.Config.Init.ValidatorAddr, priv, pv.Logger)
+			rwc.SecretConn, err = connection.RetrySecretDial("tcp", pv.Config.Init.ValidatorListenAddr, priv, pv.Logger)
 			if err != nil {
 				pv.Logger.Printf("[ERR] pairmint: error while establishing secret connection: %v\n", err)
 				os.Exit(1)
