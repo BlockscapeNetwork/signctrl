@@ -105,13 +105,45 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 
 // handleSignProposalRequest handles incoming proposal signing requests.
 func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposalRequest, pubkey crypto.PubKey, rwc *connection.ReadWriteConn) error {
-	// TODO: Sign proposal if node is primary, and reply with signed proposal.
-	// TODO: Else, reply with an error.
-
-	if err := p.FilePV.SignProposal(p.Config.FilePV.ChainID, req.Proposal); err != nil {
+	// Get commit signatures from the last height.
+	commitsigs, err := connection.GetCommitSigs(req.Proposal.Height - 1)
+	if err != nil {
 		return err
 	}
-	if _, err := rwc.Writer.WriteMsg(wrapMsg(&privvalproto.SignedProposalResponse{Proposal: *req.Proposal})); err != nil {
+
+	// Prepare empty response.
+	resp := &privvalproto.SignedProposalResponse{}
+
+	// Check if the commitsigs have an entry with our validator's address and
+	// a signature in it.
+	if hasSignedCommit(pubkey.Address().Bytes(), commitsigs) {
+		if p.Config.Init.Rank == 1 {
+			// Validator is ranked #1, so it has permission to sign the proposal.
+			if err := p.FilePV.SignProposal(p.Config.FilePV.ChainID, req.Proposal); err != nil {
+				resp.Error.Description = err.Error() // Something went wrong in the signing process.
+			} else {
+				resp.Proposal = *req.Proposal // Populate prepared response with signed proposal.
+			}
+		} else {
+			// Validator is ranked too low, so it has no signing permission.
+			// Reply with a RemoteSignerError.
+			resp.Error.Description = ErrNoSigner.Error()
+		}
+	} else {
+		// None of the commitsigs had an entry with our validator's address and
+		// a signature in them which means that this block was missed.
+		if err := p.Missed(); err != nil {
+			// If an error is thrown it means that the threshold of too many missed
+			// blocks in a row has been exceeded. Now, a rank update is done in order
+			// to replace the signer.
+			p.Update()
+
+			// Populate the prepared response with the error.
+			resp.Error.Description = err.Error()
+		}
+	}
+
+	if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
 		return err
 	}
 
