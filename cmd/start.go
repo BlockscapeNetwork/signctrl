@@ -70,7 +70,7 @@ var (
 
 			pubkey, err := pv.GetPubKey()
 			if err != nil {
-				pv.Logger.Printf("[ERR] pairmint: couldn't get privval pubkey: %v", err)
+				pv.Logger.Printf("[ERR] pairmint: couldn't get privval pubkey: %v\n", err)
 				os.Exit(1)
 			}
 
