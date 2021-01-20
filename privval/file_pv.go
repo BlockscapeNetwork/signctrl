@@ -93,7 +93,7 @@ func (p *PairmintFilePV) SignProposal(chainID string, proposal *tmproto.Proposal
 }
 
 // Run runs the routine for the file-based signer.
-func (p *PairmintFilePV) Run(rwc *connection.ReadWriteConn) {
+func (p *PairmintFilePV) Run(rwc *connection.ReadWriteConn, pubkey crypto.PubKey) {
 	for {
 		msg := privvalproto.Message{}
 		if _, err := rwc.Reader.ReadMsg(&msg); err != nil {
@@ -102,12 +102,6 @@ func (p *PairmintFilePV) Run(rwc *connection.ReadWriteConn) {
 				continue
 			}
 			p.Logger.Printf("[ERR] pairmint: error while reading message: %v\n", err)
-		}
-
-		pubkey, err := p.GetPubKey()
-		if err != nil {
-			p.Logger.Printf("[ERR] pairmint: %v", ErrMissingPubKey.Error())
-			continue
 		}
 
 		if err := p.HandleMessage(&msg, pubkey, rwc); err != nil {

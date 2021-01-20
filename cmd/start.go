@@ -68,8 +68,14 @@ var (
 			rwc.Reader = protoio.NewDelimitedReader(rwc.SecretConn, 64<<10)
 			rwc.Writer = protoio.NewDelimitedWriter(rwc.SecretConn)
 
+			pubkey, err := pv.GetPubKey()
+			if err != nil {
+				pv.Logger.Printf("[ERR] pairmint: couldn't get privval pubkey: %v", err)
+				os.Exit(1)
+			}
+
 			// Run the routine for reading and writing messages.
-			go pv.Run(rwc)
+			go pv.Run(rwc, pubkey)
 
 			// Block until SIGINT is fired.
 			osCh := make(chan os.Signal, 1)
