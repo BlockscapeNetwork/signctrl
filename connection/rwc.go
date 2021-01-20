@@ -4,6 +4,7 @@ import (
 	"crypto/ed25519"
 	"log"
 	"net"
+	"time"
 
 	tmcrypto "github.com/tendermint/tendermint/crypto/ed25519"
 	"github.com/tendermint/tendermint/libs/protoio"
@@ -39,6 +40,7 @@ func RetrySecretDial(protocol, address string, privkey ed25519.PrivateKey, logge
 	var err error
 
 	for {
+		<-time.After(500 * time.Millisecond)
 		if conn, err = net.Dial(protocol, address); err == nil {
 			logger.Println("[DEBUG] pairmint: Successfully dialed Tendermint validator. ✓")
 			break
