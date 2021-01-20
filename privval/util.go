@@ -6,7 +6,7 @@ import (
 	"github.com/tendermint/tendermint/types"
 )
 
-// hasSignedCommit returns true if the given validator address has a commitsig
+// hasSignedCommit checks whether the given validator address has a commitsig
 // in the provided commitsigs.
 func hasSignedCommit(valaddr types.Address, commitsigs *[]types.CommitSig) bool {
 	for _, commitsig := range *commitsigs {
