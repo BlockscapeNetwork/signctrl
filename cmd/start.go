@@ -82,7 +82,7 @@ var (
 			signal.Notify(osCh, os.Interrupt)
 
 			<-osCh
-			pv.Logger.Println("\nExiting pairmint")
+			pv.Logger.Println("\n[INFO] pairmint: Exiting pairmint")
 			os.Exit(1)
 		},
 	}
