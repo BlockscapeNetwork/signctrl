@@ -141,6 +141,33 @@ func (p *PairmintFilePV) HandleMessage(msg *privvalproto.Message, pubkey crypto.
 		p.Logger.Printf("[DEBUG] pairmint: SignVoteRequest for %v on height %v, round %v\n",
 			req.Vote.Type.String(), req.Vote.Height, req.Vote.Round)
 
+		// Only check sync info for first message at new block height.
+		if p.CurrentHeight < req.Vote.Height {
+			p.CurrentHeight = req.Vote.Height
+			p.Logger.Printf("[DEBUG] pairmint: Received first message for new height %v, checking sync info\n", req.Vote.Height)
+
+			info, err := connection.GetSyncInfo()
+			if err != nil {
+				p.Logger.Printf("[ERR] pairmint: couldn't get sync info: %v\n", err)
+				return err
+			}
+
+			// Check whether the validator is caught up.
+			if info.CatchingUp {
+				p.Logger.Printf("[INFO] pairmint: Validator is catching up (latest height: %v)\n", info.LatestBlockHeight)
+
+				if _, err := rwc.Writer.WriteMsg(wrapMsg(&privvalproto.SignedVoteResponse{
+					Error: &privvalproto.RemoteSignerError{
+						Description: ErrCatchingUp.Error(),
+					},
+				})); err != nil {
+					return err
+				}
+
+				return ErrCatchingUp
+			}
+		}
+
 		// TODO: Need to repeat in order to make sure Tendermint gets a response?
 		if err := p.handleSignVoteRequest(req, pubkey, rwc); err != nil {
 			return err
@@ -151,6 +178,34 @@ func (p *PairmintFilePV) HandleMessage(msg *privvalproto.Message, pubkey crypto.
 		p.Logger.Printf("[DEBUG] pairmint: SignProposalRequest for %v on height %v, round %v\n",
 			req.Proposal.Type.String(), req.Proposal.Height, req.Proposal.Round)
 
+		// Only check sync info for first message at new block height.
+		if p.CurrentHeight < req.Proposal.Height {
+			p.CurrentHeight = req.Proposal.Height
+			p.Logger.Printf("[DEBUG] pairmint: Received first message for new height %v, checking sync info\n", req.Proposal.Height)
+
+			info, err := connection.GetSyncInfo()
+			if err != nil {
+				p.Logger.Printf("[ERR] pairmint: couldn't get sync info: %v\n", err)
+				return err
+			}
+
+			// Check whether the validator is caught up.
+			if info.CatchingUp {
+				p.Logger.Printf("[INFO] pairmint: Validator is catching up (latest height: %v)\n", info.LatestBlockHeight)
+
+				if _, err := rwc.Writer.WriteMsg(wrapMsg(&privvalproto.SignedProposalResponse{
+					Error: &privvalproto.RemoteSignerError{
+						Description: ErrCatchingUp.Error(),
+					},
+				})); err != nil {
+					return err
+				}
+
+				return ErrCatchingUp
+			}
+		}
+
+		// TODO: Need to repeat in order to make sure Tendermint gets a response?
 		if err := p.handleSignProposalRequest(req, pubkey, rwc); err != nil {
 			return err
 		}

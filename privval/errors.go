@@ -18,4 +18,8 @@ var (
 	// ErrTooManyMissedBlocks is thrown if pairmint exceeds the threshold of
 	// too many missed blocks in a row.
 	ErrTooManyMissedBlocks = errors.New("too many missed blocks in a row")
+
+	// ErrCatchingUp is thrown if the validator is catching up with the
+	// global blockchain state.
+	ErrCatchingUp = errors.New("validator is catching up")
 )
