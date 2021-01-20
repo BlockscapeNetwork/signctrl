@@ -40,19 +40,12 @@ func RetrySecretDial(protocol, address string, privkey ed25519.PrivateKey, logge
 	var err error
 
 	for {
-		<-time.After(500 * time.Millisecond)
 		if conn, err = net.Dial(protocol, address); err == nil {
 			logger.Println("[DEBUG] pairmint: Successfully dialed Tendermint validator. ✓")
 			break
 		}
+		<-time.After(500 * time.Millisecond)
 	}
 
-	secretConn, err := p2pconn.MakeSecretConnection(conn, tmcrypto.PrivKey(privkey))
-	if err != nil {
-		return nil, err
-	}
-
-	logger.Println("[DEBUG] pairmint: Successfully established a secret connection with the Tendermint validator. ✓")
-
-	return secretConn, nil
+	return p2pconn.MakeSecretConnection(conn, tmcrypto.PrivKey(privkey))
 }
