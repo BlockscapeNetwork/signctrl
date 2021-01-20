@@ -23,7 +23,7 @@ type CommitRPCResponse struct {
 // GetCommitSigs gets the commit signatures of the specified height.
 func GetCommitSigs(height int64) (*[]types.CommitSig, error) {
 	client := http.Client{Timeout: 10 * time.Second}
-	url := fmt.Sprintf("http://127.0.0.1:26657/commit?height=%v", height)
+	url := fmt.Sprintf("http://127.0.0.1:26657/commit?height=%v", height) // TODO: Replace hardcoded address with config address ([rpc].laddr)
 
 	resp, err := client.Get(url)
 	if err != nil {
