@@ -8,6 +8,7 @@ import (
 	"github.com/BlockscapeNetwork/pairmint/config"
 	"github.com/BlockscapeNetwork/pairmint/utils"
 	"github.com/spf13/cobra"
+	tmprivval "github.com/tendermint/tendermint/privval"
 )
 
 // The init command creates a pairmint.toml configuration file and a
@@ -42,6 +43,20 @@ var initCmd = &cobra.Command{
 			}
 		} else {
 			fmt.Printf("Found existing pm-identity.key seed at %v\n", configDir)
+		}
+
+		// Generate key and state files.
+		// TODO: We're assuming that either both files exist or neither.
+		// Look into how the priv_validator_state.json is generated.
+
+		keyPath := configDir + "/priv_validator_key.json"
+		statePath := configDir + "/priv_validator_state.json"
+
+		if _, err := os.Stat(keyPath); os.IsNotExist(err) {
+			tmprivval.LoadOrGenFilePV(keyPath, statePath)
+			fmt.Printf("Created new priv_validator_key.json and priv_validator_state.json at %v\n", configDir)
+		} else {
+			fmt.Printf("Found existing priv_validator_key.json at %v\n", configDir)
 		}
 	},
 }
