@@ -8,43 +8,38 @@ import (
 
 const configTemplate = `[init]
 
-# The minimum log level for pairmint logs.
+# Minimum log level for Pairmint logs.
 # Must be either DEBUG, INFO, WARN or ERR.
 log_level = ""
 
-# The number of pairminted validator nodes run in parallel.
+# Number of pairminted validator nodes running in parallel.
 # This number cannot be changed during operation anymore.
-# If you want to change the set_size you need to stop all
+# If you want to change this value you need to stop all
 # nodes, modify the configuration on each node and start
-# them.
+# them up again.
 # Must be 2 or higher.
-set_size = <int>
+set_size = 0
 
-# The number of missed blocks in a row that trigger a rank
+# Number of missed blocks in a row that triggers a rank
 # update in the set.
 # Must be 1 or higher.
-threshold = <int>
+threshold = 0
 
-# The nodes rank on startup. It is used to determine which node
-# in the set is currently signing and which nodes line up as
-# backups. Rank 1 is always the signer, while rank 2 and above
-# move up one rank each time the threshold of missed blocks in
-# a row is reached and thus a new signer is determined.
+# Node's rank on startup. It is used to determine which node
+# in the set is currently signing (rank 1) and which nodes
+# line up as backups (ranks 2-n).
 # Must be 1 or higher.
-rank = <int>
+rank = 0
 
-# The TCP socket address the Tendermint validator listens on for
-# an external PrivValidator process. Pairmint dials this address
-# to establish a connection to the validator and receive signing
-# requests.
+# TCP socket address the validator listens on for an external
+# PrivValidator process. Pairmint dials this address to
+# establish a connection to the validator.
 validator_laddr = "127.0.0.1:26658"
 
-# The TCP socket address the validator's RPC server listens on.
+# TCP socket address the validator's RPC server listens on.
 validator_laddr_rpc = "127.0.0.1:26657"
 
 [file_pv]
-
-# Use file_pv if you are using a file-based signer.
 
 # The chain ID the signer should sign for.
 chain_id = ""
