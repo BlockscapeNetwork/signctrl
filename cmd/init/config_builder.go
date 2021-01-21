@@ -42,14 +42,6 @@ validator_laddr = "127.0.0.1:26658"
 # The TCP socket address the validator's RPC server listens on.
 validator_laddr_rpc = "127.0.0.1:26657"
 
-[ext_pv]
-
-# Use ext_pv if you are using an external PrivValidator process.
-
-# The TCP socket address for Pairmint to listen on for connections
-# from an external PrivValidator process.
-priv_validator_laddr = ""
-
 [file_pv]
 
 # Use file_pv if you are using a file-based signer.

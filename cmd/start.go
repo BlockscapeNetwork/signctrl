@@ -16,12 +16,11 @@ import (
 	tmprivval "github.com/tendermint/tendermint/privval"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var (
-	// Flags
-	tmkms bool
+	// // Flags
+	// tmkms bool
 
 	// The start command starts the pairmint application.
 	startCmd = &cobra.Command{
@@ -92,7 +91,7 @@ func init() {
 	// Add start to the root command.
 	rootCmd.AddCommand(startCmd)
 
-	// Add tmkms flag.
-	startCmd.Flags().BoolVar(&tmkms, "tmkms", false, "Use the TMKMS as an external PrivValidator process for Pairmint")
-	viper.BindPFlag("tmkms", startCmd.Flags().Lookup("tmkms"))
+	// // Add tmkms flag.
+	// startCmd.Flags().BoolVar(&tmkms, "tmkms", false, "Use the TMKMS as an external PrivValidator process for Pairmint")
+	// viper.BindPFlag("tmkms", startCmd.Flags().Lookup("tmkms"))
 }
