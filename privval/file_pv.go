@@ -71,10 +71,10 @@ func (p *PairmintFilePV) Reset() {
 func (p *PairmintFilePV) Update() {
 	if p.Config.Init.Rank > 1 {
 		p.Config.Init.Rank--
-		p.Logger.Printf("[DEBUG] pairmint: Updating rank from %v to %v\n", p.Config.Init.Rank+1, p.Config.Init.Rank)
+		p.Logger.Printf("[DEBUG] pairmint: Promoted validator from rank %v to %v\n", p.Config.Init.Rank+1, p.Config.Init.Rank)
 	} else {
 		p.Config.Init.Rank = p.Config.Init.SetSize
-		p.Logger.Printf("[DEBUG] pairmint: Updating rank from 1 to %v\n", p.Config.Init.Rank)
+		p.Logger.Printf("[DEBUG] pairmint: Demoted validator from rank 1 to %v\n", p.Config.Init.Rank)
 	}
 }
 
