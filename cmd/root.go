@@ -9,8 +9,8 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "pairmint",
-	Short: "Pairmint is a high availability solution for Tendermint validators",
-	Long:  "A high availability solution for Tendermint validators written in Go, built by blockscape",
+	Short: "High availability solution for Tendermint validators",
+	Long:  "Pairmint is a high availability solution for Tendermint validators written in Go, built by blockscape",
 }
 
 // Execute executes the root command.
