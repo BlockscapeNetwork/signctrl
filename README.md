@@ -1,12 +1,13 @@
 # Pairmint
 
-Pairmint is a high availability solution for Tendermint-based blockchain validators. It mimics an external PrivValidator process and as such acts as a middleware layer between [Tendermint](https://github.com/tendermint/tendermint) and an external PrivValidator process, making it also compatible with the [TMKMS](https://github.com/iqlusioninc/tmkms). Furthermore, it is designed to get rid of all communication overhead between a set of redundant validator nodes running in parallel by using the blockchain itself as a perfectly synchronous communication line for double-signing protection.
+Pairmint is a high availability solution for Tendermint-based blockchain validators which uses the blockchain itself as a perfectly synchronous communication line between redundant validators running in parallel for double-signing protection.
 
-## Prerequisites
+## Requirements
 
 * Go `v1.15+`
+* Validator software compatible with Tendermint `v0.34+`
 
-## Build/Install
+## Build & Install
 
 Get the repository either via
 
@@ -23,7 +24,7 @@ $ go get github.com/BlockscapeLab/pairmint && cd $GOPATH/src/github.com/Blocksca
 Once you have cloned the repository, use
 
 ```shell
-$ make deps
+$ make go-mod-cache
 ```
 
 to download all the dependencies.
@@ -49,36 +50,39 @@ Before putting Pairmint into operation, it needs to be initialized using:
 $ pairmint init
 ```
 
-The `init` command creates a `pairmint.toml` configuration file at the directory specified in the `PAIRMINT_CONFIG_DIR` environment variable (defaults to `$HOME/.pairmint`) and a `pm-identity.key` file which holds the seed used to establish a secret connection to Tendermint and an external PrivValidator process.
+The `init` command creates a `pairmint.toml` configuration file at the directory specified in the `PAIRMINT_CONFIG_DIR` environment variable (defaults to `$HOME/.pairmint`) and a `pm-identity.key` file which holds the seed used to establish a secret connection to the validator.
 
-Please look through the `pairmint.toml` file after it's generated as it is only a template and initially not valid.
-
-The `pairmint.toml` consists of two sections with the following parameters:
+> :information_source: Please look through the `pairmint.toml` file after it's generated as it is only a template and initially not valid.
 
 ### Init
 
-| Parameter   | Type   | Description                                                 |
-|:------------|:-------|:------------------------------------------------------------|
-| `log_level` | string | Minimum log level for pairmint's log messages.              |
-| `set_size`  | int    | Fixed size of the pairminted validator set.                 |
-| `threshold` | int    | Threshold value of missed blocks in a row for rank updates. |
-| `rank`      | int    | Rank on node startup.                                       |
+Init contains configuration parameters needed on initialization.
 
-### Connection
+| Parameter             | Type   | Description                                                                                                                                                |
+| :-------------------- | :----- | :--------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `log_level`           | string | Minimum log level for pairmint's log messages.                                                                                                             |
+| `set_size`            | int    | Fixed size of the pairminted validator set.                                                                                                                |
+| `threshold`           | int    | Threshold value of missed blocks in a row for rank updates.                                                                                                |
+| `rank`                | int    | Rank on node startup.                                                                                                                                      |
+| `validator_laddr`     | string | TCP socket address the validator listens on for an external PrivValidator process. Pairmint dials this address to establish a connection to the validator. |
+| `validator_laddr_rpc` | string | TCP socket address the validator's RPC server listens on.                                                                                                  |
 
-| Parameter              | Type   | Description                                                                                              |
-|:-----------------------|:-------|:---------------------------------------------------------------------------------------------------------|
-| `validator_addr`       | string | The TCP socket address of the validator node for Pairmint to connect to.                                 |
-| `priv_validator_laddr` | string | The TCP socket address for Pairmint to listen on for connections from an external PrivValidator process. |
+### FilePV
+
+FilePV contains configuration parameters for the file-based signer.
+
+| Parameter         | Type   | Description                                   |
+| :---------------- | :----- | :-------------------------------------------- |
+| `chain_id`        | string | Chain ID the validator is part of.            |
+| `key_file_path`   | string | Path to the `priv_validator_key.json` file.   |
+| `state_file_path` | string | Path to the `priv_validator_state.json` file. |
 
 ## Running
 
-After creating the configuration, start Pairmint with the following command:
+After creating the configuration, start Pairmint using:
 
 ```shell
 $ pairmint start
 ```
-
-By default, Pairmint provides a file-based signer. If you want to sign with the tmkms, you can pass in the `--tmkms` flag.
 
 > :warning: Make sure to start the validator with `rank = 1` first. To be absolutely certain, wait for it to be fully synced and only then start the other nodes.
