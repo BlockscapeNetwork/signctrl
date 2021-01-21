@@ -13,7 +13,7 @@ var (
 		Short: "Print the version number of Pairmint",
 		Long:  "",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("Pairmint v0.0.0-alpha")
+			fmt.Printf("Pairmint v0.1.0-RC1")
 		},
 	}
 )
