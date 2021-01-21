@@ -14,11 +14,11 @@ install:
 	@go build -o $(shell go env GOPATH)/bin/pairmint *.go
 
 # Download dependencies
-deps:
-	@echo "--> Downloading dependencies for pairmint..."
+go-mod-cache:
+	@echo "--> Downloading dependencies for Pairmint..."
 	@go mod download
 
 # Verify dependencies
-deps-verify:
-	@echo "--> Ensuring dependencies for pairmint have not been modified..."
+go.sum:
+	@echo "--> Ensuring dependencies for Pairmint have not been modified..."
 	@go mod verify
