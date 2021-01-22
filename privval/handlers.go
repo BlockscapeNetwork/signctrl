@@ -8,6 +8,7 @@ import (
 	"github.com/tendermint/tendermint/crypto"
 	cryptoproto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 	privvalproto "github.com/tendermint/tendermint/proto/tendermint/privval"
+	"github.com/tendermint/tendermint/types"
 )
 
 // wrapMsg wraps a protobuf message into a privval proto message.
@@ -58,9 +59,14 @@ func (p *PairmintFilePV) handlePubKeyRequest(req *privvalproto.PubKeyRequest, pu
 // handleSignVoteRequest handles incoming vote signing requests.
 func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest, pubkey crypto.PubKey, rwc *connection.ReadWriteConn) error {
 	// Get commit signatures from the last height.
-	commitsigs, err := connection.GetCommitSigs(req.Vote.Height - 1)
-	if err != nil {
-		return err
+	var commitsigs *[]types.CommitSig
+	var err error
+
+	if req.Vote.Height != 1 {
+		commitsigs, err = connection.GetCommitSigs(req.Vote.Height - 1)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Prepare empty response.
@@ -106,9 +112,14 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 // handleSignProposalRequest handles incoming proposal signing requests.
 func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposalRequest, pubkey crypto.PubKey, rwc *connection.ReadWriteConn) error {
 	// Get commit signatures from the last height.
-	commitsigs, err := connection.GetCommitSigs(req.Proposal.Height - 1)
-	if err != nil {
-		return err
+	var commitsigs *[]types.CommitSig
+	var err error
+
+	if req.Proposal.Height != 1 {
+		commitsigs, err = connection.GetCommitSigs(req.Proposal.Height - 1)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Prepare empty response.
