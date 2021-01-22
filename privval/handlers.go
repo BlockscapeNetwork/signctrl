@@ -53,12 +53,11 @@ func (p *PairmintFilePV) handlePubKeyRequest(req *privvalproto.PubKeyRequest, pu
 			},
 		},
 	}
-
 	if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
 		return err
 	}
 
-	p.Logger.Printf("[DEBUG] pairmint: Write PubKeyResponse: %v\n", resp)
+	p.Logger.Printf("[DEBUG] pairmint: Write PubKeyResponse: %v\n", pubkey.Address())
 
 	return nil
 }
@@ -76,7 +75,7 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 		return err
 	}
 
-	p.Logger.Printf("[DEBUG] pairmint: http response: GET /status: %v\n", info)
+	p.Logger.Printf("[DEBUG] pairmint: http response: GET /status: { \"catching_up\": %v }\n", info.CatchingUp)
 
 	// Check whether the validator is caught up.
 	if info.CatchingUp {
@@ -105,18 +104,19 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 	// Check if the commitsigs have an entry with our validator's address and
 	// a signature in it.
 	if hasSignedCommit(pubkey.Address().Bytes(), commitsigs) {
-		p.Logger.Printf("[DEBUG] pairmint: Found signature from %v in commit from height %v.\n", pubkey.Address(), req.Vote.Height)
+		p.Logger.Printf("[DEBUG] pairmint: Found signature from %v in commit from height %v.\n",
+			pubkey.Address(), req.Vote.Height)
 
 		if p.Config.Init.Rank == 1 {
-			p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #1, sign vote...\n")
+			p.Logger.Println("[DEBUG] pairmint: Validator is ranked #1, sign vote...")
 
 			// Validator is ranked #1, so it has permission to sign the vote.
 			if err := p.FilePV.SignVote(p.Config.FilePV.ChainID, req.Vote); err != nil {
 				p.Logger.Printf("[ERR] pairmint: error while signing vote: %v\n", err)
 				resp.Error.Description = err.Error()
 			} else {
-				p.Logger.Printf("[DEBUG] pairmint: Signed vote: %v\n", req.Vote)
-				resp.Vote = *req.Vote // Populate prepared response with signed vote.
+				p.Logger.Printf("[DEBUG] pairmint: Signed vote: { \"type\": %v, \"height\": %v, \"signature\": %v }\n", req.Vote.Type, req.Vote.Height, req.Vote.Signature)
+				resp.Vote = *req.Vote
 			}
 		} else {
 			p.Logger.Println("[DEBUG] pairmint: Validator has no permission to sign.")
@@ -164,7 +164,7 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 		return err
 	}
 
-	p.Logger.Printf("[DEBUG] pairmint: http response: GET /status: %v\n", info)
+	p.Logger.Printf("[DEBUG] pairmint: http response: GET /status: { \"catching_up\": %v }\n", info.CatchingUp)
 
 	// Check whether the validator is caught up.
 	if info.CatchingUp {
@@ -200,9 +200,11 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 
 			// Validator is ranked #1, so it has permission to sign the proposal.
 			if err := p.FilePV.SignProposal(p.Config.FilePV.ChainID, req.Proposal); err != nil {
-				resp.Error.Description = err.Error() // Something went wrong in the signing process.
+				p.Logger.Printf("[ERR] pairmint: error while signing proposal: %v\n", err)
+				resp.Error.Description = err.Error()
 			} else {
-				resp.Proposal = *req.Proposal // Populate prepared response with signed proposal.
+				p.Logger.Printf("[DEBUG] pairmint: Signed vote: { \"type\": %v, \"height\": %v, \"signature\": %v }\n", req.Proposal.Type, req.Proposal.Height, req.Proposal.Signature)
+				resp.Proposal = *req.Proposal
 			}
 		} else {
 			p.Logger.Println("[DEBUG] pairmint: Validator has no permission to sign.")
@@ -250,7 +252,7 @@ func (p *PairmintFilePV) HandleMessage(msg *privvalproto.Message, pubkey crypto.
 
 	case *privvalproto.Message_PubKeyRequest:
 		req := msg.GetPubKeyRequest()
-		p.Logger.Printf("[DEBUG] pairmint: PubKeyRequest (Chain ID: %v)\n", req.ChainId)
+		p.Logger.Printf("[DEBUG] pairmint: PubKeyRequest: { \"chain_id\": %v }\n", req.ChainId)
 
 		if err := p.handlePubKeyRequest(req, pubkey, rwc); err != nil {
 			return err
@@ -258,8 +260,7 @@ func (p *PairmintFilePV) HandleMessage(msg *privvalproto.Message, pubkey crypto.
 
 	case *privvalproto.Message_SignVoteRequest:
 		req := msg.GetSignVoteRequest()
-		p.Logger.Printf("[DEBUG] pairmint: SignVoteRequest (Type: %v, Height %v, Round %v)\n",
-			req.Vote.Type.String(), req.Vote.Height, req.Vote.Round)
+		p.Logger.Printf("[DEBUG] pairmint: SignVoteRequest: { \"type\": %v, \"height\": %v, \"round\": %v }\n", req.Vote.Type.String(), req.Vote.Height, req.Vote.Round)
 
 		// TODO: Need to repeat in order to make sure Tendermint gets a response?
 		if err := p.handleSignVoteRequest(req, pubkey, rwc); err != nil {
@@ -268,8 +269,7 @@ func (p *PairmintFilePV) HandleMessage(msg *privvalproto.Message, pubkey crypto.
 
 	case *privvalproto.Message_SignProposalRequest:
 		req := msg.GetSignProposalRequest()
-		p.Logger.Printf("[DEBUG] pairmint: SignProposalRequest (Type: %v, Height %v, Round %v)\n",
-			req.Proposal.Type.String(), req.Proposal.Height, req.Proposal.Round)
+		p.Logger.Printf("[DEBUG] pairmint: SignProposalRequest: { \"type\": %v, \"height\": %v, \"round\": %v }\n", req.Proposal.Type.String(), req.Proposal.Height, req.Proposal.Round)
 
 		// TODO: Need to repeat in order to make sure Tendermint gets a response?
 		if err := p.handleSignProposalRequest(req, pubkey, rwc); err != nil {
