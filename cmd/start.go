@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/hashicorp/logutils"
 	"github.com/tendermint/tendermint/libs/protoio"
@@ -76,13 +77,12 @@ var (
 			// Run the routine for reading and writing messages.
 			go pv.Run(rwc, pubkey)
 
-			// Block until SIGINT is fired.
-			osCh := make(chan os.Signal, 1)
-			signal.Notify(osCh, os.Interrupt)
+			// Block until SIGINT or SIGTERM is fired.
+			sigCh := make(chan os.Signal, 1)
+			signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+			<-sigCh
 
-			<-osCh
 			pv.Logger.Println("\n[INFO] pairmint: Exiting pairmint")
-			os.Exit(1)
 		},
 	}
 )
