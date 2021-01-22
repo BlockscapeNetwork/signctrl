@@ -34,14 +34,14 @@ func NewReadWriteConn() *ReadWriteConn {
 // RetrySecretDial dials the given address until success and returns
 // a secret connection.
 func RetrySecretDial(protocol, address string, privkey ed25519.PrivateKey, logger *log.Logger) (*p2pconn.SecretConnection, error) {
-	logger.Println("[INFO] pairmint: Dialing Tendermint validator...")
+	logger.Printf("[INFO] pairmint: Dialing validator at %v...\n", address)
 
 	var conn net.Conn
 	var err error
 
 	for {
 		if conn, err = net.Dial(protocol, address); err == nil {
-			logger.Println("[DEBUG] pairmint: Successfully dialed Tendermint validator. ✓")
+			logger.Println("[DEBUG] pairmint: Successfully dialed validator. ✓")
 			break
 		}
 		<-time.After(500 * time.Millisecond)
