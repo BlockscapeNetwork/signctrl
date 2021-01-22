@@ -105,7 +105,7 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 	// Check if the commitsigs have an entry with our validator's address and
 	// a signature in it.
 	if hasSignedCommit(pubkey.Address().Bytes(), commitsigs) {
-		p.Logger.Printf("[DEBUG] pairmint: Found signature from %v in commit from height %v.\n", pubkey.Address().Bytes(), req.Vote.Height)
+		p.Logger.Printf("[DEBUG] pairmint: Found signature from %v in commit from height %v.\n", pubkey.Address(), req.Vote.Height)
 
 		if p.Config.Init.Rank == 1 {
 			p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #1, sign vote...\n")
@@ -126,7 +126,7 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 			resp.Error.Description = ErrNoSigner.Error()
 		}
 	} else {
-		p.Logger.Printf("[DEBUG] pairmint: No signature from %v in commit from height %v.\n", pubkey.Address().Bytes(), req.Vote.Height)
+		p.Logger.Printf("[DEBUG] pairmint: No signature from %v in commit from height %v.\n", pubkey.Address(), req.Vote.Height)
 
 		// None of the commitsigs had an entry with our validator's address and
 		// a signature in them which means that this block was missed.
@@ -193,7 +193,7 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 	// Check if the commitsigs have an entry with our validator's address and
 	// a signature in it.
 	if hasSignedCommit(pubkey.Address().Bytes(), commitsigs) {
-		p.Logger.Printf("[DEBUG] pairmint: Found signature from %v in commit from height %v.\n", pubkey.Address().Bytes(), req.Proposal.Height)
+		p.Logger.Printf("[DEBUG] pairmint: Found signature from %v in commit from height %v.\n", pubkey.Address(), req.Proposal.Height)
 
 		if p.Config.Init.Rank == 1 {
 			p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #1, sign vote...\n")
@@ -212,7 +212,7 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 			resp.Error.Description = ErrNoSigner.Error()
 		}
 	} else {
-		p.Logger.Printf("[DEBUG] pairmint: No signature from %v in commit from height %v.\n", pubkey.Address().Bytes(), req.Proposal.Height)
+		p.Logger.Printf("[DEBUG] pairmint: No signature from %v in commit from height %v.\n", pubkey.Address(), req.Proposal.Height)
 
 		// None of the commitsigs had an entry with our validator's address and
 		// a signature in them which means that this block was missed.
