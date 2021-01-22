@@ -152,6 +152,8 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 
 // HandleMessage handles all incoming messages from Tendermint.
 func (p *PairmintFilePV) HandleMessage(msg *privvalproto.Message, pubkey crypto.PubKey, rwc *connection.ReadWriteConn) error {
+	// TODO: Check if requests originate from the chainid specified in the pairmint.toml.
+
 	switch msg.GetSum().(type) {
 	case *privvalproto.Message_PingRequest:
 		p.Logger.Printf("[DEBUG] pairmint: PingRequest")
