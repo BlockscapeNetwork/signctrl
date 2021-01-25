@@ -3,8 +3,6 @@ package cmd
 import (
 	"log"
 	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/hashicorp/logutils"
 	"github.com/tendermint/tendermint/libs/protoio"
