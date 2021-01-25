@@ -22,4 +22,8 @@ var (
 	// ErrCatchingUp is thrown if the validator is catching up with the
 	// global blockchain state.
 	ErrCatchingUp = errors.New("validator is catching up")
+
+	// ErrMissingSignature is thrown if the validator's signature is missing
+	// from the commitsigs of the last queried commit.
+	ErrMissingSignature = errors.New("missing signature from validator")
 )

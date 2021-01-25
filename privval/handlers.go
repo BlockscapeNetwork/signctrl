@@ -1,14 +1,15 @@
 package privval
 
 import (
+	"encoding/hex"
 	"fmt"
+	"strings"
 
 	"github.com/BlockscapeNetwork/pairmint/connection"
 	"github.com/gogo/protobuf/proto"
 	"github.com/tendermint/tendermint/crypto"
 	cryptoproto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 	privvalproto "github.com/tendermint/tendermint/proto/tendermint/privval"
-	"github.com/tendermint/tendermint/types"
 )
 
 // wrapMsg wraps a protobuf message into a privval proto message.
@@ -63,80 +64,67 @@ func (p *PairmintFilePV) handlePubKeyRequest(req *privvalproto.PubKeyRequest, pu
 }
 
 // handleSignVoteRequest handles incoming vote signing requests.
+// Errors are never returned but passed into the response.
 func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest, pubkey crypto.PubKey, rwc *connection.ReadWriteConn) error {
 	// Prepare empty vote response.
 	resp := &privvalproto.SignedVoteResponse{}
 
-	// Check sync info.
-	info, err := connection.GetSyncInfo()
-	if err != nil {
-		p.Logger.Printf("[ERR] pairmint: couldn't get sync info: %v\n", err)
-		return err
-	}
+	// Retrieve sync info from the /status endpoint of the validator.
+	if syncinfo, err := connection.GetSyncInfo(); err == nil {
+		p.Logger.Printf("[DEBUG] pairmint: GET /status: SyncInfo{ \"catching_up\": %v }", syncinfo.CatchingUp)
 
-	p.Logger.Printf("[DEBUG] pairmint: GET /status: { \"catching_up\": %v }\n", info.CatchingUp)
+		// Check if the validator is synced.
+		if !syncinfo.CatchingUp {
+			// Retrieve last height's commit from the /commit endpoint of the validator.
+			if commitsigs, err := connection.GetCommitSigs(req.Vote.Height - 1); err == nil {
+				p.Logger.Printf("[DEBUG] pairmint: GET /commit?height=%v: %v\n", req.Vote.Height-1, commitsigs)
 
-	// Check whether the validator is caught up.
-	if info.CatchingUp {
-		p.Logger.Printf("[INFO] pairmint: Validator is catching up (latest height: %v)\n", info.LatestBlockHeight)
+				// Check if the last commit contains our validator's signature.
+				if hasSignedCommit(pubkey.Address(), commitsigs) {
+					p.Logger.Printf("[DEBUG] pairmint: Found signature from %v in commitsigs from height %v\n", pubkey.Address().String(), req.Vote.Height-1)
+				} else {
+					p.Logger.Printf("[ERR] pairmint: no commitsig from %v for block height %v\n", pubkey.Address().String(), req.Vote.Height-1)
+					resp.Error.Description = ErrMissingSignature.Error()
 
-		resp.Error.Description = ErrCatchingUp.Error()
-		if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
-			return err
-		}
+					// None of the commitsigs had an entry with our validator's address and
+					// a signature in them which means that this block was missed.
+					if err := p.Missed(); err != nil {
+						p.Logger.Println("[ERR] pairmint: too many missed blocks in a row, updating ranks...")
 
-		return ErrCatchingUp
-	}
+						// If an error is thrown it means that the threshold of too many missed
+						// blocks in a row has been exceeded. Now, a rank update is done in order
+						// to replace the signer.
+						p.Update()
+					}
+				}
 
-	// Get commit signatures from the last height.
-	var commitsigs *[]types.CommitSig
-	if req.Vote.Height != 1 {
-		commitsigs, err = connection.GetCommitSigs(req.Vote.Height - 1)
-		if err != nil {
-			return err
-		}
+				// After the commitsigs have been checked, check if the validator has permission to sign the vote.
+				if p.Config.Init.Rank == 1 {
+					p.Logger.Println("[DEBUG] pairmint: Validator is ranked #1, signing vote...")
 
-		p.Logger.Printf("[DEBUG] pairmint: GET /commit?height=%v: %v\n", req.Vote.Height-1, commitsigs)
-	}
-
-	// Check if the commitsigs have an entry with our validator's address and
-	// a signature in it.
-	if hasSignedCommit(pubkey.Address().Bytes(), commitsigs) {
-		p.Logger.Printf("[DEBUG] pairmint: Found signature from %v in commit from height %v.\n",
-			pubkey.Address(), req.Vote.Height)
-
-		if p.Config.Init.Rank == 1 {
-			p.Logger.Println("[DEBUG] pairmint: Validator is ranked #1, sign vote...")
-
-			// Validator is ranked #1, so it has permission to sign the vote.
-			if err := p.FilePV.SignVote(p.Config.FilePV.ChainID, req.Vote); err != nil {
-				p.Logger.Printf("[ERR] pairmint: error while signing vote: %v\n", err)
-				resp.Error.Description = err.Error()
+					// Sign the vote.
+					if err := p.FilePV.SignVote(p.Config.FilePV.ChainID, req.Vote); err != nil {
+						p.Logger.Printf("[ERR] pairmint: error while signing vote: %v\n", err)
+						resp.Error.Description = err.Error()
+					} else {
+						p.Logger.Printf("[DEBUG] pairmint: Signed %v for block height %v (signature: %v)\n", req.Vote.Type, req.Vote.Height, strings.ToUpper(hex.EncodeToString(req.Vote.Signature)))
+						resp.Vote = *req.Vote
+					}
+				} else {
+					p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #%v, no permission to sign vote\n", p.Config.Init.Rank)
+					resp.Error.Description = ErrNoSigner.Error()
+				}
 			} else {
-				p.Logger.Printf("[DEBUG] pairmint: Signed vote: { \"type\": %v, \"height\": %v, \"signature\": %v }\n", req.Vote.Type, req.Vote.Height, req.Vote.Signature)
-				resp.Vote = *req.Vote
+				p.Logger.Printf("[ERR] pairmint: couldn't get commitsigs: %v\n", err)
+				resp.Error.Description = err.Error()
 			}
 		} else {
-			p.Logger.Println("[DEBUG] pairmint: Validator has no permission to sign.")
-
-			// Validator is ranked too low, so it has no signing permission.
-			// Reply with a RemoteSignerError.
-			resp.Error.Description = ErrNoSigner.Error()
+			p.Logger.Printf("[ERR] pairmint: validator is catching up... (latest height: %v)\n", syncinfo.LatestBlockHeight)
+			resp.Error.Description = ErrCatchingUp.Error()
 		}
 	} else {
-		p.Logger.Printf("[DEBUG] pairmint: No signature from %v in commit from height %v.\n", pubkey.Address(), req.Vote.Height)
-
-		// None of the commitsigs had an entry with our validator's address and
-		// a signature in them which means that this block was missed.
-		if err := p.Missed(); err != nil {
-			// If an error is thrown it means that the threshold of too many missed
-			// blocks in a row has been exceeded. Now, a rank update is done in order
-			// to replace the signer.
-			p.Update()
-
-			// Populate the prepared response with the error.
-			resp.Error.Description = err.Error()
-		}
+		p.Logger.Printf("[ERR] pairmint: couldn't get sync info: %v\n", err)
+		resp.Error.Description = err.Error()
 	}
 
 	// Send response to Tendermint.
@@ -154,77 +142,65 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 	// Prepare empty proposal response.
 	resp := &privvalproto.SignedProposalResponse{}
 
-	// Check sync info.
-	info, err := connection.GetSyncInfo()
-	if err != nil {
-		p.Logger.Printf("[ERR] pairmint: couldn't get sync info: %v\n", err)
-		return err
-	}
+	// Retrieve sync info from the /status endpoint of the validator.
+	if syncinfo, err := connection.GetSyncInfo(); err == nil {
+		p.Logger.Printf("[DEBUG] pairmint: GET /status: SyncInfo{ \"catching_up\": %v }", syncinfo.CatchingUp)
 
-	p.Logger.Printf("[DEBUG] pairmint: GET /status: { \"catching_up\": %v }\n", info.CatchingUp)
+		// Check if the validator is synced.
+		if !syncinfo.CatchingUp {
+			// Retrieve last height's commit from the /commit endpoint of the validator.
+			if commitsigs, err := connection.GetCommitSigs(req.Proposal.Height - 1); err == nil {
+				p.Logger.Printf("[DEBUG] pairmint: GET /commit?height=%v: %v\n", req.Proposal.Height-1, commitsigs)
 
-	// Check whether the validator is caught up.
-	if info.CatchingUp {
-		p.Logger.Printf("[INFO] pairmint: Validator is catching up (latest height: %v)\n", info.LatestBlockHeight)
+				// Check if the last commit contains our validator's signature.
+				if hasSignedCommit(pubkey.Address(), commitsigs) {
+					p.Logger.Printf("[DEBUG] pairmint: Found signature from %v in commitsigs from height %v\n", pubkey.Address().String(), req.Proposal.Height-1)
+				} else {
+					p.Logger.Printf("[ERR] pairmint: no commitsig from %v for block height %v\n", pubkey.Address().String(), req.Proposal.Height-1)
+					resp.Error.Description = ErrMissingSignature.Error()
 
-		resp.Error.Description = ErrCatchingUp.Error()
-		if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
-			return err
-		}
+					// None of the commitsigs had an entry with our validator's address and
+					// a signature in them which means that this block was missed.
+					if err := p.Missed(); err != nil {
+						p.Logger.Println("[ERR] pairmint: too many missed blocks in a row, updating ranks...")
 
-		return ErrCatchingUp
-	}
+						// If an error is thrown it means that the threshold of too many missed
+						// blocks in a row has been exceeded. Now, a rank update is done in order
+						// to replace the signer.
+						p.Update()
+					}
+				}
 
-	// Get commit signatures from the last height.
-	var commitsigs *[]types.CommitSig
-	if req.Proposal.Height != 1 {
-		commitsigs, err = connection.GetCommitSigs(req.Proposal.Height - 1)
-		if err != nil {
-			return err
-		}
+				// After the commitsigs have been checked, check if the validator has permission to sign the proposal.
+				if p.Config.Init.Rank == 1 {
+					p.Logger.Println("[DEBUG] pairmint: Validator is ranked #1, signing proposal...")
 
-		p.Logger.Printf("[DEBUG] pairmint: GET /commit?height=%v: %v\n", req.Proposal.Height-1, commitsigs)
-	}
-
-	// Check if the commitsigs have an entry with our validator's address and
-	// a signature in it.
-	if hasSignedCommit(pubkey.Address().Bytes(), commitsigs) {
-		p.Logger.Printf("[DEBUG] pairmint: Found signature from %v in commit from height %v.\n", pubkey.Address(), req.Proposal.Height)
-
-		if p.Config.Init.Rank == 1 {
-			p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #1, sign vote...\n")
-
-			// Validator is ranked #1, so it has permission to sign the proposal.
-			if err := p.FilePV.SignProposal(p.Config.FilePV.ChainID, req.Proposal); err != nil {
-				p.Logger.Printf("[ERR] pairmint: error while signing proposal: %v\n", err)
-				resp.Error.Description = err.Error()
+					// Sign the vote.
+					if err := p.FilePV.SignProposal(p.Config.FilePV.ChainID, req.Proposal); err != nil {
+						p.Logger.Printf("[ERR] pairmint: error while signing proposal: %v\n", err)
+						resp.Error.Description = err.Error()
+					} else {
+						p.Logger.Printf("[DEBUG] pairmint: Signed %v for block height %v (signature: %v)\n", req.Proposal.Type, req.Proposal.Height, strings.ToUpper(hex.EncodeToString(req.Proposal.Signature)))
+						resp.Proposal = *req.Proposal
+					}
+				} else {
+					p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #%v, no permission to sign proposal\n", p.Config.Init.Rank)
+					resp.Error.Description = ErrNoSigner.Error()
+				}
 			} else {
-				p.Logger.Printf("[DEBUG] pairmint: Signed vote: { \"type\": %v, \"height\": %v, \"signature\": %v }\n", req.Proposal.Type, req.Proposal.Height, req.Proposal.Signature)
-				resp.Proposal = *req.Proposal
+				p.Logger.Printf("[ERR] pairmint: couldn't get commitsigs: %v\n", err)
+				resp.Error.Description = err.Error()
 			}
 		} else {
-			p.Logger.Println("[DEBUG] pairmint: Validator has no permission to sign.")
-
-			// Validator is ranked too low, so it has no signing permission.
-			// Reply with a RemoteSignerError.
-			resp.Error.Description = ErrNoSigner.Error()
+			p.Logger.Printf("[ERR] pairmint: validator is catching up... (latest height: %v)\n", syncinfo.LatestBlockHeight)
+			resp.Error.Description = ErrCatchingUp.Error()
 		}
 	} else {
-		p.Logger.Printf("[DEBUG] pairmint: No signature from %v in commit from height %v.\n", pubkey.Address(), req.Proposal.Height)
-
-		// None of the commitsigs had an entry with our validator's address and
-		// a signature in them which means that this block was missed.
-		if err := p.Missed(); err != nil {
-			// If an error is thrown it means that the threshold of too many missed
-			// blocks in a row has been exceeded. Now, a rank update is done in order
-			// to replace the signer.
-			p.Update()
-
-			// Populate the prepared response with the error.
-			resp.Error.Description = err.Error()
-		}
+		p.Logger.Printf("[ERR] pairmint: couldn't get sync info: %v\n", err)
+		resp.Error.Description = err.Error()
 	}
 
+	// Send response to Tendermint.
 	if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
 		return err
 	}
