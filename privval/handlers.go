@@ -68,14 +68,13 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 	resp := &privvalproto.SignedVoteResponse{}
 
 	// Check sync info.
-	p.Logger.Println("[DEBUG] pairmint: http request: GET /status")
 	info, err := connection.GetSyncInfo()
 	if err != nil {
 		p.Logger.Printf("[ERR] pairmint: couldn't get sync info: %v\n", err)
 		return err
 	}
 
-	p.Logger.Printf("[DEBUG] pairmint: http response: GET /status: { \"catching_up\": %v }\n", info.CatchingUp)
+	p.Logger.Printf("[DEBUG] pairmint: GET /status: { \"catching_up\": %v }\n", info.CatchingUp)
 
 	// Check whether the validator is caught up.
 	if info.CatchingUp {
@@ -92,13 +91,12 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 	// Get commit signatures from the last height.
 	var commitsigs *[]types.CommitSig
 	if req.Vote.Height != 1 {
-		p.Logger.Printf("[DEBUG] pairmint: http request: GET /commit?height=%v\n", req.Vote.Height-1)
 		commitsigs, err = connection.GetCommitSigs(req.Vote.Height - 1)
 		if err != nil {
 			return err
 		}
 
-		p.Logger.Printf("[DEBUG] pairmint: http response: GET /commit?height=%v: %v\n", req.Vote.Height-1, commitsigs)
+		p.Logger.Printf("[DEBUG] pairmint: GET /commit?height=%v: %v\n", req.Vote.Height-1, commitsigs)
 	}
 
 	// Check if the commitsigs have an entry with our validator's address and
@@ -157,14 +155,13 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 	resp := &privvalproto.SignedProposalResponse{}
 
 	// Check sync info.
-	p.Logger.Println("[DEBUG] pairmint: http request: GET /status")
 	info, err := connection.GetSyncInfo()
 	if err != nil {
 		p.Logger.Printf("[ERR] pairmint: couldn't get sync info: %v\n", err)
 		return err
 	}
 
-	p.Logger.Printf("[DEBUG] pairmint: http response: GET /status: { \"catching_up\": %v }\n", info.CatchingUp)
+	p.Logger.Printf("[DEBUG] pairmint: GET /status: { \"catching_up\": %v }\n", info.CatchingUp)
 
 	// Check whether the validator is caught up.
 	if info.CatchingUp {
@@ -181,13 +178,12 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 	// Get commit signatures from the last height.
 	var commitsigs *[]types.CommitSig
 	if req.Proposal.Height != 1 {
-		p.Logger.Printf("[DEBUG] pairmint: http request: GET /commit?height=%v\n", req.Proposal.Height-1)
 		commitsigs, err = connection.GetCommitSigs(req.Proposal.Height - 1)
 		if err != nil {
 			return err
 		}
 
-		p.Logger.Printf("[DEBUG] pairmint: http response: GET /commit?height=%v: %v\n", req.Proposal.Height-1, commitsigs)
+		p.Logger.Printf("[DEBUG] pairmint: GET /commit?height=%v: %v\n", req.Proposal.Height-1, commitsigs)
 	}
 
 	// Check if the commitsigs have an entry with our validator's address and
