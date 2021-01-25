@@ -84,7 +84,7 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 					p.Logger.Printf("[DEBUG] pairmint: Found signature from %v in commitsigs from height %v\n", pubkey.Address().String(), req.Vote.Height-1)
 				} else {
 					p.Logger.Printf("[ERR] pairmint: no commitsig from %v for block height %v\n", pubkey.Address().String(), req.Vote.Height-1)
-					resp.Error.Description = ErrMissingSignature.Error()
+					resp.Error = &privvalproto.RemoteSignerError{Description: ErrMissingSignature.Error()}
 
 					// None of the commitsigs had an entry with our validator's address and
 					// a signature in them which means that this block was missed.
@@ -105,26 +105,26 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 					// Sign the vote.
 					if err := p.FilePV.SignVote(p.Config.FilePV.ChainID, req.Vote); err != nil {
 						p.Logger.Printf("[ERR] pairmint: error while signing vote: %v\n", err)
-						resp.Error.Description = err.Error()
+						resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
 					} else {
 						p.Logger.Printf("[DEBUG] pairmint: Signed %v for block height %v (signature: %v)\n", req.Vote.Type, req.Vote.Height, strings.ToUpper(hex.EncodeToString(req.Vote.Signature)))
 						resp.Vote = *req.Vote
 					}
 				} else {
 					p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #%v, no permission to sign vote\n", p.Config.Init.Rank)
-					resp.Error.Description = ErrNoSigner.Error()
+					resp.Error = &privvalproto.RemoteSignerError{Description: ErrNoSigner.Error()}
 				}
 			} else {
 				p.Logger.Printf("[ERR] pairmint: couldn't get commitsigs: %v\n", err)
-				resp.Error.Description = err.Error()
+				resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
 			}
 		} else {
 			p.Logger.Printf("[ERR] pairmint: validator is catching up... (latest height: %v)\n", syncinfo.LatestBlockHeight)
-			resp.Error.Description = ErrCatchingUp.Error()
+			resp.Error = &privvalproto.RemoteSignerError{Description: ErrCatchingUp.Error()}
 		}
 	} else {
 		p.Logger.Printf("[ERR] pairmint: couldn't get sync info: %v\n", err)
-		resp.Error.Description = err.Error()
+		resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
 	}
 
 	// Send response to Tendermint.
@@ -157,7 +157,7 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 					p.Logger.Printf("[DEBUG] pairmint: Found signature from %v in commitsigs from height %v\n", pubkey.Address().String(), req.Proposal.Height-1)
 				} else {
 					p.Logger.Printf("[ERR] pairmint: no commitsig from %v for block height %v\n", pubkey.Address().String(), req.Proposal.Height-1)
-					resp.Error.Description = ErrMissingSignature.Error()
+					resp.Error = &privvalproto.RemoteSignerError{Description: ErrMissingSignature.Error()}
 
 					// None of the commitsigs had an entry with our validator's address and
 					// a signature in them which means that this block was missed.
@@ -178,26 +178,26 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 					// Sign the vote.
 					if err := p.FilePV.SignProposal(p.Config.FilePV.ChainID, req.Proposal); err != nil {
 						p.Logger.Printf("[ERR] pairmint: error while signing proposal: %v\n", err)
-						resp.Error.Description = err.Error()
+						resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
 					} else {
 						p.Logger.Printf("[DEBUG] pairmint: Signed %v for block height %v (signature: %v)\n", req.Proposal.Type, req.Proposal.Height, strings.ToUpper(hex.EncodeToString(req.Proposal.Signature)))
 						resp.Proposal = *req.Proposal
 					}
 				} else {
 					p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #%v, no permission to sign proposal\n", p.Config.Init.Rank)
-					resp.Error.Description = ErrNoSigner.Error()
+					resp.Error = &privvalproto.RemoteSignerError{Description: ErrNoSigner.Error()}
 				}
 			} else {
 				p.Logger.Printf("[ERR] pairmint: couldn't get commitsigs: %v\n", err)
-				resp.Error.Description = err.Error()
+				resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
 			}
 		} else {
 			p.Logger.Printf("[ERR] pairmint: validator is catching up... (latest height: %v)\n", syncinfo.LatestBlockHeight)
-			resp.Error.Description = ErrCatchingUp.Error()
+			resp.Error = &privvalproto.RemoteSignerError{Description: ErrCatchingUp.Error()}
 		}
 	} else {
 		p.Logger.Printf("[ERR] pairmint: couldn't get sync info: %v\n", err)
-		resp.Error.Description = err.Error()
+		resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
 	}
 
 	// Send response to Tendermint.
