@@ -26,7 +26,7 @@ func GetCommitSigs(height int64) (*[]types.CommitSig, error) {
 		return nil, fmt.Errorf("can't get commitsigs for block height %v", height)
 	}
 
-	client := http.Client{Timeout: 10 * time.Second}
+	client := http.Client{Timeout: 5 * time.Second}                       // TODO: Timeouts need to be set according to the block time of the chain.
 	url := fmt.Sprintf("http://127.0.0.1:26657/commit?height=%v", height) // TODO: Replace hardcoded address with config address ([rpc].laddr)
 
 	resp, err := client.Get(url)

@@ -20,7 +20,7 @@ type StatusRPCResponse struct {
 
 // GetSyncInfo gets the current sync info from the Tendermint validator.
 func GetSyncInfo() (*coretypes.SyncInfo, error) {
-	client := http.Client{Timeout: 10 * time.Second}
+	client := http.Client{Timeout: 5 * time.Second}     // TODO: Timeouts need to be set according to the block time of the chain.
 	url := fmt.Sprintf("http://127.0.0.1:26657/status") // TODO: Replace hardcoded address with config address ([rpc].laddr)
 
 	resp, err := client.Get(url)
