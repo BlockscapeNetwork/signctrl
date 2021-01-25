@@ -75,14 +75,7 @@ var (
 			}
 
 			// Run the routine for reading and writing messages.
-			go pv.Run(rwc, pubkey)
-
-			// Block until SIGINT or SIGTERM is fired.
-			sigCh := make(chan os.Signal, 1)
-			signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
-			<-sigCh
-
-			pv.Logger.Println("\n[INFO] pairmint: Exiting pairmint")
+			pv.Run(rwc, pubkey)
 		},
 	}
 )

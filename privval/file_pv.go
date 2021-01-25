@@ -3,6 +3,9 @@ package privval
 import (
 	"io"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/tendermint/tendermint/privval"
 
@@ -94,18 +97,29 @@ func (p *PairmintFilePV) SignProposal(chainID string, proposal *tmproto.Proposal
 
 // Run runs the routine for the file-based signer.
 func (p *PairmintFilePV) Run(rwc *connection.ReadWriteConn, pubkey crypto.PubKey) {
-	for {
-		msg := privvalproto.Message{}
-		if _, err := rwc.Reader.ReadMsg(&msg); err != nil {
-			if err == io.EOF {
-				// Prevent the console log from being spammed with EOF errors.
-				continue
-			}
-			p.Logger.Printf("[ERR] pairmint: error while reading message: %v\n", err)
-		}
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	defer close(sigCh)
 
-		if err := p.HandleMessage(&msg, pubkey, rwc); err != nil {
-			p.Logger.Printf("[ERR] pairmint: couldn't handle message: %v\n", err)
+	for {
+		select {
+		case <-sigCh:
+			p.Logger.Println("[INFO] pairmint: Terminating pairmint...")
+			return
+
+		default:
+			msg := privvalproto.Message{}
+			if _, err := rwc.Reader.ReadMsg(&msg); err != nil {
+				if err == io.EOF {
+					// Prevent the console log from being spammed with EOF errors.
+					continue
+				}
+				p.Logger.Printf("[ERR] pairmint: error while reading message: %v\n", err)
+			}
+
+			if err := p.HandleMessage(&msg, pubkey, rwc); err != nil {
+				p.Logger.Printf("[ERR] pairmint: couldn't handle message: %v\n", err)
+			}
 		}
 	}
 }
