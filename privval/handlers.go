@@ -82,6 +82,7 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 				// Check if the last commit contains our validator's signature.
 				if hasSignedCommit(pubkey.Address(), commitsigs) {
 					p.Logger.Printf("[DEBUG] pairmint: Found signature from %v in commitsigs from height %v\n", pubkey.Address().String(), req.Vote.Height-1)
+					p.Reset()
 				} else {
 					p.Logger.Printf("[ERR] pairmint: no commitsig from %v for block height %v\n", pubkey.Address().String(), req.Vote.Height-1)
 
@@ -94,6 +95,7 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 						// blocks in a row has been exceeded. Now, a rank update is done in order
 						// to replace the signer.
 						p.Update()
+						p.Reset()
 					}
 				}
 
@@ -154,6 +156,7 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 				// Check if the last commit contains our validator's signature.
 				if hasSignedCommit(pubkey.Address(), commitsigs) {
 					p.Logger.Printf("[DEBUG] pairmint: Found signature from %v in commitsigs from height %v\n", pubkey.Address().String(), req.Proposal.Height-1)
+					p.Reset()
 				} else {
 					p.Logger.Printf("[ERR] pairmint: no commitsig from %v for block height %v\n", pubkey.Address().String(), req.Proposal.Height-1)
 
@@ -166,6 +169,7 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 						// blocks in a row has been exceeded. Now, a rank update is done in order
 						// to replace the signer.
 						p.Update()
+						p.Reset()
 					}
 				}
 
