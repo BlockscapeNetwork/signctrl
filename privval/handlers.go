@@ -84,16 +84,11 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 					p.Logger.Printf("[DEBUG] pairmint: Found signature from %v in commitsigs from height %v\n", pubkey.Address().String(), req.Vote.Height-1)
 				} else {
 					p.Logger.Printf("[ERR] pairmint: no commitsig from %v for block height %v\n", pubkey.Address().String(), req.Vote.Height-1)
-					resp.Error = &privvalproto.RemoteSignerError{Description: ErrMissingSignature.Error()}
 
 					// None of the commitsigs had an entry with our validator's address and
 					// a signature in them which means that this block was missed.
 					if err := p.Missed(); err != nil {
 						p.Logger.Println("[ERR] pairmint: too many missed blocks in a row, updating ranks...")
-
-						// Remove ErrMissingSignature from response error. The new error will be
-						// determined below in the rank check.
-						resp.Error = nil
 
 						// If an error is thrown it means that the threshold of too many missed
 						// blocks in a row has been exceeded. Now, a rank update is done in order
@@ -161,16 +156,11 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 					p.Logger.Printf("[DEBUG] pairmint: Found signature from %v in commitsigs from height %v\n", pubkey.Address().String(), req.Proposal.Height-1)
 				} else {
 					p.Logger.Printf("[ERR] pairmint: no commitsig from %v for block height %v\n", pubkey.Address().String(), req.Proposal.Height-1)
-					resp.Error = &privvalproto.RemoteSignerError{Description: ErrMissingSignature.Error()}
 
 					// None of the commitsigs had an entry with our validator's address and
 					// a signature in them which means that this block was missed.
 					if err := p.Missed(); err != nil {
 						p.Logger.Println("[ERR] pairmint: too many missed blocks in a row, updating ranks...")
-
-						// Remove ErrMissingSignature from response error. The new error will be
-						// determined below in the rank check.
-						resp.Error = nil
 
 						// If an error is thrown it means that the threshold of too many missed
 						// blocks in a row has been exceeded. Now, a rank update is done in order
