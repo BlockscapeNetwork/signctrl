@@ -91,6 +91,10 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 					if err := p.Missed(); err != nil {
 						p.Logger.Println("[ERR] pairmint: too many missed blocks in a row, updating ranks...")
 
+						// Remove ErrMissingSignature from response error. The new error will be
+						// determined below in the rank check.
+						resp.Error = nil
+
 						// If an error is thrown it means that the threshold of too many missed
 						// blocks in a row has been exceeded. Now, a rank update is done in order
 						// to replace the signer.
@@ -98,9 +102,9 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 					}
 				}
 
-				// After the commitsigs have been checked, check if the validator has permission to sign the vote.
+				// Check if the validator has permission to sign the vote.
 				if p.Config.Init.Rank == 1 {
-					p.Logger.Println("[DEBUG] pairmint: Validator is ranked #1, signing vote...")
+					p.Logger.Println("[DEBUG] pairmint: Validator is ranked #1, permission to sign vote...")
 
 					// Sign the vote.
 					if err := p.FilePV.SignVote(p.Config.FilePV.ChainID, req.Vote); err != nil {
@@ -163,6 +167,10 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 					// a signature in them which means that this block was missed.
 					if err := p.Missed(); err != nil {
 						p.Logger.Println("[ERR] pairmint: too many missed blocks in a row, updating ranks...")
+
+						// Remove ErrMissingSignature from response error. The new error will be
+						// determined below in the rank check.
+						resp.Error = nil
 
 						// If an error is thrown it means that the threshold of too many missed
 						// blocks in a row has been exceeded. Now, a rank update is done in order
