@@ -107,7 +107,7 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 					p.Logger.Println("[DEBUG] pairmint: Validator is ranked #1, permission to sign vote...")
 
 					// Sign the vote.
-					if err := p.FilePV.SignVote(p.Config.FilePV.ChainID, req.Vote); err != nil {
+					if err := p.SignVote(p.Config.FilePV.ChainID, req.Vote); err != nil {
 						p.Logger.Printf("[ERR] pairmint: error while signing vote: %v\n", err)
 						resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
 					} else {
@@ -184,7 +184,7 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 					p.Logger.Println("[DEBUG] pairmint: Validator is ranked #1, signing proposal...")
 
 					// Sign the vote.
-					if err := p.FilePV.SignProposal(p.Config.FilePV.ChainID, req.Proposal); err != nil {
+					if err := p.SignProposal(p.Config.FilePV.ChainID, req.Proposal); err != nil {
 						p.Logger.Printf("[ERR] pairmint: error while signing proposal: %v\n", err)
 						resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
 					} else {
