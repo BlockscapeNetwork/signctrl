@@ -13,11 +13,10 @@ import (
 
 // handlePingRequest handles incoming ping requests.
 func (p *PairmintFilePV) handlePingRequest(rwc *connection.ReadWriteConn) error {
+	p.Logger.Println("[DEBUG] pairmint: Write PingResponse")
 	if _, err := rwc.Writer.WriteMsg(wrapMsg(&privvalproto.PingResponse{})); err != nil {
 		return err
 	}
-
-	p.Logger.Println("[DEBUG] pairmint: Write PingResponse")
 
 	return nil
 }
@@ -31,11 +30,11 @@ func (p *PairmintFilePV) handlePubKeyRequest(req *privvalproto.PubKeyRequest, pu
 			},
 		},
 	}
+
+	p.Logger.Printf("[DEBUG] pairmint: Write PubKeyResponse: %v\n", pubkey.Address())
 	if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
 		return err
 	}
-
-	p.Logger.Printf("[DEBUG] pairmint: Write PubKeyResponse: %v\n", pubkey.Address())
 
 	return nil
 }
