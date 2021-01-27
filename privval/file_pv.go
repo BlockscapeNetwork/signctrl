@@ -56,10 +56,10 @@ func NewPairmintFilePV() *PairmintFilePV {
 // Missed implements the Pairminter interface.
 func (p *PairmintFilePV) Missed() error {
 	p.MissedInARow++
-	p.Logger.Printf("[DEBUG] pairmint: Missed a block (total: %v)\n", p.MissedInARow)
+	p.Logger.Printf("[DEBUG] pairmint: Missed a block (%v/%v)\n", p.MissedInARow, p.Config.Init.Threshold)
 
 	if p.MissedInARow == p.Config.Init.Threshold {
-		p.MissedInARow = 0
+		p.Reset()
 		return ErrTooManyMissedBlocks
 	}
 
@@ -69,17 +69,17 @@ func (p *PairmintFilePV) Missed() error {
 // Reset implements the Pairminter interface.
 func (p *PairmintFilePV) Reset() {
 	p.MissedInARow = 0
-	p.Logger.Println("[DEBUG] pairmint: Reset counter for missed blocks in a row")
+	p.Logger.Printf("[DEBUG] pairmint: Reset counter for missed blocks in a row (%v/%v)\n", p.MissedInARow, p.Config.Init.Threshold)
 }
 
 // Update implements the Pairminter interface.
 func (p *PairmintFilePV) Update() {
 	if p.Config.Init.Rank > 1 {
 		p.Config.Init.Rank--
-		p.Logger.Printf("[DEBUG] pairmint: Promoted validator from rank %v to %v\n", p.Config.Init.Rank+1, p.Config.Init.Rank)
+		p.Logger.Printf("[DEBUG] pairmint: Promoted validator (rank #%v -> #%v)\n", p.Config.Init.Rank+1, p.Config.Init.Rank)
 	} else {
 		p.Config.Init.Rank = p.Config.Init.SetSize
-		p.Logger.Printf("[DEBUG] pairmint: Demoted validator from rank 1 to %v\n", p.Config.Init.Rank)
+		p.Logger.Printf("[DEBUG] pairmint: Demoted validator (rank #1 -> #%v)\n", p.Config.Init.Rank)
 	}
 }
 
