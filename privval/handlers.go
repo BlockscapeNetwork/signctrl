@@ -6,33 +6,10 @@ import (
 	"strings"
 
 	"github.com/BlockscapeNetwork/pairmint/connection"
-	"github.com/gogo/protobuf/proto"
 	"github.com/tendermint/tendermint/crypto"
 	cryptoproto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 	privvalproto "github.com/tendermint/tendermint/proto/tendermint/privval"
 )
-
-// wrapMsg wraps a protobuf message into a privval proto message.
-func wrapMsg(pb proto.Message) *privvalproto.Message {
-	msg := privvalproto.Message{}
-
-	switch pb := pb.(type) {
-	case *privvalproto.Message:
-		msg = *pb
-	case *privvalproto.PingResponse:
-		msg.Sum = &privvalproto.Message_PingResponse{PingResponse: pb}
-	case *privvalproto.PubKeyResponse:
-		msg.Sum = &privvalproto.Message_PubKeyResponse{PubKeyResponse: pb}
-	case *privvalproto.SignedVoteResponse:
-		msg.Sum = &privvalproto.Message_SignedVoteResponse{SignedVoteResponse: pb}
-	case *privvalproto.SignedProposalResponse:
-		msg.Sum = &privvalproto.Message_SignedProposalResponse{SignedProposalResponse: pb}
-	default:
-		panic(fmt.Errorf("unknown message type: %T", pb))
-	}
-
-	return &msg
-}
 
 // handlePingRequest handles incoming ping requests.
 func (p *PairmintFilePV) handlePingRequest(rwc *connection.ReadWriteConn) error {
