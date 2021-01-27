@@ -166,18 +166,18 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 
 	// After the commitsigs have been checked, check if the validator has permission to sign the proposal.
 	if p.Config.Init.Rank == 1 {
-		p.Logger.Println("[DEBUG] pairmint: Validator is ranked #1, signing proposal...")
+		p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #1, signing %v...", req.Proposal.Type)
 
 		// Sign the vote.
 		if err := p.SignProposal(p.Config.FilePV.ChainID, req.Proposal); err != nil {
-			p.Logger.Printf("[ERR] pairmint: error while signing proposal: %v\n", err)
+			p.Logger.Printf("[ERR] pairmint: error while signing %v for height %v: %v\n", err, req.Proposal.Type, req.Proposal.Height)
 			resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
 		} else {
 			p.Logger.Printf("[DEBUG] pairmint: Signed %v for block height %v (signature: %v)\n", req.Proposal.Type, req.Proposal.Height, strings.ToUpper(hex.EncodeToString(req.Proposal.Signature)))
 			resp.Proposal = *req.Proposal
 		}
 	} else {
-		p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #%v, no permission to sign proposal\n", p.Config.Init.Rank)
+		p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #%v, no permission to sign %v for height %v\n", p.Config.Init.Rank, req.Proposal.Type, req.Proposal.Height)
 		resp.Error = &privvalproto.RemoteSignerError{Description: ErrNoSigner.Error()}
 	}
 
