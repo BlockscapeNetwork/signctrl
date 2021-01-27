@@ -37,7 +37,8 @@ type PairmintFilePV struct {
 	FilePV *privval.FilePV
 
 	// CurrentHeight keeps track of the current height based on the
-	// messages pairmint receives from the validator.
+	// messages pairmint receives from the validator. It is used to keep
+	// track of which height the commitsigs were retrieved at.
 	CurrentHeight int64
 }
 
@@ -48,7 +49,7 @@ func NewPairmintFilePV() *PairmintFilePV {
 		Config:        new(config.Config),
 		MissedInARow:  0,
 		FilePV:        new(privval.FilePV),
-		CurrentHeight: 0,
+		CurrentHeight: 1, // Start at genesis block height
 	}
 }
 
