@@ -41,7 +41,6 @@ func (p *PairmintFilePV) handlePubKeyRequest(req *privvalproto.PubKeyRequest, pu
 }
 
 // handleSignVoteRequest handles incoming signing requests for prevotes and precommits.
-// Errors are never returned but passed into the response.
 func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest, pubkey crypto.PubKey, rwc *connection.ReadWriteConn) error {
 	// Prepare empty vote response.
 	resp := &privvalproto.SignedVoteResponse{}
