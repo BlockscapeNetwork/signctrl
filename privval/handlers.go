@@ -46,17 +46,27 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 	resp := &privvalproto.SignedVoteResponse{}
 
 	// Only check the commitsigs once for each block height.
+	// Since p.CurrentHeight is initialized to 1, the check for the genesis block is
+	// skipped as there is no previous commit to be fetched.
 	if req.Vote.Height > p.CurrentHeight {
-		p.CurrentHeight = req.Vote.Height
-
 		// Retrieve last height's commit from the /commit endpoint of the validator.
 		commitsigs, err := connection.GetCommitSigs(req.Vote.Height - 1)
-		if err == nil {
-			p.Logger.Printf("[DEBUG] pairmint: GET /commit?height=%v: %v\n", req.Vote.Height-1, commitsigs)
-		} else {
+		if err != nil {
 			p.Logger.Printf("[ERR] pairmint: couldn't get commitsigs: %v\n", err)
 			resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
+
+			// Send error to Tendermint that the commitsigs could not be retrieved.
+			// In this case, pairmint can't know whether it is safe to sign or not,
+			// so it won't sign the message.
+			if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
+				return err
+			}
+
+			return ErrNoCommitSigs
 		}
+
+		p.Logger.Printf("[DEBUG] pairmint: GET /commit?height=%v: %v\n", req.Vote.Height-1, commitsigs)
+		p.CurrentHeight = req.Vote.Height
 
 		// Check if the last commit contains our validator's signature.
 		if hasSignedCommit(pubkey.Address(), commitsigs) {
@@ -81,27 +91,26 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 
 	// Check if the validator has permission to sign the vote.
 	if p.Config.Init.Rank == 1 {
-		p.Logger.Println("[DEBUG] pairmint: Validator is ranked #1, permission to sign vote...")
+		p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #1, signing %v...\n", req.Vote.Type)
 
 		// Sign the vote.
 		if err := p.SignVote(p.Config.FilePV.ChainID, req.Vote); err != nil {
-			p.Logger.Printf("[ERR] pairmint: error while signing vote: %v\n", err)
+			p.Logger.Printf("[ERR] pairmint: error while signing %v for height %v: %v\n", req.Vote.Type, req.Vote.Height, err)
 			resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
 		} else {
 			p.Logger.Printf("[DEBUG] pairmint: Signed %v for block height %v (signature: %v)\n", req.Vote.Type, req.Vote.Height, strings.ToUpper(hex.EncodeToString(req.Vote.Signature)))
 			resp.Vote = *req.Vote
 		}
 	} else {
-		p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #%v, no permission to sign vote\n", p.Config.Init.Rank)
+		p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #%v, no permission to sign %v for height %v\n", p.Config.Init.Rank, req.Vote.Type, req.Vote.Height)
 		resp.Error = &privvalproto.RemoteSignerError{Description: ErrNoSigner.Error()}
 	}
 
 	// Send response to Tendermint.
+	p.Logger.Printf("[DEBUG] pairmint: Write SignedVoteResponse: %v\n", resp)
 	if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
 		return err
 	}
-
-	p.Logger.Printf("[DEBUG] pairmint: Write SignedVoteResponse: %v\n", resp)
 
 	return nil
 }
@@ -112,17 +121,27 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 	resp := &privvalproto.SignedProposalResponse{}
 
 	// Only check the commitsigs once for each block height.
+	// Since p.CurrentHeight is initialized to 1, the check for the genesis block is
+	// skipped as there is no previous commit to be fetched.
 	if req.Proposal.Height > p.CurrentHeight {
-		p.CurrentHeight = req.Proposal.Height
-
 		// Retrieve last height's commit from the /commit endpoint of the validator.
 		commitsigs, err := connection.GetCommitSigs(req.Proposal.Height - 1)
-		if err == nil {
-			p.Logger.Printf("[DEBUG] pairmint: GET /commit?height=%v: %v\n", req.Proposal.Height-1, commitsigs)
-		} else {
+		if err != nil {
 			p.Logger.Printf("[ERR] pairmint: couldn't get commitsigs: %v\n", err)
 			resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
+
+			// Send error to Tendermint that the commitsigs could not be retrieved.
+			// In this case, pairmint can't know whether it is safe to sign or not,
+			// so it won't sign the message.
+			if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
+				return err
+			}
+
+			return ErrNoCommitSigs
 		}
+
+		p.Logger.Printf("[DEBUG] pairmint: GET /commit?height=%v: %v\n", req.Proposal.Height-1, commitsigs)
+		p.CurrentHeight = req.Proposal.Height
 
 		// Check if the last commit contains our validator's signature.
 		if hasSignedCommit(pubkey.Address(), commitsigs) {
