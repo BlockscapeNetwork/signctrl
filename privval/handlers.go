@@ -182,11 +182,10 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 	}
 
 	// Send response to Tendermint.
+	p.Logger.Printf("[DEBUG] pairmint: Write SignedProposalResponse: %v\n", resp)
 	if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
 		return err
 	}
-
-	p.Logger.Printf("[DEBUG] pairmint: Write SignedProposalResponse: %v\n", resp)
 
 	return nil
 }
