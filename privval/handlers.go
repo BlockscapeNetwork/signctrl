@@ -46,9 +46,18 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 	// Prepare empty vote response.
 	resp := &privvalproto.SignedVoteResponse{}
 
-	// Retrieve last height's commit from the /commit endpoint of the validator.
-	if commitsigs, err := connection.GetCommitSigs(req.Vote.Height - 1); err == nil {
-		p.Logger.Printf("[DEBUG] pairmint: GET /commit?height=%v: %v\n", req.Vote.Height-1, commitsigs)
+	// Only check the commitsigs once for each block height.
+	if req.Vote.Height > p.CurrentHeight {
+		p.CurrentHeight = req.Vote.Height
+
+		// Retrieve last height's commit from the /commit endpoint of the validator.
+		commitsigs, err := connection.GetCommitSigs(req.Vote.Height - 1)
+		if err == nil {
+			p.Logger.Printf("[DEBUG] pairmint: GET /commit?height=%v: %v\n", req.Vote.Height-1, commitsigs)
+		} else {
+			p.Logger.Printf("[ERR] pairmint: couldn't get commitsigs: %v\n", err)
+			resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
+		}
 
 		// Check if the last commit contains our validator's signature.
 		if hasSignedCommit(pubkey.Address(), commitsigs) {
@@ -69,26 +78,23 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 				p.Reset()
 			}
 		}
+	}
 
-		// Check if the validator has permission to sign the vote.
-		if p.Config.Init.Rank == 1 {
-			p.Logger.Println("[DEBUG] pairmint: Validator is ranked #1, permission to sign vote...")
+	// Check if the validator has permission to sign the vote.
+	if p.Config.Init.Rank == 1 {
+		p.Logger.Println("[DEBUG] pairmint: Validator is ranked #1, permission to sign vote...")
 
-			// Sign the vote.
-			if err := p.SignVote(p.Config.FilePV.ChainID, req.Vote); err != nil {
-				p.Logger.Printf("[ERR] pairmint: error while signing vote: %v\n", err)
-				resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
-			} else {
-				p.Logger.Printf("[DEBUG] pairmint: Signed %v for block height %v (signature: %v)\n", req.Vote.Type, req.Vote.Height, strings.ToUpper(hex.EncodeToString(req.Vote.Signature)))
-				resp.Vote = *req.Vote
-			}
+		// Sign the vote.
+		if err := p.SignVote(p.Config.FilePV.ChainID, req.Vote); err != nil {
+			p.Logger.Printf("[ERR] pairmint: error while signing vote: %v\n", err)
+			resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
 		} else {
-			p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #%v, no permission to sign vote\n", p.Config.Init.Rank)
-			resp.Error = &privvalproto.RemoteSignerError{Description: ErrNoSigner.Error()}
+			p.Logger.Printf("[DEBUG] pairmint: Signed %v for block height %v (signature: %v)\n", req.Vote.Type, req.Vote.Height, strings.ToUpper(hex.EncodeToString(req.Vote.Signature)))
+			resp.Vote = *req.Vote
 		}
 	} else {
-		p.Logger.Printf("[ERR] pairmint: couldn't get commitsigs: %v\n", err)
-		resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
+		p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #%v, no permission to sign vote\n", p.Config.Init.Rank)
+		resp.Error = &privvalproto.RemoteSignerError{Description: ErrNoSigner.Error()}
 	}
 
 	// Send response to Tendermint.
@@ -106,9 +112,18 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 	// Prepare empty proposal response.
 	resp := &privvalproto.SignedProposalResponse{}
 
-	// Retrieve last height's commit from the /commit endpoint of the validator.
-	if commitsigs, err := connection.GetCommitSigs(req.Proposal.Height - 1); err == nil {
-		p.Logger.Printf("[DEBUG] pairmint: GET /commit?height=%v: %v\n", req.Proposal.Height-1, commitsigs)
+	// Only check the commitsigs once for each block height.
+	if req.Proposal.Height > p.CurrentHeight {
+		p.CurrentHeight = req.Proposal.Height
+
+		// Retrieve last height's commit from the /commit endpoint of the validator.
+		commitsigs, err := connection.GetCommitSigs(req.Proposal.Height - 1)
+		if err == nil {
+			p.Logger.Printf("[DEBUG] pairmint: GET /commit?height=%v: %v\n", req.Proposal.Height-1, commitsigs)
+		} else {
+			p.Logger.Printf("[ERR] pairmint: couldn't get commitsigs: %v\n", err)
+			resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
+		}
 
 		// Check if the last commit contains our validator's signature.
 		if hasSignedCommit(pubkey.Address(), commitsigs) {
@@ -129,26 +144,23 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 				p.Reset()
 			}
 		}
+	}
 
-		// After the commitsigs have been checked, check if the validator has permission to sign the proposal.
-		if p.Config.Init.Rank == 1 {
-			p.Logger.Println("[DEBUG] pairmint: Validator is ranked #1, signing proposal...")
+	// After the commitsigs have been checked, check if the validator has permission to sign the proposal.
+	if p.Config.Init.Rank == 1 {
+		p.Logger.Println("[DEBUG] pairmint: Validator is ranked #1, signing proposal...")
 
-			// Sign the vote.
-			if err := p.SignProposal(p.Config.FilePV.ChainID, req.Proposal); err != nil {
-				p.Logger.Printf("[ERR] pairmint: error while signing proposal: %v\n", err)
-				resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
-			} else {
-				p.Logger.Printf("[DEBUG] pairmint: Signed %v for block height %v (signature: %v)\n", req.Proposal.Type, req.Proposal.Height, strings.ToUpper(hex.EncodeToString(req.Proposal.Signature)))
-				resp.Proposal = *req.Proposal
-			}
+		// Sign the vote.
+		if err := p.SignProposal(p.Config.FilePV.ChainID, req.Proposal); err != nil {
+			p.Logger.Printf("[ERR] pairmint: error while signing proposal: %v\n", err)
+			resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
 		} else {
-			p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #%v, no permission to sign proposal\n", p.Config.Init.Rank)
-			resp.Error = &privvalproto.RemoteSignerError{Description: ErrNoSigner.Error()}
+			p.Logger.Printf("[DEBUG] pairmint: Signed %v for block height %v (signature: %v)\n", req.Proposal.Type, req.Proposal.Height, strings.ToUpper(hex.EncodeToString(req.Proposal.Signature)))
+			resp.Proposal = *req.Proposal
 		}
 	} else {
-		p.Logger.Printf("[ERR] pairmint: couldn't get commitsigs: %v\n", err)
-		resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
+		p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #%v, no permission to sign proposal\n", p.Config.Init.Rank)
+		resp.Error = &privvalproto.RemoteSignerError{Description: ErrNoSigner.Error()}
 	}
 
 	// Send response to Tendermint.

@@ -35,15 +35,20 @@ type PairmintFilePV struct {
 
 	// FilePV is Tendermint's file-based signer.
 	FilePV *privval.FilePV
+
+	// CurrentHeight keeps track of the current height based on the
+	// messages pairmint receives from the validator.
+	CurrentHeight int64
 }
 
 // NewPairmintFilePV returns a new instance of PairmintFilePV.
 func NewPairmintFilePV() *PairmintFilePV {
 	return &PairmintFilePV{
-		Logger:       new(log.Logger),
-		Config:       new(config.Config),
-		MissedInARow: 0,
-		FilePV:       new(privval.FilePV),
+		Logger:        new(log.Logger),
+		Config:        new(config.Config),
+		MissedInARow:  0,
+		FilePV:        new(privval.FilePV),
+		CurrentHeight: 0,
 	}
 }
 
