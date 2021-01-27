@@ -22,7 +22,7 @@ type CommitRPCResponse struct {
 
 // GetCommitSigs gets the commit signatures of the specified height.
 func GetCommitSigs(height int64) (*[]types.CommitSig, error) {
-	if height < 1 {
+	if height < 2 {
 		return nil, fmt.Errorf("can't get commitsigs for block height %v", height)
 	}
 

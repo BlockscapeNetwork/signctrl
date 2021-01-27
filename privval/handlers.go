@@ -49,7 +49,7 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 	// skipped as there is no previous commit to be fetched.
 	if req.Vote.Height > p.CurrentHeight {
 		// Retrieve last height's commit from the /commit endpoint of the validator.
-		commitsigs, err := connection.GetCommitSigs(req.Vote.Height - 1)
+		commitsigs, err := connection.GetCommitSigs(req.Vote.Height - 2)
 		if err != nil {
 			p.Logger.Printf("[ERR] pairmint: couldn't get commitsigs: %v\n", err)
 			resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
@@ -124,7 +124,7 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 	// skipped as there is no previous commit to be fetched.
 	if req.Proposal.Height > p.CurrentHeight {
 		// Retrieve last height's commit from the /commit endpoint of the validator.
-		commitsigs, err := connection.GetCommitSigs(req.Proposal.Height - 1)
+		commitsigs, err := connection.GetCommitSigs(req.Proposal.Height - 2)
 		if err != nil {
 			p.Logger.Printf("[ERR] pairmint: couldn't get commitsigs: %v\n", err)
 			resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
