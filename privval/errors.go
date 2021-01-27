@@ -22,4 +22,8 @@ var (
 	// ErrCatchingUp is thrown if the validator is catching up with the
 	// global blockchain state.
 	ErrCatchingUp = errors.New("validator is catching up")
+
+	// ErrNoCommitSigs is thrown if the validators /commit endpoint is
+	// not available and no commitsigs can be retrieved.
+	ErrNoCommitSigs = errors.New("couldn't get commitsigs from validator")
 )
