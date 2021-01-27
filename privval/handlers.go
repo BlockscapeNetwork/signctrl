@@ -48,7 +48,10 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 	// Since p.CurrentHeight is initialized to 1, the check for the genesis block is
 	// skipped as there is no previous commit to be fetched.
 	if req.Vote.Height > p.CurrentHeight {
-		// Retrieve last height's commit from the /commit endpoint of the validator.
+		// Retrieve commit of height-2 from the /commit endpoint of the validator.
+		// Taking the second to last commit makes sure the endpoint has the commit
+		// data so as to avoid a race condition in Tendermint when only going for
+		// the last commit at height-1.
 		commitsigs, err := connection.GetCommitSigs(req.Vote.Height - 2)
 		if err != nil {
 			p.Logger.Printf("[ERR] pairmint: couldn't get commitsigs: %v\n", err)
@@ -123,7 +126,10 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 	// Since p.CurrentHeight is initialized to 1, the check for the genesis block is
 	// skipped as there is no previous commit to be fetched.
 	if req.Proposal.Height > p.CurrentHeight {
-		// Retrieve last height's commit from the /commit endpoint of the validator.
+		// Retrieve commit of height-2 from the /commit endpoint of the validator.
+		// Taking the second to last commit makes sure the endpoint has the commit
+		// data so as to avoid a race condition in Tendermint when only going for
+		// the last commit at height-1.
 		commitsigs, err := connection.GetCommitSigs(req.Proposal.Height - 2)
 		if err != nil {
 			p.Logger.Printf("[ERR] pairmint: couldn't get commitsigs: %v\n", err)
