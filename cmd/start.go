@@ -78,8 +78,4 @@ var (
 func init() {
 	// Add start to the root command.
 	rootCmd.AddCommand(startCmd)
-
-	// // Add tmkms flag.
-	// startCmd.Flags().BoolVar(&tmkms, "tmkms", false, "Use the TMKMS as an external PrivValidator process for Pairmint")
-	// viper.BindPFlag("tmkms", startCmd.Flags().Lookup("tmkms"))
 }
