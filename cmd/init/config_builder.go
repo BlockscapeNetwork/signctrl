@@ -34,10 +34,12 @@ rank = 0
 # TCP socket address the validator listens on for an external
 # PrivValidator process. Pairmint dials this address to
 # establish a connection to the validator.
-validator_laddr = "127.0.0.1:26658"
+# Must be in host:port format.
+validator_laddr = ""
 
 # TCP socket address the validator's RPC server listens on.
-validator_laddr_rpc = "127.0.0.1:26657"
+# Must be in host:port format.
+validator_laddr_rpc = ""
 
 [file_pv]
 
