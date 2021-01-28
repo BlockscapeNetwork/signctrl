@@ -18,9 +18,6 @@ import (
 )
 
 var (
-	// // Flags
-	// tmkms bool
-
 	// The start command starts the pairmint application.
 	startCmd = &cobra.Command{
 		Use:   "start",
