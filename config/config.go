@@ -38,14 +38,6 @@ type InitConfig struct {
 	ValidatorListenAddrRPC string `mapstructure:"validator_laddr_rpc"`
 }
 
-// // ExtPVConfig defines address of an external PrivValidator process for Pairmint
-// // to connect to.
-// type ExtPVConfig struct {
-// 	// PrivValidatorListenAddr is the TCP socket address to listen on for
-// 	// connections from an external PrivValidator process.
-// 	PrivValidatorListenAddr string `mapstructure:"priv_validator_laddr"`
-// }
-
 // FilePVConfig defines file paths for the file-based signer.
 type FilePVConfig struct {
 	// The chain ID the FilePV signs votes/proposals for.
@@ -64,9 +56,6 @@ type FilePVConfig struct {
 type Config struct {
 	// Init defines the section for the initialization parameters.
 	Init InitConfig `mapstructure:"init"`
-
-	// // Tmkms defines the section for tmkms configuration parameters.
-	// ExtPV ExtPVConfig `mapstructure:"ext_pv"`
 
 	// FilePV defines the section for the file-based signer's file paths.
 	FilePV FilePVConfig `mapstructure:"file_pv"`
@@ -145,27 +134,6 @@ func (c *Config) validateInitConfig() error {
 	return nil
 }
 
-// // validateExtPVConfig validates the ExtPVConfig.
-// func (c *Config) validateExtPVConfig() error {
-// 	errs := ""
-// 	if c.ExtPV.PrivValidatorListenAddr != "" {
-// 		host, _, err := net.SplitHostPort(c.ExtPV.PrivValidatorListenAddr)
-// 		if err != nil {
-// 			errs += "\tpriv_validator_laddr is not in the host:port format\n"
-// 		} else {
-// 			if ip := net.ParseIP(host); ip == nil {
-// 				errs += "\tpriv_validator_laddr is not a valid IPv4\n"
-// 			}
-// 		}
-// 	}
-
-// 	if errs != "" {
-// 		return fmt.Errorf("%v", errs)
-// 	}
-
-// 	return nil
-// }
-
 // validateFilePVConfig validates the FilePVConfig.
 func (c *Config) validateFilePVConfig() error {
 	errs := ""
@@ -192,9 +160,6 @@ func (c *Config) validate() error {
 	if err := c.validateInitConfig(); err != nil {
 		errs += err.Error()
 	}
-	// if err := c.validateExtPVConfig(); err != nil {
-	// 	errs += err.Error()
-	// }
 	if err := c.validateFilePVConfig(); err != nil {
 		errs += err.Error()
 	}
