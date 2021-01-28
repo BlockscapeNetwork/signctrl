@@ -23,7 +23,20 @@ func (p *PairmintFilePV) handlePingRequest(rwc *connection.ReadWriteConn) error 
 
 // handlePubKeyRequest handles incoming public key requests.
 func (p *PairmintFilePV) handlePubKeyRequest(req *privvalproto.PubKeyRequest, pubkey crypto.PubKey, rwc *connection.ReadWriteConn) error {
-	resp := &privvalproto.PubKeyResponse{
+	resp := &privvalproto.PubKeyResponse{}
+
+	// Check if requests originate from the chainid specified in the pairmint.toml.
+	if req.ChainId != p.Config.FilePV.ChainID {
+		resp.Error = &privvalproto.RemoteSignerError{Description: ErrWrongChainID.Error()}
+		p.Logger.Println("[ERR] pairmint: pubkey request is for the wrong chain ID")
+		if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
+			return err
+		}
+
+		return ErrWrongChainID
+	}
+
+	resp = &privvalproto.PubKeyResponse{
 		PubKey: cryptoproto.PublicKey{
 			Sum: &cryptoproto.PublicKey_Ed25519{
 				Ed25519: pubkey.Bytes(),
@@ -43,6 +56,17 @@ func (p *PairmintFilePV) handlePubKeyRequest(req *privvalproto.PubKeyRequest, pu
 func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest, pubkey crypto.PubKey, rwc *connection.ReadWriteConn) error {
 	// Prepare empty vote response.
 	resp := &privvalproto.SignedVoteResponse{}
+
+	// Check if requests originate from the chainid specified in the pairmint.toml.
+	if req.ChainId != p.Config.FilePV.ChainID {
+		resp.Error = &privvalproto.RemoteSignerError{Description: ErrWrongChainID.Error()}
+		p.Logger.Println("[ERR] pairmint: sign vote request is for the wrong chain ID")
+		if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
+			return err
+		}
+
+		return ErrWrongChainID
+	}
 
 	// Only check the commitsigs once for each block height.
 	// Since p.CurrentHeight is initialized to 1, the check for the genesis block is
@@ -122,6 +146,17 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 	// Prepare empty proposal response.
 	resp := &privvalproto.SignedProposalResponse{}
 
+	// Check if requests originate from the chainid specified in the pairmint.toml.
+	if req.ChainId != p.Config.FilePV.ChainID {
+		resp.Error = &privvalproto.RemoteSignerError{Description: ErrWrongChainID.Error()}
+		p.Logger.Println("[ERR] pairmint: sign proposal request is for the wrong chain ID")
+		if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
+			return err
+		}
+
+		return ErrWrongChainID
+	}
+
 	// Only check the commitsigs once for each block height.
 	// Since p.CurrentHeight is initialized to 1, the check for the genesis block is
 	// skipped as there is no previous commit to be fetched.
@@ -197,8 +232,6 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 
 // HandleMessage handles all incoming messages from Tendermint.
 func (p *PairmintFilePV) HandleMessage(msg *privvalproto.Message, pubkey crypto.PubKey, rwc *connection.ReadWriteConn) error {
-	// TODO: Check if requests originate from the chainid specified in the pairmint.toml.
-
 	switch msg.GetSum().(type) {
 	case *privvalproto.Message_PingRequest:
 		p.Logger.Printf("[DEBUG] pairmint: PingRequest")

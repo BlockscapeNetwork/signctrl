@@ -26,4 +26,8 @@ var (
 	// ErrNoCommitSigs is thrown if the validators /commit endpoint is
 	// not available and no commitsigs can be retrieved.
 	ErrNoCommitSigs = errors.New("couldn't get commitsigs from validator")
+
+	// ErrWrongChainID is thrown if an incoming request is for a different
+	// chainid than the one specified in the pairmint.toml file.
+	ErrWrongChainID = errors.New("wrong chainid")
 )
