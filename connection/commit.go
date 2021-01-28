@@ -21,15 +21,13 @@ type CommitRPCResponse struct {
 }
 
 // GetCommitSigs gets the commit signatures of the specified height.
-func GetCommitSigs(height int64) (*[]types.CommitSig, error) {
+func GetCommitSigs(rpcladdr string, height int64) (*[]types.CommitSig, error) {
 	if height < 2 {
 		return nil, fmt.Errorf("can't get commitsigs for block height %v", height)
 	}
 
-	client := http.Client{Timeout: 5 * time.Second}                       // TODO: Timeouts need to be set according to the block time of the chain.
-	url := fmt.Sprintf("http://127.0.0.1:26657/commit?height=%v", height) // TODO: Replace hardcoded address with config address ([rpc].laddr)
-
-	resp, err := client.Get(url)
+	client := http.Client{Timeout: 5 * time.Second} // TODO: Timeouts need to be set according to the block time of the chain.
+	resp, err := client.Get(fmt.Sprintf("http://%v/commit?height=%v", rpcladdr, height))
 	if err != nil {
 		return nil, err
 	}

@@ -52,7 +52,7 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 		// Taking the second to last commit makes sure the endpoint has the commit
 		// data so as to avoid a race condition in Tendermint when only going for
 		// the last commit at height-1.
-		commitsigs, err := connection.GetCommitSigs(req.Vote.Height - 2)
+		commitsigs, err := connection.GetCommitSigs(p.Config.Init.ValidatorListenAddrRPC, req.Vote.Height-2)
 		if err != nil {
 			p.Logger.Printf("[ERR] pairmint: couldn't get commitsigs: %v\n", err)
 			resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
@@ -130,7 +130,7 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 		// Taking the second to last commit makes sure the endpoint has the commit
 		// data so as to avoid a race condition in Tendermint when only going for
 		// the last commit at height-1.
-		commitsigs, err := connection.GetCommitSigs(req.Proposal.Height - 2)
+		commitsigs, err := connection.GetCommitSigs(p.Config.Init.ValidatorListenAddrRPC, req.Proposal.Height-2)
 		if err != nil {
 			p.Logger.Printf("[ERR] pairmint: couldn't get commitsigs: %v\n", err)
 			resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
