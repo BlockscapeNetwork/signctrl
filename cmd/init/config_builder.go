@@ -47,9 +47,11 @@ validator_laddr_rpc = ""
 chain_id = ""
 
 # The path to the priv_validator_key.json file.
+# Defaults to $PAIRMINT_CONFIG_DIR/priv_validator_key.json if left empty.
 key_file_path = ""
 
 # The path to the priv_validator_state.json file.
+# Defaults to $PAIRMINT_CONFIG_DIR/priv_validator_state.json if left empty.
 state_file_path = ""
 `
 

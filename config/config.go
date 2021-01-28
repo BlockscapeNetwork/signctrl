@@ -140,6 +140,12 @@ func (c *Config) validateFilePVConfig() error {
 	if c.FilePV.ChainID == "" {
 		errs += "\tchain_id must not be empty\n"
 	}
+	if c.FilePV.KeyFilePath == "" {
+		c.FilePV.KeyFilePath = GetDir() + "/priv_validator_key.json"
+	}
+	if c.FilePV.StateFilePath == "" {
+		c.FilePV.StateFilePath = GetDir() + "/priv_validator_state.json"
+	}
 	if keyFile, err := os.Stat(c.FilePV.KeyFilePath); err != nil && !keyFile.IsDir() {
 		errs += "\tkey_file_path is not a valid path\n"
 	}
