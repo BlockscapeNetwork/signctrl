@@ -50,9 +50,13 @@ Before putting Pairmint into operation, it needs to be initialized using:
 $ pairmint init
 ```
 
-The `init` command creates a `pairmint.toml` configuration file at the directory specified in the `PAIRMINT_CONFIG_DIR` environment variable (defaults to `$HOME/.pairmint`) and a `pm-identity.key` file which holds the seed used to establish a secret connection to the validator.
+The `init` command creates a `pairmint.toml` configuration file at the directory specified in the `$PAIRMINT_CONFIG_DIR` environment variable (defaults to `$HOME/.pairmint`) and a `pm-identity.key` file which holds the seed used to establish a secret connection to the validator.
 
 > :information_source: Please look through the `pairmint.toml` file after it's generated as it is only a template and initially not valid.
+
+If you don't already have a keypair, you can use the `--keypair` flag to generate a new `priv_validator_key.json` and `priv_validator_state.json` in your `$PAIRMINT_CONFIG_DIR` directory. Pairmint will know where to find them without you having to specify their location (see `key_file_path` and `state_file_path` parameters in the FilePV section).
+
+If you do already have a keypair, you can either copy them into the `$PAIRMINT_CONFIG_DIR` directory or leave the key and state files where they are and specify the paths to them in the FilePV section of the `pairmint.toml`.
 
 ### Init
 
@@ -71,11 +75,11 @@ Init contains configuration parameters needed on initialization.
 
 FilePV contains configuration parameters for the file-based signer.
 
-| Parameter         | Type   | Description                                   |
-| :---------------- | :----- | :-------------------------------------------- |
-| `chain_id`        | string | Chain ID the validator is part of.            |
-| `key_file_path`   | string | Path to the `priv_validator_key.json` file.   |
-| `state_file_path` | string | Path to the `priv_validator_state.json` file. |
+| Parameter         | Type   | Description                                                                                                 |
+| :---------------- | :----- | :---------------------------------------------------------------------------------------------------------- |
+| `chain_id`        | string | Chain ID the validator is part of.                                                                          |
+| `key_file_path`   | string | Path to the `priv_validator_key.json` file. Defaults to `$PAIRMINT_CONFIG_DIR/priv_validator_key.json`.     |
+| `state_file_path` | string | Path to the `priv_validator_state.json` file. Defaults to `$PAIRMINT_CONFIG_DIR/priv_validator_state.json`. |
 
 ## Running
 
