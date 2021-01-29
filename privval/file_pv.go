@@ -74,13 +74,19 @@ func (p *PairmintFilePV) Reset() {
 
 // Update implements the Pairminter interface.
 func (p *PairmintFilePV) Update() {
-	if p.Config.Init.Rank > 1 {
-		p.Config.Init.Rank--
-		p.Logger.Printf("[DEBUG] pairmint: Promoted validator (rank #%v -> #%v)\n", p.Config.Init.Rank+1, p.Config.Init.Rank)
-	} else {
-		p.Config.Init.Rank = p.Config.Init.SetSize
-		p.Logger.Printf("[DEBUG] pairmint: Demoted validator (rank #1 -> #%v)\n", p.Config.Init.Rank)
+	if p.Config.Init.Rank == 1 {
+		// The signer is shut down if he exceeds the threshold of too many missed blocks
+		// in a row so as to avoid any chances for double-signing.
+		p.Logger.Println("[INFO] pairmint: Shutting down validator...")
+		os.Exit(0)
+
+		// TODO: Code snippet for validator demotion once double-signing issue is resolved.
+		// p.Config.Init.Rank = p.Config.Init.SetSize
+		// p.Logger.Printf("[DEBUG] pairmint: Demoted validator (rank #1 -> #%v)\n", p.Config.Init.Rank)
 	}
+
+	p.Config.Init.Rank--
+	p.Logger.Printf("[DEBUG] pairmint: Promoted validator (rank #%v -> #%v)\n", p.Config.Init.Rank+1, p.Config.Init.Rank)
 }
 
 // GetPubKey returns the public key of the validator.
