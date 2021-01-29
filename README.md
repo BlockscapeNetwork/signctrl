@@ -1,11 +1,11 @@
 # Pairmint
 
-Pairmint is a high availability solution for Tendermint-based blockchain validators which uses the blockchain itself as a perfectly synchronous communication line between redundant validators running in parallel for double-signing protection.
+Pairmint is a high availability solution for Tendermint-based blockchain validators. It uses the blockchain itself as a perfectly synchronous communication line between redundant validators running in parallel for double-signing protection.
 
 ## Requirements
 
 * Go `v1.15+`
-* Validator software compatible with Tendermint `v0.34+`
+* Validator software compatible with Tendermint `v0.34+` in terms of protobuf support
 
 ## Build & Install
 
@@ -20,14 +20,6 @@ or
 ```shell
 $ go get github.com/BlockscapeLab/pairmint && cd $GOPATH/src/github.com/BlockscapeLab/pairmint
 ```
-
-Once you have cloned the repository, use
-
-```shell
-$ make go-mod-cache
-```
-
-to download all the dependencies.
 
 Pairmint can be built into the `./build` directory using
 
@@ -62,14 +54,14 @@ If you do already have a keypair, you can either copy them into the `$PAIRMINT_C
 
 Init contains configuration parameters needed on initialization.
 
-| Parameter             | Type   | Description                                                                                                                                                |
-| :-------------------- | :----- | :--------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `log_level`           | string | Minimum log level for pairmint's log messages.                                                                                                             |
-| `set_size`            | int    | Fixed size of the pairminted validator set.                                                                                                                |
-| `threshold`           | int    | Threshold value of missed blocks in a row for rank updates.                                                                                                |
-| `rank`                | int    | Rank on node startup.                                                                                                                                      |
-| `validator_laddr`     | string | TCP socket address the validator listens on for an external PrivValidator process. Pairmint dials this address to establish a connection to the validator. |
-| `validator_laddr_rpc` | string | TCP socket address the validator's RPC server listens on.                                                                                                  |
+| Parameter             | Type   | Description                                                                                                                                                                             |
+| :-------------------- | :----- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `log_level`           | string | Minimum log level for pairmint's log messages. Must either DEBUG, INFO, WARN or ERR..                                                                                                   |
+| `set_size`            | int    | Fixed size of the pairminted validator set. Must be 2 or higher.                                                                                                                        |
+| `threshold`           | int    | Threshold value of missed blocks in a row for rank updates. Must be 1 or higher.                                                                                                        |
+| `rank`                | int    | Rank on node startup. Must be 1 or higher.                                                                                                                                              |
+| `validator_laddr`     | string | TCP socket address the validator listens on for an external PrivValidator process. Pairmint dials this address to establish a connection to the validator. Must be in host:port format. |
+| `validator_laddr_rpc` | string | TCP socket address the validator's RPC server listens on. Must be in host:port format.                                                                                                  |
 
 ### FilePV
 
