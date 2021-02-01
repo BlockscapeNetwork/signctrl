@@ -69,15 +69,14 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 	}
 
 	// Only check the commitsigs once for each block height.
-	// Since p.CurrentHeight is initialized to 1, the check for the genesis block is
-	// skipped as there is no previous commit to be fetched.
-	if req.Vote.Height > p.CurrentHeight {
-		// Retrieve commit height-2 from the validator via the /commit endpoint.
-		// Taking the commit from height-2 makes sure the endpoint has the commit
-		// data. Taking height-1 resulted in a race condition in Tendermint where
-		// sometimes all commit data was there and sometimes some was missing.
+	// The commitsigs are checked based on the commit from height-2. This makes
+	// sure that the /commit endpoint actually has all the commit data at its
+	// disposal. Taking height-1 resulted in a race condition in Tendermint where
+	// sometimes all commit data was there and sometimes some was missing.
+	// Al of this means that commit checks are done from block height 3 upwards.
+	if req.Vote.Height > p.CurrentHeight && req.Vote.Height > 2 {
 		commitsigs, err := connection.GetCommitSigs(p.Config.Init.ValidatorListenAddrRPC, req.Vote.Height-2)
-		if err != nil && req.Vote.Height > 2 {
+		if err != nil {
 			p.Logger.Printf("[ERR] pairmint: couldn't get commitsigs: %v\n", err)
 			resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
 
