@@ -80,7 +80,7 @@ func (p *PairmintFilePV) Update() {
 		// The signer is shut down if he exceeds the threshold of too many missed blocks
 		// in a row so as to avoid any chances for double-signing.
 		p.Logger.Printf("[INFO] pairmint: Missed %v/%v blocks in a row. Shutting down...\n", p.Config.Init.Threshold, p.Config.Init.Threshold)
-		os.Exit(0)
+		os.Exit(int(syscall.SIGTERM))
 
 		// TODO: Code snippet for validator demotion once double-signing issue is resolved.
 		// p.Config.Init.Rank = p.Config.Init.SetSize

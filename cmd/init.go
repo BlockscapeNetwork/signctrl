@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"syscall"
 
 	builder "github.com/BlockscapeNetwork/pairmint/cmd/init"
 	"github.com/BlockscapeNetwork/pairmint/config"
@@ -32,13 +33,13 @@ var (
 			// Initialize the config directory.
 			if err := config.InitDir(configDir); err != nil {
 				fmt.Printf("couldn't initialize configuration directory: %v\n", err)
-				os.Exit(1)
+				os.Exit(int(syscall.SIGHUP))
 			}
 
 			// Build the configuration template.
 			if err := builder.BuildConfigTemplate(configDir); err != nil {
 				fmt.Printf("couldn't build config template: %v\n", err)
-				os.Exit(1)
+				os.Exit(int(syscall.SIGHUP))
 			}
 
 			// Generate the pm-identity.key seed if there isn't already one.
@@ -46,7 +47,7 @@ var (
 			if _, err := os.Stat(seedPath); os.IsNotExist(err) {
 				if err := utils.GenSeed(seedPath); err != nil {
 					fmt.Printf("couldn't generate seed: %v\n", err)
-					os.Exit(1)
+					os.Exit(int(syscall.SIGHUP))
 				}
 			} else {
 				fmt.Printf("Found existing pm-identity.key seed at %v\n", configDir)
@@ -63,12 +64,12 @@ var (
 					input, err := reader.ReadString('\n')
 					if err != nil {
 						fmt.Printf("error while reading input: %v\n", err)
-						os.Exit(1)
+						os.Exit(int(syscall.SIGHUP))
 					}
 
 					if input == "\n" || strings.ToLower(input) == "n\n" {
 						fmt.Println("Creation of key and state file canceled.")
-						os.Exit(1)
+						os.Exit(int(syscall.SIGHUP))
 					} else if strings.ToLower(input) == "y\n" {
 						tmprivval.LoadOrGenFilePV(keyPath, statePath)
 						fmt.Printf("Created new priv_validator_key.json and priv_validator_state.json at %v\n", configDir)

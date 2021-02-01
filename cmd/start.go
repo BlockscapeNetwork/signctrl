@@ -3,6 +3,7 @@ package cmd
 import (
 	"log"
 	"os"
+	"syscall"
 
 	"github.com/hashicorp/logutils"
 	"github.com/tendermint/tendermint/libs/protoio"
@@ -32,7 +33,7 @@ var (
 			pv.Logger = log.New(os.Stderr, "", 0)
 			if err := pv.Config.Load(); err != nil {
 				pv.Logger.Printf("[ERR] pairmint: error while loading configuration: %v\n", err)
-				os.Exit(1)
+				os.Exit(int(syscall.SIGHUP))
 			}
 			pv.FilePV = tmprivval.LoadOrGenFilePV(pv.Config.FilePV.KeyFilePath, pv.Config.FilePV.StateFilePath)
 
@@ -48,7 +49,7 @@ var (
 			priv, _, err := utils.LoadKeypair(configDir + "/pm-identity.key")
 			if err != nil {
 				pv.Logger.Printf("[ERR] pairmint: error while loading keypair: %v\n", err)
-				os.Exit(1)
+				os.Exit(int(syscall.SIGHUP))
 			}
 
 			// Establish a secret connection to the Tendermint validator.
@@ -56,7 +57,7 @@ var (
 			rwc.SecretConn, err = connection.RetrySecretDial("tcp", pv.Config.Init.ValidatorListenAddr, priv, pv.Logger)
 			if err != nil {
 				pv.Logger.Printf("[ERR] pairmint: error while establishing secret connection: %v\n", err)
-				os.Exit(1)
+				os.Exit(int(syscall.SIGHUP))
 			}
 			defer rwc.SecretConn.Close()
 
@@ -66,7 +67,7 @@ var (
 			pubkey, err := pv.GetPubKey()
 			if err != nil {
 				pv.Logger.Printf("[ERR] pairmint: couldn't get privval pubkey: %v\n", err)
-				os.Exit(1)
+				os.Exit(int(syscall.SIGHUP))
 			}
 
 			// Run the routine for reading and writing messages.
