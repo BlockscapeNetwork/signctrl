@@ -23,7 +23,7 @@ type CommitRPCResponse struct {
 // GetCommitSigs gets the commit signatures of the specified height.
 func GetCommitSigs(rpcladdr string, height int64) (*[]types.CommitSig, error) {
 	if height < 1 {
-		return nil, fmt.Errorf("can't get commitsigs for block height %v", height)
+		return nil, fmt.Errorf("block height %v does not exist", height)
 	}
 
 	client := http.Client{Timeout: 5 * time.Second} // TODO: Timeouts need to be set according to the block time of the chain.
