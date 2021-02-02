@@ -74,17 +74,11 @@ func (p *PairmintFilePV) Reset() {
 
 // Update implements the Pairminter interface.
 func (p *PairmintFilePV) Update() {
-	if p.Config.Init.Rank == 1 {
-		p.Logger.Printf("[INFO] pairmint: Missed %v/%v blocks in a row. Shutting pairmint down...\n", p.Config.Init.Threshold, p.Config.Init.Threshold)
-
-		// The signer needs to be shut down if he exceeds the threshold of too many
-		// missed blocks in a row so as to avoid any chances for double-signing.
-		os.Exit(int(syscall.SIGTERM))
-
-		// TODO: Code snippet for validator demotion once double-signing issue is resolved.
-		// p.Config.Init.Rank = p.Config.Init.SetSize
-		// p.Logger.Printf("[DEBUG] pairmint: Demoted validator (rank #1 -> #%v)\n", p.Config.Init.Rank)
-	}
+	// TODO: Uncomment this if statement when signer rank demotion gets implemented
+	// if p.Config.Init.Rank == 1 {
+	// 	p.Config.Init.Rank = p.Config.Init.SetSize
+	// 	p.Logger.Printf("[DEBUG] pairmint: Demoted validator (rank #1 -> #%v)\n", p.Config.Init.Rank)
+	// }
 
 	p.Config.Init.Rank--
 	p.Logger.Printf("[DEBUG] pairmint: Promoted validator (rank #%v -> #%v)\n", p.Config.Init.Rank+1, p.Config.Init.Rank)

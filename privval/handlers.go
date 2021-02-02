@@ -3,7 +3,9 @@ package privval
 import (
 	"encoding/hex"
 	"fmt"
+	"os"
 	"strings"
+	"syscall"
 
 	"github.com/BlockscapeNetwork/pairmint/connection"
 	"github.com/tendermint/tendermint/crypto"
@@ -103,6 +105,16 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 			// None of the commitsigs had an entry with our validator's address and
 			// a signature in them which means that this block was missed.
 			if err := p.Missed(); err != nil {
+				// TODO: Remove this if statement when signer rank demotion gets implemented.
+				if p.Config.Init.Rank == 1 {
+					p.Logger.Printf("[INFO] pairmint: Missed %v/%v blocks in a row. Shutting pairmint down...\n", p.Config.Init.Threshold, p.Config.Init.Threshold)
+
+					// Close the secret connection to Tendermint and shut the signer down
+					// before it gets a chance to sign the vote.
+					rwc.SecretConn.Close()
+					os.Exit(int(syscall.SIGTERM))
+				}
+
 				p.Logger.Println("[ERR] pairmint: too many missed blocks in a row, updating ranks...")
 
 				// If an error is thrown it means that the threshold of too many missed
@@ -192,6 +204,16 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 			// None of the commitsigs had an entry with our validator's address and
 			// a signature in them which means that this block was missed.
 			if err := p.Missed(); err != nil {
+				// TODO: Remove this if statement when signer rank demotion gets implemented.
+				if p.Config.Init.Rank == 1 {
+					p.Logger.Printf("[INFO] pairmint: Missed %v/%v blocks in a row. Shutting pairmint down...\n", p.Config.Init.Threshold, p.Config.Init.Threshold)
+
+					// Close the secret connection to Tendermint and shut the signer down
+					// before it gets a chance to sign the proposal.
+					rwc.SecretConn.Close()
+					os.Exit(int(syscall.SIGTERM))
+				}
+
 				p.Logger.Println("[ERR] pairmint: too many missed blocks in a row, updating ranks...")
 
 				// If an error is thrown it means that the threshold of too many missed
