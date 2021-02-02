@@ -15,7 +15,7 @@ import (
 
 	"github.com/BlockscapeNetwork/pairmint/config"
 	"github.com/BlockscapeNetwork/pairmint/connection"
-	"github.com/tendermint/tendermint/crypto"
+	tmcrypto "github.com/tendermint/tendermint/crypto"
 )
 
 var _ Pairminter = new(PairmintFilePV)
@@ -89,7 +89,7 @@ func (p *PairmintFilePV) Update() {
 
 // GetPubKey returns the public key of the validator.
 // Implements the PrivValidator interface.
-func (p *PairmintFilePV) GetPubKey() (crypto.PubKey, error) {
+func (p *PairmintFilePV) GetPubKey() (tmcrypto.PubKey, error) {
 	return p.FilePV.GetPubKey()
 }
 
@@ -106,7 +106,7 @@ func (p *PairmintFilePV) SignProposal(chainID string, proposal *tmproto.Proposal
 }
 
 // Run runs the routine for the file-based signer.
-func (p *PairmintFilePV) Run(rwc *connection.ReadWriteConn, pubkey crypto.PubKey) {
+func (p *PairmintFilePV) Run(rwc *connection.ReadWriteConn, pubkey tmcrypto.PubKey) {
 	p.Logger.Println("[INFO] pairmint: Running pairmint daemon...")
 
 	sigCh := make(chan os.Signal, 1)
