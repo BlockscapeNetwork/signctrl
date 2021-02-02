@@ -121,7 +121,6 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 				// blocks in a row has been exceeded. Now, a rank update is done in order
 				// to replace the signer.
 				p.Update()
-				p.Reset()
 			}
 		}
 	}
@@ -220,7 +219,6 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 				// blocks in a row has been exceeded. Now, a rank update is done in order
 				// to replace the signer.
 				p.Update()
-				p.Reset()
 			}
 		}
 	}
