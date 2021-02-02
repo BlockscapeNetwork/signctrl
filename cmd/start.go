@@ -22,7 +22,7 @@ var (
 	// The start command starts the pairmint application.
 	startCmd = &cobra.Command{
 		Use:   "start",
-		Short: "Start the pairmint application",
+		Short: "Start the pairmint daemon",
 		Long:  "",
 		Run: func(cmd *cobra.Command, args []string) {
 			// Initialize configuration directory.
