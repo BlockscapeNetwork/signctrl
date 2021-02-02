@@ -97,7 +97,7 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 
 		// Check if the last commit contains our validator's signature.
 		if hasSignedCommit(pubkey.Address(), commitsigs) {
-			p.Logger.Printf("[DEBUG] pairmint: Found signature from %v in commitsigs from height %v\n", pubkey.Address().String(), req.Vote.Height-1)
+			p.Logger.Printf("[DEBUG] pairmint: Found commitsig from %v for block height %v\n", pubkey.Address().String(), req.Vote.Height-1)
 			p.Reset()
 		} else {
 			p.Logger.Printf("[ERR] pairmint: no commitsig from %v for block height %v\n", pubkey.Address().String(), req.Vote.Height-1)
@@ -115,7 +115,7 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 					os.Exit(int(syscall.SIGTERM))
 				}
 
-				p.Logger.Println("[ERR] pairmint: too many missed blocks in a row, updating ranks...")
+				p.Logger.Printf("[ERR] pairmint: %v (%v/%v)\n", err, p.MissedInARow, p.Config.Init.Threshold)
 
 				// If an error is thrown it means that the threshold of too many missed
 				// blocks in a row has been exceeded. Now, a rank update is done in order
@@ -196,7 +196,7 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 
 		// Check if the last commit contains our validator's signature.
 		if hasSignedCommit(pubkey.Address(), commitsigs) {
-			p.Logger.Printf("[DEBUG] pairmint: Found signature from %v in commitsigs from height %v\n", pubkey.Address().String(), req.Proposal.Height-1)
+			p.Logger.Printf("[DEBUG] pairmint: Found commitsig from %v for block height %v\n", pubkey.Address().String(), req.Proposal.Height-1)
 			p.Reset()
 		} else {
 			p.Logger.Printf("[ERR] pairmint: no commitsig from %v for block height %v\n", pubkey.Address().String(), req.Proposal.Height-1)
@@ -214,7 +214,7 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 					os.Exit(int(syscall.SIGTERM))
 				}
 
-				p.Logger.Println("[ERR] pairmint: too many missed blocks in a row, updating ranks...")
+				p.Logger.Printf("[ERR] pairmint: %v (%v/%v)\n", err, p.MissedInARow, p.Config.Init.Threshold)
 
 				// If an error is thrown it means that the threshold of too many missed
 				// blocks in a row has been exceeded. Now, a rank update is done in order
