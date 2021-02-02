@@ -56,7 +56,7 @@ func NewPairmintFilePV() *PairmintFilePV {
 // Missed implements the Pairminter interface.
 func (p *PairmintFilePV) Missed() error {
 	p.MissedInARow++
-	p.Logger.Printf("[DEBUG] pairmint: Missed a block (%v/%v)\n", p.MissedInARow, p.Config.Init.Threshold)
+	p.Logger.Printf("[INFO] pairmint: Missed a block (%v/%v)\n", p.MissedInARow, p.Config.Init.Threshold)
 
 	if p.MissedInARow == p.Config.Init.Threshold {
 		p.Reset()
@@ -77,11 +77,11 @@ func (p *PairmintFilePV) Update() {
 	// TODO: Uncomment this if statement when signer rank demotion gets implemented
 	// if p.Config.Init.Rank == 1 {
 	// 	p.Config.Init.Rank = p.Config.Init.SetSize
-	// 	p.Logger.Printf("[DEBUG] pairmint: Demoted validator (rank #1 -> #%v)\n", p.Config.Init.Rank)
+	// 	p.Logger.Printf("[INFO] pairmint: Demoted validator (rank #1 -> #%v)\n", p.Config.Init.Rank)
 	// }
 
 	p.Config.Init.Rank--
-	p.Logger.Printf("[DEBUG] pairmint: Promoted validator (rank #%v -> #%v)\n", p.Config.Init.Rank+1, p.Config.Init.Rank)
+	p.Logger.Printf("[INFO] pairmint: Promoted validator (rank #%v -> #%v)\n", p.Config.Init.Rank+1, p.Config.Init.Rank)
 }
 
 // GetPubKey returns the public key of the validator.

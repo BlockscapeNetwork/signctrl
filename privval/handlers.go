@@ -107,7 +107,7 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 			if err := p.Missed(); err != nil {
 				// TODO: Remove this if statement when signer rank demotion gets implemented.
 				if p.Config.Init.Rank == 1 {
-					p.Logger.Printf("[INFO] pairmint: Missed %v/%v blocks in a row. Shutting pairmint down...\n", p.Config.Init.Threshold, p.Config.Init.Threshold)
+					p.Logger.Printf("[ERR] pairmint: missed %v/%v blocks in a row. Shutting pairmint down...\n", p.Config.Init.Threshold, p.Config.Init.Threshold)
 
 					// Close the secret connection to Tendermint and shut the signer down
 					// before it gets a chance to sign the vote.
@@ -206,7 +206,7 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 			if err := p.Missed(); err != nil {
 				// TODO: Remove this if statement when signer rank demotion gets implemented.
 				if p.Config.Init.Rank == 1 {
-					p.Logger.Printf("[INFO] pairmint: Missed %v/%v blocks in a row. Shutting pairmint down...\n", p.Config.Init.Threshold, p.Config.Init.Threshold)
+					p.Logger.Printf("[ERR] pairmint: missed %v/%v blocks in a row. Shutting pairmint down...\n", p.Config.Init.Threshold, p.Config.Init.Threshold)
 
 					// Close the secret connection to Tendermint and shut the signer down
 					// before it gets a chance to sign the proposal.

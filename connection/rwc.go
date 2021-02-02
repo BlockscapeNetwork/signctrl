@@ -41,7 +41,7 @@ func RetrySecretDial(protocol, address string, privkey ed25519.PrivateKey, logge
 
 	for {
 		if conn, err = net.Dial(protocol, address); err == nil {
-			logger.Println("[DEBUG] pairmint: Successfully dialed validator. ✓")
+			logger.Println("[INFO] pairmint: Successfully dialed validator. ✓")
 			break
 		}
 		<-time.After(500 * time.Millisecond)
