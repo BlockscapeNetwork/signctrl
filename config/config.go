@@ -62,7 +62,7 @@ type Config struct {
 }
 
 // InitDir creates the pairmint configuration directory according
-// to the `PAIRMINT_CONFIG_DIR` encironment variable.
+// to the PAIRMINT_CONFIG_DIR environment variable.
 func InitDir(configDir string) error {
 	if _, err := os.Stat(configDir); os.IsNotExist(err) {
 		if err := os.MkdirAll(configDir, 0744); err != nil {
