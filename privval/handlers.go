@@ -8,9 +8,11 @@ import (
 	"syscall"
 
 	"github.com/BlockscapeNetwork/pairmint/connection"
-	"github.com/tendermint/tendermint/crypto"
+	tmcrypto "github.com/tendermint/tendermint/crypto"
+	cryptoenc "github.com/tendermint/tendermint/crypto/encoding"
 	cryptoproto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 	privvalproto "github.com/tendermint/tendermint/proto/tendermint/privval"
+	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
 // handlePingRequest handles incoming ping requests.
@@ -24,30 +26,25 @@ func (p *PairmintFilePV) handlePingRequest(rwc *connection.ReadWriteConn) error 
 }
 
 // handlePubKeyRequest handles incoming public key requests.
-func (p *PairmintFilePV) handlePubKeyRequest(req *privvalproto.PubKeyRequest, pubkey crypto.PubKey, rwc *connection.ReadWriteConn) error {
-	resp := &privvalproto.PubKeyResponse{}
-
+func (p *PairmintFilePV) handlePubKeyRequest(req *privvalproto.PubKeyRequest, pubkey tmcrypto.PubKey, rwc *connection.ReadWriteConn) error {
 	// Check if requests originate from the chainid specified in the pairmint.toml.
 	if req.ChainId != p.Config.FilePV.ChainID {
-		resp.Error = &privvalproto.RemoteSignerError{Description: ErrWrongChainID.Error()}
 		p.Logger.Printf("[ERR] pairmint: pubkey request is for the wrong chain ID (%v is not %v)", req.ChainId, p.Config.FilePV.ChainID)
-		if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
+		rse := &privvalproto.RemoteSignerError{Description: ErrWrongChainID.Error()}
+		if _, err := rwc.Writer.WriteMsg(wrapMsg(&privvalproto.PubKeyResponse{PubKey: cryptoproto.PublicKey{}, Error: rse})); err != nil {
 			return err
 		}
 
 		return ErrWrongChainID
 	}
 
-	resp = &privvalproto.PubKeyResponse{
-		PubKey: cryptoproto.PublicKey{
-			Sum: &cryptoproto.PublicKey_Ed25519{
-				Ed25519: pubkey.Bytes(),
-			},
-		},
+	encPub, err := cryptoenc.PubKeyToProto(pubkey)
+	if err != nil {
+		return err
 	}
 
 	p.Logger.Printf("[DEBUG] pairmint: Write PubKeyResponse: %v\n", pubkey.Address())
-	if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
+	if _, err := rwc.Writer.WriteMsg(wrapMsg(&privvalproto.PubKeyResponse{PubKey: encPub, Error: nil})); err != nil {
 		return err
 	}
 
@@ -55,15 +52,12 @@ func (p *PairmintFilePV) handlePubKeyRequest(req *privvalproto.PubKeyRequest, pu
 }
 
 // handleSignVoteRequest handles incoming signing requests for prevotes and precommits.
-func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest, pubkey crypto.PubKey, rwc *connection.ReadWriteConn) error {
-	// Prepare empty vote response.
-	resp := &privvalproto.SignedVoteResponse{}
-
+func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest, pubkey tmcrypto.PubKey, rwc *connection.ReadWriteConn) error {
 	// Check if requests originate from the chainid specified in the pairmint.toml.
 	if req.ChainId != p.Config.FilePV.ChainID {
-		resp.Error = &privvalproto.RemoteSignerError{Description: ErrWrongChainID.Error()}
 		p.Logger.Printf("[ERR] pairmint: sign vote request is for the wrong chain ID (%v is not %v)", req.ChainId, p.Config.FilePV.ChainID)
-		if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
+		rse := &privvalproto.RemoteSignerError{Description: ErrWrongChainID.Error()}
+		if _, err := rwc.Writer.WriteMsg(wrapMsg(&privvalproto.SignedVoteResponse{Vote: tmtypes.Vote{}, Error: rse})); err != nil {
 			return err
 		}
 
@@ -80,12 +74,12 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 		commitsigs, err := connection.GetCommitSigs(p.Config.Init.ValidatorListenAddrRPC, req.Vote.Height-2)
 		if err != nil {
 			p.Logger.Printf("[ERR] pairmint: couldn't get commitsigs: %v\n", err)
-			resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
+			rse := &privvalproto.RemoteSignerError{Description: err.Error()}
 
 			// Send error to Tendermint that the commitsigs could not be retrieved.
 			// In this case, pairmint can't know whether it is safe to sign or not,
 			// so it won't sign the message.
-			if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
+			if _, err := rwc.Writer.WriteMsg(wrapMsg(&privvalproto.SignedVoteResponse{Vote: tmtypes.Vote{}, Error: rse})); err != nil {
 				return err
 			}
 
@@ -95,11 +89,7 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 		p.Logger.Printf("[DEBUG] pairmint: GET /commit?height=%v: %v\n", req.Vote.Height-1, commitsigs)
 		p.CurrentHeight = req.Vote.Height
 
-		// Check if the last commit contains our validator's signature.
-		if hasSignedCommit(pubkey.Address(), commitsigs) {
-			p.Logger.Printf("[DEBUG] pairmint: Found commitsig from %v for block height %v\n", pubkey.Address().String(), req.Vote.Height-1)
-			p.Reset()
-		} else {
+		if !hasSignedCommit(pubkey.Address(), commitsigs) {
 			p.Logger.Printf("[ERR] pairmint: no commitsig from %v for block height %v\n", pubkey.Address().String(), req.Vote.Height-1)
 
 			// None of the commitsigs had an entry with our validator's address and
@@ -121,30 +111,39 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 				// blocks in a row has been exceeded. Now, a rank update is done in order
 				// to replace the signer.
 				p.Update()
+			} else {
+				p.Logger.Printf("[DEBUG] pairmint: Found commitsig from %v for block height %v\n", pubkey.Address().String(), req.Vote.Height-1)
+				p.Reset()
 			}
 		}
 	}
 
 	// Check if the validator has permission to sign the vote.
-	if p.Config.Init.Rank == 1 {
-		p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #%v, signing %v...\n", p.Config.Init.Rank, req.Vote.Type)
-
-		// Sign the vote.
-		if err := p.SignVote(p.Config.FilePV.ChainID, req.Vote); err != nil {
-			p.Logger.Printf("[ERR] pairmint: error while signing %v for height %v: %v\n", req.Vote.Type, req.Vote.Height, err)
-			resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
-		} else {
-			p.Logger.Printf("[DEBUG] pairmint: Signed %v for block height %v (signature: %v)\n", req.Vote.Type, req.Vote.Height, strings.ToUpper(hex.EncodeToString(req.Vote.Signature)))
-			resp.Vote = *req.Vote
-		}
-	} else {
+	if p.Config.Init.Rank > 1 {
 		p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #%v, no permission to sign %v for height %v\n", p.Config.Init.Rank, req.Vote.Type, req.Vote.Height)
-		resp.Error = &privvalproto.RemoteSignerError{Description: ErrNoSigner.Error()}
+		rse := &privvalproto.RemoteSignerError{Description: ErrNoSigner.Error()}
+		if _, err := rwc.Writer.WriteMsg(wrapMsg(&privvalproto.SignedVoteResponse{Vote: tmtypes.Vote{}, Error: rse})); err != nil {
+			return err
+		}
+
+		return ErrNoSigner
 	}
 
-	// Send response to Tendermint.
-	p.Logger.Printf("[DEBUG] pairmint: Write SignedVoteResponse: %v\n", resp)
-	if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
+	p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #%v, signing %v...\n", p.Config.Init.Rank, req.Vote.Type)
+
+	// Sign the vote.
+	if err := p.SignVote(p.Config.FilePV.ChainID, req.Vote); err != nil {
+		p.Logger.Printf("[ERR] pairmint: error while signing %v for height %v: %v\n", req.Vote.Type, req.Vote.Height, err)
+		rse := &privvalproto.RemoteSignerError{Description: err.Error()}
+		if _, err := rwc.Writer.WriteMsg(wrapMsg(&privvalproto.SignedVoteResponse{Vote: tmtypes.Vote{}, Error: rse})); err != nil {
+			return err
+		}
+
+		return err
+	}
+
+	p.Logger.Printf("[DEBUG] pairmint: Signed %v for block height %v (signature: %v)\n", req.Vote.Type, req.Vote.Height, strings.ToUpper(hex.EncodeToString(req.Vote.Signature)))
+	if _, err := rwc.Writer.WriteMsg(wrapMsg(&privvalproto.SignedVoteResponse{Vote: *req.Vote, Error: nil})); err != nil {
 		return err
 	}
 
@@ -152,15 +151,12 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 }
 
 // handleSignProposalRequest handles incoming proposal signing requests.
-func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposalRequest, pubkey crypto.PubKey, rwc *connection.ReadWriteConn) error {
-	// Prepare empty proposal response.
-	resp := &privvalproto.SignedProposalResponse{}
-
+func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposalRequest, pubkey tmcrypto.PubKey, rwc *connection.ReadWriteConn) error {
 	// Check if requests originate from the chainid specified in the pairmint.toml.
 	if req.ChainId != p.Config.FilePV.ChainID {
-		resp.Error = &privvalproto.RemoteSignerError{Description: ErrWrongChainID.Error()}
 		p.Logger.Printf("[ERR] pairmint: sign proposal request is for the wrong chain ID (%v is not %v)", req.ChainId, p.Config.FilePV.ChainID)
-		if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
+		rse := &privvalproto.RemoteSignerError{Description: ErrWrongChainID.Error()}
+		if _, err := rwc.Writer.WriteMsg(wrapMsg(&privvalproto.SignedProposalResponse{Proposal: tmtypes.Proposal{}, Error: rse})); err != nil {
 			return err
 		}
 
@@ -168,22 +164,21 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 	}
 
 	// Only check the commitsigs once for each block height.
-	// Since p.CurrentHeight is initialized to 1, the check for the genesis block is
-	// skipped as there is no previous commit to be fetched.
-	if req.Proposal.Height > p.CurrentHeight {
-		// Retrieve commit of height-2 from the /commit endpoint of the validator.
-		// Taking the second to last commit makes sure the endpoint has the commit
-		// data so as to avoid a race condition in Tendermint when only going for
-		// the last commit at height-1.
+	// The commitsigs are checked based on the commit from height-2. This makes
+	// sure that the /commit endpoint actually has all the commit data at its
+	// disposal. Taking height-1 resulted in a race condition in Tendermint where
+	// sometimes all commit data was there and sometimes some was missing.
+	// Al of this means that commit checks are done from block height 3 upwards.
+	if req.Proposal.Height > p.CurrentHeight && req.Proposal.Height > 2 {
 		commitsigs, err := connection.GetCommitSigs(p.Config.Init.ValidatorListenAddrRPC, req.Proposal.Height-2)
 		if err != nil {
 			p.Logger.Printf("[ERR] pairmint: couldn't get commitsigs: %v\n", err)
-			resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
+			rse := &privvalproto.RemoteSignerError{Description: err.Error()}
 
 			// Send error to Tendermint that the commitsigs could not be retrieved.
 			// In this case, pairmint can't know whether it is safe to sign or not,
 			// so it won't sign the message.
-			if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
+			if _, err := rwc.Writer.WriteMsg(wrapMsg(&privvalproto.SignedProposalResponse{Proposal: tmtypes.Proposal{}, Error: rse})); err != nil {
 				return err
 			}
 
@@ -194,10 +189,7 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 		p.CurrentHeight = req.Proposal.Height
 
 		// Check if the last commit contains our validator's signature.
-		if hasSignedCommit(pubkey.Address(), commitsigs) {
-			p.Logger.Printf("[DEBUG] pairmint: Found commitsig from %v for block height %v\n", pubkey.Address().String(), req.Proposal.Height-1)
-			p.Reset()
-		} else {
+		if !hasSignedCommit(pubkey.Address(), commitsigs) {
 			p.Logger.Printf("[ERR] pairmint: no commitsig from %v for block height %v\n", pubkey.Address().String(), req.Proposal.Height-1)
 
 			// None of the commitsigs had an entry with our validator's address and
@@ -220,29 +212,38 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 				// to replace the signer.
 				p.Update()
 			}
-		}
-	}
-
-	// After the commitsigs have been checked, check if the validator has permission to sign the proposal.
-	if p.Config.Init.Rank == 1 {
-		p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #%v, signing %v...", p.Config.Init.Rank, req.Proposal.Type)
-
-		// Sign the vote.
-		if err := p.SignProposal(p.Config.FilePV.ChainID, req.Proposal); err != nil {
-			p.Logger.Printf("[ERR] pairmint: error while signing %v for height %v: %v\n", err, req.Proposal.Type, req.Proposal.Height)
-			resp.Error = &privvalproto.RemoteSignerError{Description: err.Error()}
 		} else {
-			p.Logger.Printf("[DEBUG] pairmint: Signed %v for block height %v (signature: %v)\n", req.Proposal.Type, req.Proposal.Height, strings.ToUpper(hex.EncodeToString(req.Proposal.Signature)))
-			resp.Proposal = *req.Proposal
+			p.Logger.Printf("[DEBUG] pairmint: Found commitsig from %v for block height %v\n", pubkey.Address().String(), req.Proposal.Height-1)
+			p.Reset()
 		}
-	} else {
-		p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #%v, no permission to sign %v for height %v\n", p.Config.Init.Rank, req.Proposal.Type, req.Proposal.Height)
-		resp.Error = &privvalproto.RemoteSignerError{Description: ErrNoSigner.Error()}
 	}
 
-	// Send response to Tendermint.
-	p.Logger.Printf("[DEBUG] pairmint: Write SignedProposalResponse: %v\n", resp)
-	if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
+	// Check if the validator has permission to sign the proposal.
+	if p.Config.Init.Rank > 1 {
+		p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #%v, no permission to sign %v for height %v\n", p.Config.Init.Rank, req.Proposal.Type, req.Proposal.Height)
+		rse := &privvalproto.RemoteSignerError{Description: ErrNoSigner.Error()}
+		if _, err := rwc.Writer.WriteMsg(wrapMsg(&privvalproto.SignedProposalResponse{Proposal: tmtypes.Proposal{}, Error: rse})); err != nil {
+			return err
+		}
+
+		return ErrNoSigner
+	}
+
+	p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #%v, signing %v...", p.Config.Init.Rank, req.Proposal.Type)
+
+	// Sign the proposal.
+	if err := p.SignProposal(p.Config.FilePV.ChainID, req.Proposal); err != nil {
+		p.Logger.Printf("[ERR] pairmint: error while signing %v for height %v: %v\n", err, req.Proposal.Type, req.Proposal.Height)
+		rse := &privvalproto.RemoteSignerError{Description: err.Error()}
+		if _, err := rwc.Writer.WriteMsg(wrapMsg(&privvalproto.SignedProposalResponse{Proposal: tmtypes.Proposal{}, Error: rse})); err != nil {
+			return err
+		}
+
+		return err
+	}
+
+	p.Logger.Printf("[DEBUG] pairmint: Signed %v for block height %v (signature: %v)\n", req.Proposal.Type, req.Proposal.Height, strings.ToUpper(hex.EncodeToString(req.Proposal.Signature)))
+	if _, err := rwc.Writer.WriteMsg(wrapMsg(&privvalproto.SignedProposalResponse{Proposal: *req.Proposal, Error: nil})); err != nil {
 		return err
 	}
 
@@ -250,7 +251,7 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 }
 
 // HandleMessage handles all incoming messages from Tendermint.
-func (p *PairmintFilePV) HandleMessage(msg *privvalproto.Message, pubkey crypto.PubKey, rwc *connection.ReadWriteConn) error {
+func (p *PairmintFilePV) HandleMessage(msg *privvalproto.Message, pubkey tmcrypto.PubKey, rwc *connection.ReadWriteConn) error {
 	switch msg.GetSum().(type) {
 	case *privvalproto.Message_PingRequest:
 		p.Logger.Printf("[DEBUG] pairmint: PingRequest")
