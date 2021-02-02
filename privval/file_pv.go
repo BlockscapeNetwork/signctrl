@@ -69,8 +69,8 @@ func (p *PairmintFilePV) Missed() error {
 // Reset implements the Pairminter interface.
 func (p *PairmintFilePV) Reset() {
 	if p.MissedInARow != 0 {
-		p.Logger.Printf("[INFO] pairmint: Reset counter for missed blocks in a row (%v/%v)\n", p.MissedInARow, p.Config.Init.Threshold)
 		p.MissedInARow = 0
+		p.Logger.Printf("[INFO] pairmint: Reset counter for missed blocks in a row (%v/%v)\n", p.MissedInARow, p.Config.Init.Threshold)
 	}
 }
 
