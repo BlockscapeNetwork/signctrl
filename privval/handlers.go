@@ -255,6 +255,7 @@ func (p *PairmintFilePV) HandleMessage(msg *privvalproto.Message, pubkey crypto.
 	case *privvalproto.Message_PingRequest:
 		p.Logger.Printf("[DEBUG] pairmint: PingRequest")
 
+		// TODO: Need to repeat in order to make sure Tendermint gets a response?
 		if err := p.handlePingRequest(rwc); err != nil {
 			return err
 		}
@@ -263,6 +264,7 @@ func (p *PairmintFilePV) HandleMessage(msg *privvalproto.Message, pubkey crypto.
 		req := msg.GetPubKeyRequest()
 		p.Logger.Printf("[DEBUG] pairmint: PubKeyRequest: { \"chain_id\": %v }\n", req.ChainId)
 
+		// TODO: Need to repeat in order to make sure Tendermint gets a response?
 		if err := p.handlePubKeyRequest(req, pubkey, rwc); err != nil {
 			return err
 		}
