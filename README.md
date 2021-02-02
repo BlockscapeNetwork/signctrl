@@ -1,15 +1,84 @@
 # Pairmint
 
-Pairmint is a high availability solution for Tendermint-based blockchains. It is designed to get rid of all communication overhead between a set of redundant validator nodes running in parallel by using the blockchain itself as a perfectly synchronous communication line for double-signing protection.
+Pairmint is a high availability solution for Tendermint-based blockchain validators. It uses the blockchain itself as a perfectly synchronous communication line between redundant validators running in parallel for double-signing protection.
 
-## Overview
+## Requirements
 
-Pairmint requires a minimum of `n = 2` validator nodes to be run in parallel. Every one of these `n` nodes is part of a ranking system that determines when exactly each validator is allowed to sign blocks. The signing node is always called the Primary, while the Secondary, Tertiary, etc. make up the backup queue. Each time a certain threshold `m` of consecutively missed blocks is exceeded, each node moves up one rank in the backup queue - the Secondary becomes the Primary, the Tertiary becomes the Secondary and the Primary becomes the Tertiary.
+* Go `v1.15+`
+* Validator software compatible with Tendermint `v0.34+` in terms of protobuf support
 
-![Pairmint Workflow](img/Pairmint-Workflow.png)
+## Build & Install
 
-## Flow Diagram
+Get the repository either via
 
-Fundamentally, all nodes work the same in terms of monitoring the blockchain for missed blocks and updating their ranks. The Primary is the only node with signing permission, though.
+```shell
+$ git clone https://github.com/BlockscapeNetwork/pairmint && cd pairmint
+```
 
-![Pairmint Flow Diagram](img/Pairmint-Flow-Diagram.png)
+or
+
+```shell
+$ go get github.com/BlockscapeLab/pairmint && cd $GOPATH/src/github.com/BlockscapeLab/pairmint
+```
+
+Pairmint can be built into the `./build` directory using
+
+```shell
+$ make build       # local os/arch
+$ make build-linux # linux/amd64
+```
+
+or installed directly into `$GOPATH/bin` using
+
+```shell
+$ make install
+```
+
+## Configuration
+
+Before putting Pairmint into operation, it needs to be initialized using:
+
+```shell
+$ pairmint init
+```
+
+The `init` command creates a `pairmint.toml` configuration file at the directory specified in the `$PAIRMINT_CONFIG_DIR` environment variable (defaults to `$HOME/.pairmint`) and a `pm-identity.key` file which holds the seed used to establish a secret connection to the validator.
+
+> :information_source: Please look through the `pairmint.toml` file after it's generated as it is only a template and initially not valid.
+
+If you don't already have a keypair, you can use the `--keypair` flag to generate a new `priv_validator_key.json` and `priv_validator_state.json` in your `$PAIRMINT_CONFIG_DIR` directory. Pairmint will know where to find them without you having to specify their location (see `key_file_path` and `state_file_path` parameters in the FilePV section).
+
+If you do already have a keypair, you can either copy them into the `$PAIRMINT_CONFIG_DIR` directory or leave the key and state files where they are and specify the paths to them in the FilePV section of the `pairmint.toml`.
+
+### Init
+
+Init contains configuration parameters needed on initialization.
+
+| Parameter             | Type   | Description                                                                                                                                                                             |
+| :-------------------- | :----- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `log_level`           | string | Minimum log level for pairmint's log messages. Must either DEBUG, INFO, WARN or ERR..                                                                                                   |
+| `set_size`            | int    | Fixed size of the pairminted validator set. Must be 2 or higher.                                                                                                                        |
+| `threshold`           | int    | Threshold value of missed blocks in a row for rank updates. Must be 1 or higher.                                                                                                        |
+| `rank`                | int    | Rank on node startup. Must be 1 or higher.                                                                                                                                              |
+| `validator_laddr`     | string | TCP socket address the validator listens on for an external PrivValidator process. Pairmint dials this address to establish a connection to the validator. Must be in host:port format. |
+| `validator_laddr_rpc` | string | TCP socket address the validator's RPC server listens on. Must be in host:port format.                                                                                                  |
+
+### FilePV
+
+FilePV contains configuration parameters for the file-based signer.
+
+| Parameter         | Type   | Description                                                                                                 |
+| :---------------- | :----- | :---------------------------------------------------------------------------------------------------------- |
+| `chain_id`        | string | Chain ID the validator is part of.                                                                          |
+| `key_file_path`   | string | Path to the `priv_validator_key.json` file. Defaults to `$PAIRMINT_CONFIG_DIR/priv_validator_key.json`.     |
+| `state_file_path` | string | Path to the `priv_validator_state.json` file. Defaults to `$PAIRMINT_CONFIG_DIR/priv_validator_state.json`. |
+
+## Running
+
+After creating the configuration, start Pairmint using:
+
+```shell
+$ pairmint start
+```
+
+> :warning: Make sure to start the validator with `rank = 1` first. To be absolutely certain, wait for it to be fully synced and only then start the other nodes.
