@@ -37,6 +37,8 @@ var (
 			}
 			pv.FilePV = tmprivval.LoadOrGenFilePV(pv.Config.FilePV.KeyFilePath, pv.Config.FilePV.StateFilePath)
 
+			pv.Logger.Printf("[INFO] pairmint: Validator node is ranked #%v\n", pv.Config.Init.Rank)
+
 			// Configure minimum log level for logger.
 			pv.Logger.SetOutput(&logutils.LevelFilter{
 				Levels:   []logutils.LogLevel{"DEBUG", "INFO", "WARN", "ERR"},

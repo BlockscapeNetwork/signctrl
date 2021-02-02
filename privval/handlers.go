@@ -30,7 +30,7 @@ func (p *PairmintFilePV) handlePubKeyRequest(req *privvalproto.PubKeyRequest, pu
 	// Check if requests originate from the chainid specified in the pairmint.toml.
 	if req.ChainId != p.Config.FilePV.ChainID {
 		resp.Error = &privvalproto.RemoteSignerError{Description: ErrWrongChainID.Error()}
-		p.Logger.Println("[ERR] pairmint: pubkey request is for the wrong chain ID")
+		p.Logger.Printf("[ERR] pairmint: pubkey request is for the wrong chain ID (%v is not %v)", req.ChainId, p.Config.FilePV.ChainID)
 		if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
 			return err
 		}
@@ -62,7 +62,7 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 	// Check if requests originate from the chainid specified in the pairmint.toml.
 	if req.ChainId != p.Config.FilePV.ChainID {
 		resp.Error = &privvalproto.RemoteSignerError{Description: ErrWrongChainID.Error()}
-		p.Logger.Println("[ERR] pairmint: sign vote request is for the wrong chain ID")
+		p.Logger.Printf("[ERR] pairmint: sign vote request is for the wrong chain ID (%v is not %v)", req.ChainId, p.Config.FilePV.ChainID)
 		if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
 			return err
 		}
@@ -127,7 +127,7 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 
 	// Check if the validator has permission to sign the vote.
 	if p.Config.Init.Rank == 1 {
-		p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #1, signing %v...\n", req.Vote.Type)
+		p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #%v, signing %v...\n", p.Config.Init.Rank, req.Vote.Type)
 
 		// Sign the vote.
 		if err := p.SignVote(p.Config.FilePV.ChainID, req.Vote); err != nil {
@@ -159,7 +159,7 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 	// Check if requests originate from the chainid specified in the pairmint.toml.
 	if req.ChainId != p.Config.FilePV.ChainID {
 		resp.Error = &privvalproto.RemoteSignerError{Description: ErrWrongChainID.Error()}
-		p.Logger.Println("[ERR] pairmint: sign proposal request is for the wrong chain ID")
+		p.Logger.Printf("[ERR] pairmint: sign proposal request is for the wrong chain ID (%v is not %v)", req.ChainId, p.Config.FilePV.ChainID)
 		if _, err := rwc.Writer.WriteMsg(wrapMsg(resp)); err != nil {
 			return err
 		}
@@ -225,7 +225,7 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 
 	// After the commitsigs have been checked, check if the validator has permission to sign the proposal.
 	if p.Config.Init.Rank == 1 {
-		p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #1, signing %v...", req.Proposal.Type)
+		p.Logger.Printf("[DEBUG] pairmint: Validator is ranked #%v, signing %v...", p.Config.Init.Rank, req.Proposal.Type)
 
 		// Sign the vote.
 		if err := p.SignProposal(p.Config.FilePV.ChainID, req.Proposal); err != nil {
