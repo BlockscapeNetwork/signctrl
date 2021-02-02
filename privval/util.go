@@ -6,12 +6,12 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	privvalproto "github.com/tendermint/tendermint/proto/tendermint/privval"
-	"github.com/tendermint/tendermint/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 // hasSignedCommit checks whether the given validator address has a commitsig
 // in the provided commitsigs.
-func hasSignedCommit(valaddr types.Address, commitsigs *[]types.CommitSig) bool {
+func hasSignedCommit(valaddr tmtypes.Address, commitsigs *[]tmtypes.CommitSig) bool {
 	for _, commitsig := range *commitsigs {
 		if cmp := bytes.Compare(commitsig.ValidatorAddress, valaddr); cmp == 0 && commitsig.Signature != nil {
 			return true
