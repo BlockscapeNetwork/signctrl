@@ -7,8 +7,8 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-func TestHasSignedCommit(t *testing.T) {
-	commitsigs := []tmtypes.CommitSig{
+func testValidCommitSigs() *[]tmtypes.CommitSig {
+	return &[]tmtypes.CommitSig{
 		{
 			ValidatorAddress: []byte("VAL-1-ADDR"),
 			Signature:        []byte("VAL-1-SIG"),
@@ -18,26 +18,32 @@ func TestHasSignedCommit(t *testing.T) {
 			Signature:        []byte("VAL-2-SIG"),
 		},
 	}
+}
 
-	// Valid case for VAL-1 since it has a complete commitsig.
-	if !hasSignedCommit([]byte("VAL-1-ADDR"), &commitsigs) {
+func testInvalidCommitSigs() *[]tmtypes.CommitSig {
+	return &[]tmtypes.CommitSig{
+		{
+			ValidatorAddress: []byte("VAL-1-ADDR"),
+			Signature:        nil,
+		},
+		{
+			ValidatorAddress: nil,
+			Signature:        []byte("VAL-2-SIG"),
+		},
+	}
+}
+
+func TestHasSignedCommit(t *testing.T) {
+	if !hasSignedCommit([]byte("VAL-1-ADDR"), testValidCommitSigs()) {
 		t.Errorf("Expected VAL-1 to have a commitsig, instead it doesn't")
 	}
-
-	// Invalid case for VAL-3 since it doesn't have a commitsig.
-	if hasSignedCommit([]byte("VAL-3-ADDR"), &commitsigs) {
+	if hasSignedCommit([]byte("VAL-3-ADDR"), testValidCommitSigs()) {
 		t.Errorf("Expected VAL-4 to not have a commitsig, instead it does")
 	}
-
-	// Make commitsig of VAL-1 incomplete and therefore invalid.
-	commitsigs[0].Signature = nil
-	if hasSignedCommit([]byte("VAL-1-ADDR"), &commitsigs) {
+	if hasSignedCommit([]byte("VAL-1-ADDR"), testInvalidCommitSigs()) {
 		t.Errorf("Expected VAL-1 to not have a complete commitsig, instead it does")
 	}
-
-	// Make commitsig of VAL-2 incomplete and therefore invalid.
-	commitsigs[1].ValidatorAddress = nil
-	if hasSignedCommit([]byte("VAL-2-ADDR"), &commitsigs) {
+	if hasSignedCommit([]byte("VAL-2-ADDR"), testInvalidCommitSigs()) {
 		t.Errorf("Expected VAL-2 to not have a complete commitsig, instead it does")
 	}
 }
