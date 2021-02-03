@@ -101,10 +101,8 @@ func (c *Config) validateInitConfig() error {
 		}
 		errs += "\n"
 	}
-	if c.Init.LogLevel == "" {
-		if match, _ := regexp.MatchString(`DEBUG|INFO|WARN|ERR`, c.Init.LogLevel); !match {
-			errs += "\tlog_level must be either DEBUG, INFO, WARN or ERR\n"
-		}
+	if match, _ := regexp.MatchString(`DEBUG|INFO|WARN|ERR`, c.Init.LogLevel); !match {
+		errs += "\tlog_level must be either DEBUG, INFO, WARN or ERR\n"
 	}
 	if c.Init.ValidatorListenAddr != "" {
 		host, _, err := net.SplitHostPort(c.Init.ValidatorListenAddr)
@@ -146,11 +144,11 @@ func (c *Config) validateFilePVConfig() error {
 	if c.FilePV.StateFilePath == "" {
 		c.FilePV.StateFilePath = GetDir() + "/priv_validator_state.json"
 	}
-	if keyFile, err := os.Stat(c.FilePV.KeyFilePath); err != nil && !keyFile.IsDir() {
-		errs += "\tkey_file_path is not a valid path\n"
+	if _, err := os.Stat(c.FilePV.KeyFilePath); err != nil {
+		errs += "\tkey_file_path does not exist\n"
 	}
-	if stateFile, err := os.Stat(c.FilePV.StateFilePath); err != nil && !stateFile.IsDir() {
-		errs += "\tstate_file_path is not a valid path\n"
+	if _, err := os.Stat(c.FilePV.StateFilePath); err != nil {
+		errs += "\tstate_file_path does not exist\n"
 	}
 
 	if errs != "" {
