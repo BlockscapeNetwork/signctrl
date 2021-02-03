@@ -1,15 +1,15 @@
 package utils
 
 import (
+	"io/ioutil"
 	"testing"
 
-	"github.com/spf13/afero"
+	"os"
 )
 
 func TestLoadKeypair(t *testing.T) {
-	fs := afero.NewOsFs()
-	afero.WriteFile(fs, "./pm-identity.key", []byte("i0E6lqsN1aw9KQjgLG+c7YpoJ0oPTYrttwk0aExZkZE="), 0644)
-	defer fs.Remove("./pm-identity.key")
+	ioutil.WriteFile("./pm-identity.key", []byte("i0E6lqsN1aw9KQjgLG+c7YpoJ0oPTYrttwk0aExZkZE="), 0644)
+	defer os.Remove("./pm-identity.key")
 
 	priv, pub, err := LoadKeypair("./pm-identity.key")
 	if err != nil {
@@ -24,9 +24,7 @@ func TestLoadKeypair(t *testing.T) {
 }
 
 func TestGenSeed(t *testing.T) {
-	fs := afero.NewOsFs()
-	defer fs.Remove("./pm-identity.key")
-
+	defer os.Remove("./pm-identity.key")
 	if err := GenSeed("./pm-identity.key"); err != nil {
 		t.Errorf("Expected pm-identity.key file to be created, instead got err: %v", err)
 	}
