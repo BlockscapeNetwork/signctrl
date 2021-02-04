@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"time"
 
 	"github.com/tendermint/tendermint/types"
 
-	"github.com/tendermint/tendermint/libs/json"
+	tmjson "github.com/tendermint/tendermint/libs/json"
 
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 )
@@ -21,12 +20,13 @@ type CommitRPCResponse struct {
 }
 
 // GetCommitSigs gets the commit signatures of the specified height.
-func GetCommitSigs(rpcladdr string, height int64) (*[]types.CommitSig, error) {
+func GetCommitSigs(rpcladdr string, client *http.Client, height int64) (*[]types.CommitSig, error) {
+	// TODO: Client timeout needs to be set according to the block time of the chain.
+
 	if height < 1 {
 		return nil, fmt.Errorf("block height %v does not exist", height)
 	}
 
-	client := http.Client{Timeout: 5 * time.Second} // TODO: Timeouts need to be set according to the block time of the chain.
 	resp, err := client.Get(fmt.Sprintf("http://%v/commit?height=%v", rpcladdr, height))
 	if err != nil {
 		return nil, err
@@ -39,10 +39,9 @@ func GetCommitSigs(rpcladdr string, height int64) (*[]types.CommitSig, error) {
 	}
 
 	var rpc CommitRPCResponse
-	if err = json.Unmarshal(bytes, &rpc); err != nil {
+	if err = tmjson.Unmarshal(bytes, &rpc); err != nil {
 		return nil, err
 	}
-
 	if rpc.Result == nil {
 		return nil, ErrNoCommitSigs
 	}

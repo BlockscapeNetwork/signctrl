@@ -3,9 +3,11 @@ package privval
 import (
 	"encoding/hex"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/BlockscapeNetwork/pairmint/connection"
 	tmcrypto "github.com/tendermint/tendermint/crypto"
@@ -71,7 +73,7 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 	// sometimes all commit data was there and sometimes some was missing.
 	// Al of this means that commit checks are done from block height 3 upwards.
 	if req.Vote.Height > p.CurrentHeight && req.Vote.Height > 2 {
-		commitsigs, err := connection.GetCommitSigs(p.Config.Init.ValidatorListenAddrRPC, req.Vote.Height-2)
+		commitsigs, err := connection.GetCommitSigs(p.Config.Init.ValidatorListenAddrRPC, &http.Client{Timeout: 5 * time.Second}, req.Vote.Height-2)
 		if err != nil {
 			p.Logger.Printf("[ERR] pairmint: couldn't get commitsigs: %v\n", err)
 			rse := &privvalproto.RemoteSignerError{Description: err.Error()}
@@ -170,7 +172,7 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 	// sometimes all commit data was there and sometimes some was missing.
 	// Al of this means that commit checks are done from block height 3 upwards.
 	if req.Proposal.Height > p.CurrentHeight && req.Proposal.Height > 2 {
-		commitsigs, err := connection.GetCommitSigs(p.Config.Init.ValidatorListenAddrRPC, req.Proposal.Height-2)
+		commitsigs, err := connection.GetCommitSigs(p.Config.Init.ValidatorListenAddrRPC, &http.Client{Timeout: 5 * time.Second}, req.Proposal.Height-2)
 		if err != nil {
 			p.Logger.Printf("[ERR] pairmint: couldn't get commitsigs: %v\n", err)
 			rse := &privvalproto.RemoteSignerError{Description: err.Error()}
