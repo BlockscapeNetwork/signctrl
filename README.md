@@ -1,5 +1,8 @@
 # Pairmint
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/blockscapelab/raftify)](https://goreportcard.com/report/github.com/blockscapenetwork/pairmint)
+[![License](https://img.shields.io/github/license/cosmos/cosmos-sdk.svg)](https://github.com/cosmos/cosmos-sdk/blob/master/LICENSE)
+
 Pairmint is a high availability solution for Tendermint-based blockchain validators. It uses the blockchain itself as a perfectly synchronous communication line between redundant validators running in parallel for double-signing protection.
 
 ## Requirements
