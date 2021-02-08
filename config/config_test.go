@@ -24,7 +24,7 @@ func testPrivValidatorState() string {
 	return `{
   "height": "0",
   "round": 0,
-  "step": 0,
+  "step": 0
 }`
 }
 
