@@ -76,6 +76,27 @@ FilePV contains configuration parameters for the file-based signer.
 | `key_file_path`   | string | Path to the `priv_validator_key.json` file. Defaults to `$PAIRMINT_CONFIG_DIR/priv_validator_key.json`.     |
 | `state_file_path` | string | Path to the `priv_validator_state.json` file. Defaults to `$PAIRMINT_CONFIG_DIR/priv_validator_state.json`. |
 
+#### Example
+
+An example of a valid `pairmint.toml` could look like this:
+
+```toml
+[init]
+
+log_level = "INFO"
+set_size = 2
+threshold = 10
+rank = 1
+validator_laddr = "127.0.0.1:3000"
+validator_laddr_rpc = "127.0.0.1:26657"
+
+[file_pv]
+
+chain_id = "mychain"
+key_file_path = "/Users/myuser/.pairmint/priv_validator_key.json"
+state_file_path = "/Users/myuser/.pairmint/priv_validator_state.json"
+```
+
 ## Running
 
 After creating the configuration, start Pairmint using:
