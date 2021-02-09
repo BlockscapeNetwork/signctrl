@@ -4,8 +4,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/tendermint/tendermint/privval"
 
@@ -106,12 +104,8 @@ func (p *PairmintFilePV) SignProposal(chainID string, proposal *tmproto.Proposal
 }
 
 // Run runs the routine for the file-based signer.
-func (p *PairmintFilePV) Run(rwc *connection.ReadWriteConn, pubkey tmcrypto.PubKey) {
+func (p *PairmintFilePV) Run(rwc *connection.ReadWriteConn, pubkey tmcrypto.PubKey, sigCh chan os.Signal) {
 	p.Logger.Println("[INFO] pairmint: Running pairmint daemon...")
-
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
-	defer close(sigCh)
 
 	for {
 		select {
