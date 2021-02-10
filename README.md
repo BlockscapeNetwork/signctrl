@@ -41,7 +41,7 @@ $ make install
 
 ## Configuration
 
-Before putting Pairmint into operation, it needs to be initialized using:
+Each validator node runs in tandem with its own Pairmint daemon, and thus each one also has its own configuration. You can initialize Pairmint using:
 
 ```shell
 $ pairmint init
@@ -58,6 +58,8 @@ If you do already have a keypair, you can either copy them into the `$PAIRMINT_C
 ### Init
 
 Init contains configuration parameters needed on initialization.
+
+> :information_source: The configuration parameters `set_size` and `threshold` must be the same across all validator nodes in the Pairmint set.
 
 | Parameter             | Type   | Description                                                                                                                                                                             |
 | :-------------------- | :----- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -80,15 +82,17 @@ FilePV contains configuration parameters for the file-based signer.
 
 #### Example
 
+Let's assume, you have two validators in your Pairmint set. The following configurations are examples of their respective `pairmint.toml` files.
 An example of a valid `pairmint.toml` could look like this:
 
+##### Validator #1
 ```toml
 [init]
 
 log_level = "INFO"
-set_size = 2
-threshold = 10
-rank = 1
+set_size = 2   # Must be 2 for both validators!
+threshold = 10 # Must be 10 for both validators!
+rank = 1       # Must be unique! (No two validators can have the same rank)
 validator_laddr = "127.0.0.1:3000"
 validator_laddr_rpc = "127.0.0.1:26657"
 
@@ -97,6 +101,24 @@ validator_laddr_rpc = "127.0.0.1:26657"
 chain_id = "mychain"
 key_file_path = "/Users/myuser/.pairmint/priv_validator_key.json"
 state_file_path = "/Users/myuser/.pairmint/priv_validator_state.json"
+```
+
+##### Validator #2
+```toml
+[init]
+
+log_level = "INFO"
+set_size = 2   # Must be 2 for both validators!
+threshold = 10 # Must be 10 for both validators!
+rank = 2       # Must be unique! (No two validators can have the same rank)
+validator_laddr = "127.0.0.1:3000"
+validator_laddr_rpc = "127.0.0.1:26657"
+
+[file_pv]
+
+chain_id = "mychain"
+key_file_path = ""   # Left empty, so it defaults to $PAIRMINT_CONFIG_DIR/priv_validator_key.json
+state_file_path = "" # Left empty, so it defaults to $PAIRMINT_CONFIG_DIR/priv_validator_state.json
 ```
 
 ## Running
