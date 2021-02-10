@@ -113,10 +113,10 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 				// blocks in a row has been exceeded. Now, a rank update is done in order
 				// to replace the signer.
 				p.Update()
-			} else {
-				p.Logger.Printf("[DEBUG] pairmint: Found commitsig from %v for block height %v\n", pubkey.Address().String(), req.Vote.Height-1)
-				p.Reset()
 			}
+		} else {
+			p.Logger.Printf("[DEBUG] pairmint: Found commitsig from %v for block height %v\n", pubkey.Address().String(), req.Vote.Height-1)
+			p.Reset()
 		}
 	}
 
