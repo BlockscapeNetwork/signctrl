@@ -3,6 +3,8 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/blockscapelab/raftify)](https://goreportcard.com/report/github.com/blockscapenetwork/pairmint)
 [![License](https://img.shields.io/github/license/cosmos/cosmos-sdk.svg)](https://github.com/cosmos/cosmos-sdk/blob/master/LICENSE)
 
+> :warning: Be mindful of key security as Pairmint currently only supports Tendermint's file-based signer. Make sure to properly secure your validator instance from unauthorized access.
+
 Pairmint is a high availability solution for Tendermint-based blockchain validators. It uses the blockchain itself as a perfectly synchronous communication line between redundant validators running in parallel for double-signing protection.
 
 ## Requirements
@@ -70,11 +72,11 @@ Init contains configuration parameters needed on initialization.
 
 FilePV contains configuration parameters for the file-based signer.
 
-| Parameter         | Type   | Description                                                                                                 |
-| :---------------- | :----- | :---------------------------------------------------------------------------------------------------------- |
-| `chain_id`        | string | Chain ID the validator is part of.                                                                          |
-| `key_file_path`   | string | Path to the `priv_validator_key.json` file. Defaults to `$PAIRMINT_CONFIG_DIR/priv_validator_key.json`.     |
-| `state_file_path` | string | Path to the `priv_validator_state.json` file. Defaults to `$PAIRMINT_CONFIG_DIR/priv_validator_state.json`. |
+| Parameter         | Type   | Description                                                                                                               |
+| :---------------- | :----- | :------------------------------------------------------------------------------------------------------------------------ |
+| `chain_id`        | string | Chain ID the validator is part of.                                                                                        |
+| `key_file_path`   | string | Path to the `priv_validator_key.json` file. Defaults to `$PAIRMINT_CONFIG_DIR/priv_validator_key.json` if left empty.     |
+| `state_file_path` | string | Path to the `priv_validator_state.json` file. Defaults to `$PAIRMINT_CONFIG_DIR/priv_validator_state.json` if left empty. |
 
 #### Example
 
