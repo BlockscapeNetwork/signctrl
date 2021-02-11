@@ -128,5 +128,3 @@ After creating the configuration, start Pairmint using:
 ```shell
 $ pairmint start
 ```
-
-> :warning: Make sure to start the validator with `rank = 1` first. To be absolutely certain, wait for it to be fully synced and only then start the other nodes.
