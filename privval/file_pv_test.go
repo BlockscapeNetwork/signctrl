@@ -128,6 +128,7 @@ func TestMissed(t *testing.T) {
 	pm := NewPairmintFilePV()
 	pm.Logger = log.New(os.Stderr, "", 0)
 	pm.Config.Init.Threshold = 3
+	pm.CounterUnlocked = true
 
 	for i := 0; i < pm.Config.Init.Threshold-1; i++ {
 		if err := pm.Missed(); err != nil {
