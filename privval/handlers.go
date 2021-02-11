@@ -117,6 +117,7 @@ func (p *PairmintFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest
 		} else {
 			p.Logger.Printf("[DEBUG] pairmint: Found commitsig from %v for block height %v\n", pubkey.Address().String(), req.Vote.Height-1)
 			p.Reset()
+			p.CounterUnlocked = true
 		}
 	}
 
@@ -217,6 +218,7 @@ func (p *PairmintFilePV) handleSignProposalRequest(req *privvalproto.SignProposa
 		} else {
 			p.Logger.Printf("[DEBUG] pairmint: Found commitsig from %v for block height %v\n", pubkey.Address().String(), req.Proposal.Height-1)
 			p.Reset()
+			p.CounterUnlocked = true
 		}
 	}
 
