@@ -90,6 +90,6 @@ func init() {
 	rootCmd.AddCommand(initCmd)
 
 	// Add flags.
-	initCmd.Flags().BoolVar(&keypair, "keypair", false, "Generate a new priv_validator_key.json and priv_validator_state.json in the $PAIRMINT_CONFIG_DIR directory")
+	initCmd.Flags().BoolVar(&keypair, "keypair", false, "Generate a new priv_validator_key.json and priv_validator_state.json in the $SIGNCTRL_CONFIG_DIR directory")
 	viper.BindPFlag("keypair", initCmd.Flags().Lookup("keypair"))
 }

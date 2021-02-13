@@ -13,7 +13,7 @@ var (
 		Short: "Print the version number of SignCTRL",
 		Long:  "",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("Pairmint v0.1.0-RC1")
+			fmt.Printf("SignCTRL v0.1.0-RC1")
 		},
 	}
 )
