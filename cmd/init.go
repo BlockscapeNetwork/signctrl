@@ -71,6 +71,8 @@ var (
 						fmt.Println("Creation of key and state file canceled.")
 						os.Exit(int(syscall.SIGHUP))
 					} else if strings.ToLower(input) == "y\n" {
+						os.Remove(keyPath)
+						os.Remove(statePath)
 						tmprivval.LoadOrGenFilePV(keyPath, statePath)
 						fmt.Printf("Created new priv_validator_key.json and priv_validator_state.json at %v\n", configDir)
 					}
