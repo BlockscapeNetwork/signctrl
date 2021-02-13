@@ -1,6 +1,6 @@
 # SignCTRL
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/blockscapelab/signctrl)](https://goreportcard.com/report/github.com/blockscapenetwork/signctrl)
+[![Go Report Card](https://goreportcard.com/badge/github.com/blockscapenetwork/signctrl)](https://goreportcard.com/report/github.com/blockscapenetwork/signctrl)
 [![License](https://img.shields.io/github/license/cosmos/cosmos-sdk.svg)](https://github.com/cosmos/cosmos-sdk/blob/master/LICENSE)
 
 > :warning: Be mindful of key security as SignCTRL currently only supports Tendermint's file-based signer. Make sure to properly secure your validator instance from unauthorized access.
