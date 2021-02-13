@@ -11,7 +11,7 @@ build-linux:
 # Install the binary to $GOPATH/bin
 install:
 	@echo "--> Installing SignCTRL..."
-	@go build -o $(shell go env GOPATH)/bin/sc *.go
+	@go build -o $(shell go env GOPATH)/bin/signctrl *.go
 
 # Download dependencies
 go-mod-cache:
