@@ -1,5 +1,10 @@
 # Pairmint
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/blockscapelab/raftify)](https://goreportcard.com/report/github.com/blockscapenetwork/pairmint)
+[![License](https://img.shields.io/github/license/cosmos/cosmos-sdk.svg)](https://github.com/cosmos/cosmos-sdk/blob/master/LICENSE)
+
+> :warning: Be mindful of key security as Pairmint currently only supports Tendermint's file-based signer. Make sure to properly secure your validator instance from unauthorized access.
+
 Pairmint is a high availability solution for Tendermint-based blockchain validators. It uses the blockchain itself as a perfectly synchronous communication line between redundant validators running in parallel for double-signing protection.
 
 ## Requirements
@@ -36,7 +41,7 @@ $ make install
 
 ## Configuration
 
-Before putting Pairmint into operation, it needs to be initialized using:
+Each validator node runs in tandem with its own Pairmint daemon, and thus each one also has its own configuration. You can initialize Pairmint using:
 
 ```shell
 $ pairmint init
@@ -54,6 +59,8 @@ If you do already have a keypair, you can either copy them into the `$PAIRMINT_C
 
 Init contains configuration parameters needed on initialization.
 
+> :information_source: The configuration parameters `set_size` and `threshold` must be the same across all validator nodes in the Pairmint set.
+
 | Parameter             | Type   | Description                                                                                                                                                                             |
 | :-------------------- | :----- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `log_level`           | string | Minimum log level for pairmint's log messages. Must either DEBUG, INFO, WARN or ERR..                                                                                                   |
@@ -67,11 +74,52 @@ Init contains configuration parameters needed on initialization.
 
 FilePV contains configuration parameters for the file-based signer.
 
-| Parameter         | Type   | Description                                                                                                 |
-| :---------------- | :----- | :---------------------------------------------------------------------------------------------------------- |
-| `chain_id`        | string | Chain ID the validator is part of.                                                                          |
-| `key_file_path`   | string | Path to the `priv_validator_key.json` file. Defaults to `$PAIRMINT_CONFIG_DIR/priv_validator_key.json`.     |
-| `state_file_path` | string | Path to the `priv_validator_state.json` file. Defaults to `$PAIRMINT_CONFIG_DIR/priv_validator_state.json`. |
+| Parameter         | Type   | Description                                                                                                               |
+| :---------------- | :----- | :------------------------------------------------------------------------------------------------------------------------ |
+| `chain_id`        | string | Chain ID the validator is part of.                                                                                        |
+| `key_file_path`   | string | Path to the `priv_validator_key.json` file. Defaults to `$PAIRMINT_CONFIG_DIR/priv_validator_key.json` if left empty.     |
+| `state_file_path` | string | Path to the `priv_validator_state.json` file. Defaults to `$PAIRMINT_CONFIG_DIR/priv_validator_state.json` if left empty. |
+
+#### Example
+
+Let's assume, you have two validators in your Pairmint set. The following configurations are examples of their respective `pairmint.toml` files.
+An example of a valid `pairmint.toml` could look like this:
+
+##### Validator #1
+```toml
+[init]
+
+log_level = "INFO"
+set_size = 2   # Must be 2 for both validators!
+threshold = 10 # Must be 10 for both validators!
+rank = 1       # Must be unique! (No two validators can have the same rank)
+validator_laddr = "127.0.0.1:3000"
+validator_laddr_rpc = "127.0.0.1:26657"
+
+[file_pv]
+
+chain_id = "mychain"
+key_file_path = "/Users/myuser/.pairmint/priv_validator_key.json"
+state_file_path = "/Users/myuser/.pairmint/priv_validator_state.json"
+```
+
+##### Validator #2
+```toml
+[init]
+
+log_level = "INFO"
+set_size = 2   # Must be 2 for both validators!
+threshold = 10 # Must be 10 for both validators!
+rank = 2       # Must be unique! (No two validators can have the same rank)
+validator_laddr = "127.0.0.1:3000"
+validator_laddr_rpc = "127.0.0.1:26657"
+
+[file_pv]
+
+chain_id = "mychain"
+key_file_path = ""   # Left empty, so it defaults to $PAIRMINT_CONFIG_DIR/priv_validator_key.json
+state_file_path = "" # Left empty, so it defaults to $PAIRMINT_CONFIG_DIR/priv_validator_state.json
+```
 
 ## Running
 
@@ -80,5 +128,3 @@ After creating the configuration, start Pairmint using:
 ```shell
 $ pairmint start
 ```
-
-> :warning: Make sure to start the validator with `rank = 1` first. To be absolutely certain, wait for it to be fully synced and only then start the other nodes.

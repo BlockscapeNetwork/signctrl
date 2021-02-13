@@ -3,6 +3,7 @@ package cmd
 import (
 	"log"
 	"os"
+	"os/signal"
 	"syscall"
 
 	"github.com/hashicorp/logutils"
@@ -72,8 +73,12 @@ var (
 				os.Exit(int(syscall.SIGHUP))
 			}
 
+			sigCh := make(chan os.Signal, 1)
+			signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+			defer close(sigCh)
+
 			// Run the routine for reading and writing messages.
-			pv.Run(rwc, pubkey)
+			pv.Run(rwc, pubkey, sigCh)
 		},
 	}
 )

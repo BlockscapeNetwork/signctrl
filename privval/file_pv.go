@@ -4,8 +4,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/tendermint/tendermint/privval"
 
@@ -33,6 +31,10 @@ type PairmintFilePV struct {
 	// MissedInARow is the counter used to count missed blocks in a row.
 	MissedInARow int
 
+	// CounterUnlocked is the toggle used for allowing the node to count
+	// missed blocks in a row.
+	CounterUnlocked bool
+
 	// FilePV is Tendermint's file-based signer.
 	FilePV *privval.FilePV
 
@@ -45,16 +47,22 @@ type PairmintFilePV struct {
 // NewPairmintFilePV returns a new instance of PairmintFilePV.
 func NewPairmintFilePV() *PairmintFilePV {
 	return &PairmintFilePV{
-		Logger:        new(log.Logger),
-		Config:        new(config.Config),
-		MissedInARow:  0,
-		FilePV:        new(privval.FilePV),
-		CurrentHeight: 1, // Start at genesis block height
+		Logger:          new(log.Logger),
+		Config:          new(config.Config),
+		MissedInARow:    0,
+		CounterUnlocked: false,
+		FilePV:          new(privval.FilePV),
+		CurrentHeight:   1, // Start at genesis block height
 	}
 }
 
 // Missed implements the Pairminter interface.
 func (p *PairmintFilePV) Missed() error {
+	if !p.CounterUnlocked {
+		p.Logger.Printf("[INFO] pairmint: Haven't found commitsig from rank 1 since having synced up")
+		return nil
+	}
+
 	p.MissedInARow++
 	p.Logger.Printf("[INFO] pairmint: Missed a block (%v/%v)\n", p.MissedInARow, p.Config.Init.Threshold)
 
@@ -106,12 +114,8 @@ func (p *PairmintFilePV) SignProposal(chainID string, proposal *tmproto.Proposal
 }
 
 // Run runs the routine for the file-based signer.
-func (p *PairmintFilePV) Run(rwc *connection.ReadWriteConn, pubkey tmcrypto.PubKey) {
+func (p *PairmintFilePV) Run(rwc *connection.ReadWriteConn, pubkey tmcrypto.PubKey, sigCh chan os.Signal) {
 	p.Logger.Println("[INFO] pairmint: Running pairmint daemon...")
-
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
-	defer close(sigCh)
 
 	for {
 		select {
