@@ -10,12 +10,12 @@ import (
 	"github.com/spf13/viper"
 )
 
-// InitConfig defines the initialization parameters for a pairmint node.
+// InitConfig defines the initialization parameters for a SignCTRL node.
 type InitConfig struct {
-	// LogLevel defines the log levels for pairmint logs: DEBUG, INFO, WARN, ERR.
+	// LogLevel defines the log levels for SignCTRL logs: DEBUG, INFO, WARN, ERR.
 	LogLevel string `mapstructure:"log_level"`
 
-	// SetSize determines the fixed size of the pairminter set.
+	// SetSize determines the fixed size of the SignCTRL node set.
 	// The current signer needs to know the set size in order to know which
 	// rank to fall back to if it fails.
 	SetSize int `mapstructure:"set_size"`
@@ -24,11 +24,11 @@ type InitConfig struct {
 	// signatures for rank updates.
 	Threshold int `mapstructure:"threshold"`
 
-	// Rank determines the pairminters initial rank on startup.
+	// Rank determines the SignCTRL node's initial rank on startup.
 	Rank int `mapstructure:"rank"`
 
 	// ValidatorListenAddr is the TCP socket address the Tendermint validator
-	// listens on for an external PrivValidator process. Pairmint dials this
+	// listens on for an external PrivValidator process. SignCTRL dials this
 	// address to establish a connection to the validator and receive signing
 	// requests.
 	ValidatorListenAddr string `mapstructure:"validator_laddr"`
@@ -52,7 +52,7 @@ type FilePVConfig struct {
 	StateFilePath string `mapstructure:"state_file_path"`
 }
 
-// Config defines the structure of the pairmint.toml file.
+// Config defines the structure of the config.toml file.
 type Config struct {
 	// Init defines the section for the initialization parameters.
 	Init InitConfig `mapstructure:"init"`
@@ -61,28 +61,28 @@ type Config struct {
 	FilePV FilePVConfig `mapstructure:"file_pv"`
 }
 
-// InitDir creates the pairmint configuration directory according
-// to the PAIRMINT_CONFIG_DIR environment variable.
+// InitDir creates the SignCTRL configuration directory according
+// to the SIGNCTRL_CONFIG_DIR environment variable.
 func InitDir(configDir string) error {
 	if _, err := os.Stat(configDir); os.IsNotExist(err) {
 		if err := os.MkdirAll(configDir, 0744); err != nil {
 			return err
 		}
-		fmt.Printf("Created .pairmint/ configuration directory at %v\n", strings.TrimSuffix(configDir, "/.pairmint"))
+		fmt.Printf("Created .signctrl/ configuration directory at %v\n", strings.TrimSuffix(configDir, "/.signctrl"))
 	}
 
 	return nil
 }
 
-// GetDir returns the configuration directory for pairmint from the
-// PAIRMINT_CONFIG_DIR environment variable. If the env var is not set
-// to a custom directory, it will default to $HOME/.pairmint.
+// GetDir returns the configuration directory for SignCTRL from the
+// SIGNCTRL_CONFIG_DIR environment variable. If the env var is not set
+// to a custom directory, it will default to $HOME/.signctrl.
 func GetDir() string {
-	if os.Getenv("PAIRMINT_CONFIG_DIR") == "" {
-		os.Setenv("PAIRMINT_CONFIG_DIR", os.Getenv("HOME")+"/.pairmint")
+	if os.Getenv("SIGNCTRL_CONFIG_DIR") == "" {
+		os.Setenv("SIGNCTRL_CONFIG_DIR", os.Getenv("HOME")+"/.signctrl")
 	}
 
-	return os.Getenv("PAIRMINT_CONFIG_DIR")
+	return os.Getenv("SIGNCTRL_CONFIG_DIR")
 }
 
 // validateInitConfig validates the InitConfig.
@@ -175,10 +175,10 @@ func (c *Config) validate() error {
 	return nil
 }
 
-// Load loads and validates the configuration parameters for the pairmint node.
+// Load loads and validates the configuration parameters for the SignCTRL node.
 func (c *Config) Load() error {
-	viper.SetConfigName("pairmint")
-	viper.AddConfigPath(os.Getenv("PAIRMINT_CONFIG_DIR"))
+	viper.SetConfigName("config")
+	viper.AddConfigPath(os.Getenv("SIGNCTRL_CONFIG_DIR"))
 
 	if err := viper.ReadInConfig(); err != nil {
 		return err

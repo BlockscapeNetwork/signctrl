@@ -8,11 +8,11 @@ import (
 
 const configTemplate = `[init]
 
-# Minimum log level for Pairmint logs.
+# Minimum log level for SignCTRL logs.
 # Must be either DEBUG, INFO, WARN or ERR.
 log_level = ""
 
-# Number of pairminted validator nodes running in parallel.
+# Number of SignCTRL validator nodes running in parallel.
 # This number cannot be changed during operation anymore.
 # If you want to change this value you need to stop all
 # nodes, modify the configuration on each node and start
@@ -25,14 +25,14 @@ set_size = 0
 # Must be 1 or higher.
 threshold = 0
 
-# Node's rank on startup. It is used to determine which node
-# in the set is currently signing (rank 1) and which nodes
-# line up as backups (ranks 2-n).
+# SignCTRL node's rank on startup. It is used to determine
+# which node in the set is currently signing (rank 1) and
+# which nodes line up as backups (ranks 2-n).
 # Must be 1 or higher.
 rank = 0
 
 # TCP socket address the validator listens on for an external
-# PrivValidator process. Pairmint dials this address to
+# PrivValidator process. SignCTRL dials this address to
 # establish a connection to the validator.
 # Must be in host:port format.
 validator_laddr = ""
@@ -47,24 +47,24 @@ validator_laddr_rpc = ""
 chain_id = ""
 
 # The path to the priv_validator_key.json file.
-# Defaults to $PAIRMINT_CONFIG_DIR/priv_validator_key.json if left empty.
+# Defaults to $SIGNCTRL_CONFIG_DIR/priv_validator_key.json if left empty.
 key_file_path = ""
 
 # The path to the priv_validator_state.json file.
-# Defaults to $PAIRMINT_CONFIG_DIR/priv_validator_state.json if left empty.
+# Defaults to $SIGNCTRL_CONFIG_DIR/priv_validator_state.json if left empty.
 state_file_path = ""
 `
 
-// BuildConfigTemplate creates a pairmint.toml with a configuration template.
+// BuildConfigTemplate creates a config.toml with a configuration template.
 func BuildConfigTemplate(configDir string) error {
-	if _, err := os.Stat(configDir + "/pairmint.toml"); !os.IsNotExist(err) {
-		fmt.Printf("Found existing pairmint.toml at %v\n", configDir)
+	if _, err := os.Stat(configDir + "/config.toml"); !os.IsNotExist(err) {
+		fmt.Printf("Found existing config.toml at %v\n", configDir)
 		return nil
 	}
-	if err := ioutil.WriteFile(configDir+"/pairmint.toml", []byte(configTemplate), 0644); err != nil {
+	if err := ioutil.WriteFile(configDir+"/config.toml", []byte(configTemplate), 0644); err != nil {
 		return err
 	}
-	fmt.Printf("Created new pairmint.toml template at %v\n", configDir)
+	fmt.Printf("Created new config.toml template at %v\n", configDir)
 
 	return nil
 }

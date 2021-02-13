@@ -9,10 +9,10 @@ import (
 	"github.com/hashicorp/logutils"
 	"github.com/tendermint/tendermint/libs/protoio"
 
-	"github.com/BlockscapeNetwork/pairmint/config"
-	"github.com/BlockscapeNetwork/pairmint/connection"
-	"github.com/BlockscapeNetwork/pairmint/privval"
-	"github.com/BlockscapeNetwork/pairmint/utils"
+	"github.com/BlockscapeNetwork/signctrl/config"
+	"github.com/BlockscapeNetwork/signctrl/connection"
+	"github.com/BlockscapeNetwork/signctrl/privval"
+	"github.com/BlockscapeNetwork/signctrl/utils"
 
 	tmprivval "github.com/tendermint/tendermint/privval"
 
@@ -20,25 +20,25 @@ import (
 )
 
 var (
-	// The start command starts the pairmint application.
+	// The start command starts the SignCTRL application.
 	startCmd = &cobra.Command{
 		Use:   "start",
-		Short: "Start the pairmint daemon",
+		Short: "Starts the SignCTRL daemon",
 		Long:  "",
 		Run: func(cmd *cobra.Command, args []string) {
 			// Initialize configuration directory.
 			configDir := config.GetDir()
 
 			// Configure the PrivValidator.
-			pv := privval.NewPairmintFilePV()
+			pv := privval.NewSCFilePV()
 			pv.Logger = log.New(os.Stderr, "", 0)
 			if err := pv.Config.Load(); err != nil {
-				pv.Logger.Printf("[ERR] pairmint: error while loading configuration: %v\n", err)
+				pv.Logger.Printf("[ERR] signctrl: error while loading configuration: %v\n", err)
 				os.Exit(int(syscall.SIGHUP))
 			}
 			pv.FilePV = tmprivval.LoadOrGenFilePV(pv.Config.FilePV.KeyFilePath, pv.Config.FilePV.StateFilePath)
 
-			pv.Logger.Printf("[INFO] pairmint: Validator node is ranked #%v\n", pv.Config.Init.Rank)
+			pv.Logger.Printf("[INFO] signctrl: Validator node is ranked #%v\n", pv.Config.Init.Rank)
 
 			// Configure minimum log level for logger.
 			pv.Logger.SetOutput(&logutils.LevelFilter{
@@ -51,7 +51,7 @@ var (
 			// establishing a secret connection to Tendermint.
 			priv, _, err := utils.LoadKeypair(configDir + "/pm-identity.key")
 			if err != nil {
-				pv.Logger.Printf("[ERR] pairmint: error while loading keypair: %v\n", err)
+				pv.Logger.Printf("[ERR] signctrl: error while loading keypair: %v\n", err)
 				os.Exit(int(syscall.SIGHUP))
 			}
 
@@ -59,7 +59,7 @@ var (
 			rwc := connection.NewReadWriteConn()
 			rwc.SecretConn, err = connection.RetrySecretDial("tcp", pv.Config.Init.ValidatorListenAddr, priv, pv.Logger)
 			if err != nil {
-				pv.Logger.Printf("[ERR] pairmint: error while establishing secret connection: %v\n", err)
+				pv.Logger.Printf("[ERR] signctrl: error while establishing secret connection: %v\n", err)
 				os.Exit(int(syscall.SIGHUP))
 			}
 			defer rwc.SecretConn.Close()
@@ -69,7 +69,7 @@ var (
 
 			pubkey, err := pv.GetPubKey()
 			if err != nil {
-				pv.Logger.Printf("[ERR] pairmint: couldn't get privval pubkey: %v\n", err)
+				pv.Logger.Printf("[ERR] signctrl: couldn't get privval pubkey: %v\n", err)
 				os.Exit(int(syscall.SIGHUP))
 			}
 

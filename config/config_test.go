@@ -47,7 +47,7 @@ func testValidConfig() *Config {
 }
 
 func TestInitDir(t *testing.T) {
-	configDir := "./.pairminttest"
+	configDir := "./.test"
 	defer os.RemoveAll(configDir)
 
 	if err := InitDir(configDir); err != nil {
@@ -59,16 +59,16 @@ func TestInitDir(t *testing.T) {
 }
 
 func TestGetDir(t *testing.T) {
-	defaultDir := os.Getenv("HOME") + "/.pairmint"
+	defaultDir := os.Getenv("HOME") + "/.test"
 
-	os.Setenv("PAIRMINT_CONFIG_DIR", "")
+	os.Unsetenv("SIGNCTRL_CONFIG_DIR")
 	if GetDir() != defaultDir {
-		t.Errorf("Expected PAIRMINT_CONFIG_DIR to be \"%v\", instead got: %v", defaultDir, os.Getenv("PAIRMINT_CONFIG_DIR"))
+		t.Errorf("Expected SIGNCTRL_CONFIG_DIR to be \"%v\", instead got: %v", defaultDir, os.Getenv("SIGNCTRL_CONFIG_DIR"))
 	}
 
-	os.Setenv("PAIRMINT_CONFIG_DIR", "/some/random/dir")
+	os.Setenv("SIGNCTRL_CONFIG_DIR", "/some/random/dir")
 	if GetDir() != "/some/random/dir" {
-		t.Errorf("Expected PAIRMINT_CONFIG_DIR to be \"/some/random/dir\", instead got: %v", os.Getenv("PAIRMINT_CONFIG_DIR"))
+		t.Errorf("Expected SIGNCTRL_CONFIG_DIR to be \"/some/random/dir\", instead got: %v", os.Getenv("SIGNCTRL_CONFIG_DIR"))
 	}
 }
 

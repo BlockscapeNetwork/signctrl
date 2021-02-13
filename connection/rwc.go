@@ -14,7 +14,7 @@ import (
 // ReadWriteConn holds the secret connection, the reader and the writer.
 type ReadWriteConn struct {
 	// SecretConn holds the secret connection for communication between
-	// Pairmint and Tendermint.
+	// SignCTRL and Tendermint.
 	SecretConn *p2pconn.SecretConnection
 
 	// Reader is used to read from the TCP stream.
@@ -34,14 +34,14 @@ func NewReadWriteConn() *ReadWriteConn {
 // RetrySecretDial dials the given address until success and returns
 // a secret connection.
 func RetrySecretDial(protocol, address string, privkey ed25519.PrivateKey, logger *log.Logger) (*p2pconn.SecretConnection, error) {
-	logger.Printf("[INFO] pairmint: Dialing validator at %v...\n", address)
+	logger.Printf("[INFO] signctrl: Dialing validator at %v...\n", address)
 
 	var conn net.Conn
 	var err error
 
 	for {
 		if conn, err = net.Dial(protocol, address); err == nil {
-			logger.Println("[INFO] pairmint: Successfully dialed validator. ✓")
+			logger.Println("[INFO] signctrl: Successfully dialed validator. ✓")
 			break
 		}
 		<-time.After(500 * time.Millisecond)

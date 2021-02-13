@@ -11,11 +11,11 @@ var (
 	// and is therefore denied signing permissions.
 	ErrNoSigner = errors.New("validator has no permission to sign votes/proposals")
 
-	// ErrUninitialized is thrown if pairmint has not yet been initialized in
-	// terms of missing a pairmint.toml and the pm-identity.key.
-	ErrUninitialized = errors.New("pairmint is not initialized")
+	// ErrUninitialized is thrown if the node has not yet been initialized in
+	// terms of missing a config.toml and the pm-identity.key.
+	ErrUninitialized = errors.New("SignCTRL is not initialized")
 
-	// ErrTooManyMissedBlocks is thrown if pairmint exceeds the threshold of
+	// ErrTooManyMissedBlocks is thrown if the node exceeds the threshold of
 	// too many missed blocks in a row.
 	ErrTooManyMissedBlocks = errors.New("too many missed blocks in a row")
 
@@ -28,6 +28,6 @@ var (
 	ErrNoCommitSigs = errors.New("couldn't get commitsigs from validator")
 
 	// ErrWrongChainID is thrown if an incoming request is for a different
-	// chainid than the one specified in the pairmint.toml file.
+	// chainid than the one specified in the config.toml file.
 	ErrWrongChainID = errors.New("wrong chainid")
 )

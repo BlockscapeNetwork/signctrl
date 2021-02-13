@@ -1,4 +1,4 @@
-module github.com/BlockscapeNetwork/pairmint
+module github.com/BlockscapeNetwork/signctrl
 
 go 1.15
 

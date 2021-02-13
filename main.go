@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/BlockscapeNetwork/pairmint/cmd"
+	"github.com/BlockscapeNetwork/signctrl/cmd"
 )
 
 func main() {
-	// Cobra root command for pairmint app.
+	// Cobra root command for SignCTRL app.
 	cmd.Execute()
 }

@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/BlockscapeNetwork/pairmint/config"
-	"github.com/BlockscapeNetwork/pairmint/connection"
+	"github.com/BlockscapeNetwork/signctrl/config"
+	"github.com/BlockscapeNetwork/signctrl/connection"
 	tmcrypto "github.com/tendermint/tendermint/crypto"
 	tmed25519 "github.com/tendermint/tendermint/crypto/ed25519"
 	"github.com/tendermint/tendermint/crypto/tmhash"
@@ -125,7 +125,7 @@ func testValidConfig() *config.Config {
 }
 
 func TestMissed(t *testing.T) {
-	pm := NewPairmintFilePV()
+	pm := NewSCFilePV()
 	pm.Logger = log.New(os.Stderr, "", 0)
 	pm.Config.Init.Threshold = 3
 	pm.CounterUnlocked = true
@@ -142,7 +142,7 @@ func TestMissed(t *testing.T) {
 }
 
 func TestReset(t *testing.T) {
-	pm := NewPairmintFilePV()
+	pm := NewSCFilePV()
 	pm.Logger = log.New(os.Stderr, "", 0)
 	pm.MissedInARow = 3
 	pm.Reset()
@@ -153,7 +153,7 @@ func TestReset(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	pm := NewPairmintFilePV()
+	pm := NewSCFilePV()
 	pm.Logger = log.New(os.Stderr, "", 0)
 	pm.Config.Init.Rank = 2
 	pm.Update()
@@ -164,7 +164,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestGetPubKey(t *testing.T) {
-	pm := NewPairmintFilePV()
+	pm := NewSCFilePV()
 	priv := tmed25519.GenPrivKey()
 	pm.FilePV = tmprivval.NewFilePV(priv, "", "")
 
@@ -175,7 +175,7 @@ func TestGetPubKey(t *testing.T) {
 }
 
 func TestSignVote(t *testing.T) {
-	pm := NewPairmintFilePV()
+	pm := NewSCFilePV()
 	priv := tmed25519.GenPrivKey()
 	pm.FilePV = tmprivval.NewFilePV(priv, "./priv_validator_key.json", "./priv_validator_state.json")
 	defer os.Remove("./priv_validator_key.json")
@@ -195,7 +195,7 @@ func TestSignVote(t *testing.T) {
 }
 
 func TestSignProposal(t *testing.T) {
-	pm := NewPairmintFilePV()
+	pm := NewSCFilePV()
 	priv := tmed25519.GenPrivKey()
 	pm.FilePV = tmprivval.NewFilePV(priv, "./priv_validator_key.json", "./priv_validator_state.json")
 	defer os.Remove("./priv_validator_key.json")
@@ -248,13 +248,13 @@ func testSignerClient(listenAddr, chainID string, quit chan<- error) {
 	return
 }
 
-func testPairminter(protocol, dialAddr string, privKey ed25519.PrivateKey, quit chan<- error, sigCh chan os.Signal) {
+func testSignCtrled(protocol, dialAddr string, privKey ed25519.PrivateKey, quit chan<- error, sigCh chan os.Signal) {
 	ioutil.WriteFile("./priv_validator_key.json", []byte(testPrivValidatorKey()), 0644)
 	ioutil.WriteFile("./priv_validator_state.json", []byte(testPrivValidatorState()), 0644)
 	defer os.Remove("./priv_validator_key.json")
 	defer os.Remove("./priv_validator_state.json")
 
-	pm := NewPairmintFilePV()
+	pm := NewSCFilePV()
 	pm.Logger = log.New(os.Stderr, "", 0)
 	pm.Config = testValidConfig()
 	pm.FilePV = tmprivval.LoadOrGenFilePV(pm.Config.FilePV.KeyFilePath, pm.Config.FilePV.StateFilePath)
@@ -310,7 +310,7 @@ func TestRun(t *testing.T) {
 
 	go testSignerClient("127.0.0.1:3000", "testchain", quitCh)
 	go testCommitEndpoint(quitCh)
-	go testPairminter("tcp", "127.0.0.1:3000", priv, quitCh, sigCh)
+	go testSignCtrled("tcp", "127.0.0.1:3000", priv, quitCh, sigCh)
 
 	if err := <-quitCh; err != nil {
 		t.Fatalf("Expected err to be nil, instead got: %v", err)

@@ -7,9 +7,9 @@ import (
 	"strings"
 	"syscall"
 
-	builder "github.com/BlockscapeNetwork/pairmint/cmd/init"
-	"github.com/BlockscapeNetwork/pairmint/config"
-	"github.com/BlockscapeNetwork/pairmint/utils"
+	builder "github.com/BlockscapeNetwork/signctrl/cmd/init"
+	"github.com/BlockscapeNetwork/signctrl/config"
+	"github.com/BlockscapeNetwork/signctrl/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	tmprivval "github.com/tendermint/tendermint/privval"
@@ -19,13 +19,13 @@ var (
 	// Flags
 	keypair bool
 
-	// The init command creates a pairmint.toml configuration file and a
+	// The init command creates a config.toml configuration file and a
 	// secret seed used for establishing a secret connection to Tendermint
 	// and an external PrivValidator process.
 	initCmd = &cobra.Command{
 		Use:   "init",
-		Short: "Initialize pairmint",
-		Long:  "Create a pairmint.toml configuration template and generate a pm-identity.key seed.",
+		Short: "Initialize SignCTRL",
+		Long:  "Create a config.toml configuration template and generate a pm-identity.key seed.",
 		Run: func(cmd *cobra.Command, args []string) {
 			// Get the configuration directory.
 			configDir := config.GetDir()
