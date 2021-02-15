@@ -47,9 +47,9 @@ var (
 				Writer:   os.Stderr,
 			})
 
-			// Load the keypair from the pm-identity.key file. The private key is necessary for
+			// Load the keypair from the conn.key file. The private key is necessary for
 			// establishing a secret connection to Tendermint.
-			priv, _, err := utils.LoadKeypair(configDir + "/pm-identity.key")
+			priv, _, err := utils.LoadKeypair(configDir + "/conn.key")
 			if err != nil {
 				pv.Logger.Printf("[ERR] signctrl: error while loading keypair: %v\n", err)
 				os.Exit(int(syscall.SIGHUP))

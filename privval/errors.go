@@ -12,7 +12,7 @@ var (
 	ErrNoSigner = errors.New("validator has no permission to sign votes/proposals")
 
 	// ErrUninitialized is thrown if the node has not yet been initialized in
-	// terms of missing a config.toml and the pm-identity.key.
+	// terms of missing a config.toml and the conn.key.
 	ErrUninitialized = errors.New("SignCTRL is not initialized")
 
 	// ErrTooManyMissedBlocks is thrown if the node exceeds the threshold of

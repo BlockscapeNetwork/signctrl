@@ -25,7 +25,7 @@ var (
 	initCmd = &cobra.Command{
 		Use:   "init",
 		Short: "Initialize SignCTRL",
-		Long:  "Create a config.toml configuration template and generate a pm-identity.key seed.",
+		Long:  "Create a config.toml configuration template and generate a conn.key seed.",
 		Run: func(cmd *cobra.Command, args []string) {
 			// Get the configuration directory.
 			configDir := config.GetDir()
@@ -42,15 +42,15 @@ var (
 				os.Exit(int(syscall.SIGHUP))
 			}
 
-			// Generate the pm-identity.key seed if there isn't already one.
-			seedPath := configDir + "/pm-identity.key"
+			// Generate the conn.key seed if there isn't already one.
+			seedPath := configDir + "/conn.key"
 			if _, err := os.Stat(seedPath); os.IsNotExist(err) {
 				if err := utils.GenSeed(seedPath); err != nil {
 					fmt.Printf("couldn't generate seed: %v\n", err)
 					os.Exit(int(syscall.SIGHUP))
 				}
 			} else {
-				fmt.Printf("Found existing pm-identity.key seed at %v\n", configDir)
+				fmt.Printf("Found existing conn.key seed at %v\n", configDir)
 			}
 
 			// Generate new key and state files if --keypair flag is set.

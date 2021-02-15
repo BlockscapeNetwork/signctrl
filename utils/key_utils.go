@@ -42,7 +42,7 @@ func LoadKeypair(filepath string) (ed25519.PrivateKey, ed25519.PublicKey, error)
 	return privKey, pubKey, nil
 }
 
-// writeBase64Seed base64-encodes the given seed bytes and writes them to the pm-identity.key
+// writeBase64Seed base64-encodes the given seed bytes and writes them to the conn.key
 // file in the `SIGNCTRL_CONFIG_DIR` directory with restricted file permissions (0700).
 func writeBase64Seed(filepath string, seed []byte) error {
 	encSeed := make([]byte, base64.StdEncoding.EncodedLen(len(seed)))
@@ -68,7 +68,7 @@ func GenSeed(filepath string) error {
 		return err
 	}
 
-	fmt.Printf("Created new pm-identity.key seed at %v\n", os.Getenv("SIGNCTRL_CONFIG_DIR"))
+	fmt.Printf("Created new conn.key seed at %v\n", os.Getenv("SIGNCTRL_CONFIG_DIR"))
 
 	return nil
 }
