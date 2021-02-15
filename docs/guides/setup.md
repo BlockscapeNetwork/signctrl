@@ -159,18 +159,43 @@ state_file_path = "/Users/myuser/.signctrl/priv_validator_state.json"
 </tr>
 </table>
 
-### Running
+### Unit File
 
-Once all the nodes are configured, start up SignCTRL on each validator node (in no particular order) via
+It is recommended to use systemctl to run SignCTRL. Here's an example of a `signctrl.service` unit file:
 
-```shell
-$ signctrl start
+```text
+[Unit]
+Description=signctrl
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+User=ec2-user
+Group=ec2-user
+PermissionsStartOnly=true
+ExecStart=/home/<user>/go/bin/signctrl start
+KillSignal=SIGTERM
+LimitNOFILE=4096
+Environment=SIGNCTRL_CONFIG_DIR=/Users/<user>/.signctrl
+
+[Install]
+WantedBy=multi-user.target
 ```
 
-Then, start your validator via
+> :warning: Do under no circumstances use any restart options in your SignCTRL unit file, as they currently carry the risk of double-signing.
+
+### Running
+
+Once all the nodes are configured, start the SignCTRL service first via
 
 ```shell
-$ simd start
+$ sudo systemctl start signctrl
+```
+
+and then, start your validator via
+
+```shell
+$ sudo systemctl simd start
 ```
 
 > :information_source: Replace `simd` with your binary.
