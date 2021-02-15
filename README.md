@@ -48,6 +48,14 @@ or installed directly into `$GOPATH/bin` via
 $ make install
 ```
 
+## Running
+
+Run the SignCTRL daemon via
+
+```shell
+$ start signctrl
+```
+
 ## Getting Started
 
 * [Setting up a validator with SignCTRL](../signctrl/docs/guides/setup.md)
