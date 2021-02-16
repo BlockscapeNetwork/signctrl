@@ -199,3 +199,8 @@ and then, start your validator via
 ```shell
 $ sudo systemctl simd start
 ```
+
+> For convenience, you can also chain the commands above with small delays in between:
+> ```shell
+> $ sudo systemctl start signctrl; sleep 0.5s; sudo systemctl start simd
+> ```
