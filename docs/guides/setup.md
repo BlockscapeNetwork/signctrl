@@ -204,3 +204,5 @@ $ sudo systemctl simd start
 > ```shell
 > $ sudo systemctl start signctrl; sleep 0.5s; sudo systemctl start simd
 > ```
+
+> :information_source: It doesn't matter which order you start your validators in. Ranks 2..n will always wait for a signature from rank 1 before they start couting missed blocks in a row and consequently updating their ranks.
