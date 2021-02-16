@@ -86,8 +86,7 @@ $ sudo systemctl start signctrl
 $ sudo systemctl start simd
 ```
 
-For convenience, you can also chain all the commands above with small delays in between:
-
-```shell
-$ sudo systemctl stop simd; sleep 0.5s; sudo systemctl stop signctrl; sleep 0.5s; sudo systemctl start signctrl; sleep 0.5s; sudo systemctl start simd
-```
+> For convenience, you can also chain all the commands above with small delays in between:
+> ```shell
+> $ sudo systemctl stop simd; sleep 0.5s; sudo systemctl stop signctrl; sleep 0.5s; sudo systemctl start signctrl; sleep 0.5s; sudo systemctl start simd
+> ```
