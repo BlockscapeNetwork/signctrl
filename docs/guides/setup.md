@@ -186,6 +186,8 @@ WantedBy=multi-user.target
 
 ### Running
 
+> :information_source: Replace all occurrences of `simd` with the name of your binary.
+
 Once all the nodes are configured, start the SignCTRL service first via
 
 ```shell
@@ -197,5 +199,3 @@ and then, start your validator via
 ```shell
 $ sudo systemctl simd start
 ```
-
-> :information_source: Replace `simd` with your binary.
