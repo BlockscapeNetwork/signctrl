@@ -4,9 +4,9 @@ This page covers how SignCTRL's underlying ranking system provided protection ag
 
 ## SignCTRL Set
 
-A SignCTRL set consists of two or more validators that all share the same keys, and thus represent the same validator entity. Letting all of those validators sign blocks simultaneously is a sure-fire way of getting slashed for double-signing, so there needs to be some form of coordination in the set in terms of which validator has permission to sign at any given point in time. Thus, the idea is very simple - only one validator in the set should sign all blocks while the others back it up if it becomes unavailable.
+A SignCTRL set consists of two or more validators that all share the same keys, and thus represent the same validator entity. Letting all of those validators sign blocks simultaneously is a sure-fire way of getting slashed for double-signing, so there needs to be some form of coordination in terms of which validator in the set has permission to sign at any given point in time. Thus, the idea is very simple - only one validator in the set should sign blocks while the others back it up if it becomes unavailable.
 
-Contrary to approaches that add a consensus layer and therefore more communication overhead to the set of redundant validators, like [Raft](https://raft.github.io/), SignCTRL uses the blockchain itself as a perfectly synchronous communication line that the validators in the set use to coordinate signing permissions. Let's take a closer look at how SignCTRL achieves this.
+Contrary to approaches that add a consensus layer, and therefore more communication overhead, to the set of redundant validators, like [Raft](https://raft.github.io/), SignCTRL uses the blockchain itself as a perfectly synchronous communication line that the validators use to coordinate signing permissions.
 
 ## Validator Ranking
 
