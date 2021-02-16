@@ -58,6 +58,6 @@ $ start signctrl
 
 ## Getting Started
 
-* [Setting up a validator with SignCTRL](../signctrl/docs/guides/setup.md)
-* [Performing a software upgrade](../signctrl/docs/guides/upgrade.md)
-* [Migrating from another setup](../signctrl/docs/guides/migration.md)
+* [Setting up a validator with SignCTRL](docs/guides/setup.md)
+* [Performing a software upgrade](docs/guides/upgrade.md)
+* [Migrating from existing setup](docs/guides/migration.md)
