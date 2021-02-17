@@ -9,3 +9,4 @@ To get started quickly, please see [Getting Started](../guides/README.md).
 ## Overview
 
 * [Double-Signing Protection](./ds-protection.md)
+* [Message Flow](./message-flow.md)
