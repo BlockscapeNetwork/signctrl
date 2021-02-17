@@ -59,7 +59,7 @@ func TestInitDir(t *testing.T) {
 }
 
 func TestGetDir(t *testing.T) {
-	defaultDir := os.Getenv("HOME") + "/.test"
+	defaultDir := os.Getenv("HOME") + "/.signctrl"
 
 	os.Unsetenv("SIGNCTRL_CONFIG_DIR")
 	if GetDir() != defaultDir {
