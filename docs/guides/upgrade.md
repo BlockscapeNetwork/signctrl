@@ -63,7 +63,7 @@ $ cp /path/to/./signctrl_old/*.json /path/to/.signctrl
 There is currently now automatic way of porting over old configuration settings into new formats, so for now, this process will remain manual. One way to go about it is to open both config.toml files side by side, copy over known fields from the old config.toml and finally fill in the new fields.
 
 > :warning: Before you perform a **rolling update**, please perform due diligence when porting over the node's `rank` value.
-> 1) It's possible that the rank specified in the `config.toml` doesn't match the validators current rank anymore. Please, check the logs to see which rank the validator is currently at.
+> 1) It's possible that the rank specified in the `config.toml` doesn't match the validators current rank anymore. Please, check the logs to see which rank the validator is currently at. For now, you have to use the DEBUG level for that.
 > 2) Make sure that there are no rank updates during the upgrade process that might cause the node's rank to become obsolete before it is started.
 
 ## Rolling Update
