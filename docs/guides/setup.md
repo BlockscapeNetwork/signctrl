@@ -11,11 +11,11 @@ In order to set up your node, you can follow Tendermint's official documentation
 
 ## SignCTRL Setup
 
-Each validator node runs in tandem with its own SignCTRL daemon, so each and every validator in the set needs to have its own SignCTRL daemon with its own configuration.
+Each validator node runs in tandem with its own SignCTRL daemon, so each and every validator in the set needs to have its own configuration.
 
 ### Initialization
 
-SignCTRL needs to be configured in order to be able to talk to a validator. The configuration directory default to `$HOME/.signctrl` - it can be set to a custom directory, though, via the environment variable `$SIGNCTRL_CONFIG_DIR`.
+SignCTRL needs to be configured in order to be able to talk to a validator. The configuration directory defaults to `$HOME/.signctrl` - it can be set to a custom directory, though, via the environment variable `$SIGNCTRL_CONFIG_DIR`.
 
 First thing we're going to do is initialize SignCTRL via
 
@@ -161,7 +161,7 @@ state_file_path = "/Users/myuser/.signctrl/priv_validator_state.json"
 
 ### Unit File
 
-It is recommended to use systemctl to run SignCTRL. Here's an example of a `signctrl.service` unit file:
+It is recommended to use `systemctl` to run SignCTRL. Here's an example of a `signctrl.service` unit file:
 
 ```text
 [Unit]
@@ -205,4 +205,4 @@ $ sudo systemctl simd start
 > $ sudo systemctl start signctrl; sleep 0.5s; sudo systemctl start simd
 > ```
 
-> :information_source: It doesn't matter which order you start your validators in. Ranks 2..n will always wait for a signature from rank 1 before they start couting missed blocks in a row and consequently updating their ranks.
+> :information_source: It doesn't matter which order you start your validators in. Ranks 2..n will always wait for a signature from rank 1 before they start counting missed blocks in a row and consequently updating their ranks.
