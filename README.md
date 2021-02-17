@@ -53,7 +53,7 @@ $ make install
 Run the SignCTRL daemon via
 
 ```shell
-$ start signctrl
+$ signctrl start
 ```
 
 ## Getting Started
