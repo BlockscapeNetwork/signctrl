@@ -2,6 +2,8 @@
 
 This is a step-by-step guide on how to perform a software upgrade for your SignCTRL validator set.
 
+> :information_source: This guide assumes you have completed the [Setup Guide](./setup.md) before.
+
 ## Download The New Version
 
 Check out the latest version via
@@ -62,9 +64,11 @@ $ cp /path/to/./signctrl_old/*.json /path/to/.signctrl
 
 There is currently now automatic way of porting over old configuration settings into new formats, so for now, this process will remain manual. One way to go about it is to open both config.toml files side by side, copy over known fields from the old config.toml and finally fill in the new fields.
 
-> :warning: Before you perform a **rolling update**, please perform due diligence when porting over the node's `rank` value.
-> 1) It's possible that the rank specified in the `config.toml` doesn't match the validators current rank anymore. Please, check the logs to see which rank the validator is currently at. For now, you have to use the DEBUG level for that.
-> 2) Make sure that there are no rank updates during the upgrade process that might cause the node's rank to become obsolete before it is started.
+> :warning: **IMPORTANT WARNING** :warning:
+> 
+> **Before you restart** a node, please perform due diligence when porting over the node's `rank` value.
+> 1) It's possible that the rank specified in the `config.toml` doesn't match the validators **current** rank anymore. Please, check the logs to see which rank the validator is currently at. For now, you have to use the DEBUG level for that.
+> 2) Make sure that, in the meantime while the node was stopped, there have been no rank updates that might cause the node's rank to become obsolete before it is started.
 
 ## Rolling Update
 
