@@ -2,7 +2,7 @@
 
 SignCTRL itself doesn't sign any votes/proposals. It rather acts as a gate to the PrivValidator, meaning that it's merely in charge of passing votes/proposals to the PrivValidator if it is has permission to sign, which means that it's ranked first, and barring the way if it doesn't, which means that it's ranked second or lower. You can read more about the ranking system and how it plays into protection against double-signing [here](./ds-protection.md).
 
-Before a sign request is handles, SignCTRL needs to make sure the current rank, and therefore the permission to sign, is still valid for the vote/proposal on the requested height. It does so by querying Tendermint's `/block` endpoint in order to check the previous/latest block for it's validator's signature and update the rank according to its internal counter for missed blocks in a row.
+Before a sign request is handled, SignCTRL needs to make sure the current rank, and therefore the permission to sign, is still valid for the vote/proposal on the requested height. It does so by querying Tendermint's `/block` endpoint in order to check the previous/latest block for it's validator's signature and update the rank according to its internal counter for missed blocks in a row.
 
 ## Rank 1
 

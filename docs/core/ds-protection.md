@@ -1,6 +1,6 @@
 # Double-Signing Protection
 
-This page covers how SignCTRL's underlying ranking system provided protection against double-signing.
+This page covers how SignCTRL's underlying ranking system provides protection against double-signing.
 
 ## SignCTRL Set
 

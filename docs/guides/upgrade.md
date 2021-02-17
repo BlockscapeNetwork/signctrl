@@ -67,7 +67,7 @@ There is currently now automatic way of porting over old configuration settings 
 > :warning: **IMPORTANT WARNING** :warning:
 > 
 > **Before you restart** a node, please perform due diligence when porting over the node's `rank` value.
-> 1) It's possible that the rank specified in the `config.toml` doesn't match the validators **current** rank anymore. Please, check the logs to see which rank the validator is currently at. You'll need a minimum log level of INFO for this.
+> 1) It's possible that the rank specified in the `config.toml` doesn't match the validators **current** rank anymore. Please, check the logs to see which rank the validator is currently at. You'll need a minimum log level of INFO for this. //Is this really important, shouldn't it still work with the initial values? 
 > 2) Make sure that, in the meantime while the node was stopped, there have been no rank updates that might cause the node's rank to become obsolete before it is started.
 
 ## Rolling Update

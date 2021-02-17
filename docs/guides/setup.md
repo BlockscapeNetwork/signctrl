@@ -56,7 +56,7 @@ In the previous section, we've created a `config.toml` file in our configuration
 
 # Minimum log level for SignCTRL logs.
 # Must be either DEBUG, INFO, WARN or ERR.
-log_level = ""
+log_level = "INFO"
 
 # Number of SignCTRL validator nodes running in parallel.
 # This number cannot be changed during operation anymore.
@@ -64,28 +64,28 @@ log_level = ""
 # nodes, modify the configuration on each node and start
 # them up again.
 # Must be 2 or higher.
-set_size = 0
+set_size = 2
 
 # Number of missed blocks in a row that triggers a rank
 # update in the set.
 # Must be 1 or higher.
-threshold = 0
+threshold = 10
 
 # SignCTRL node's rank on startup. It is used to determine
 # which node in the set is currently signing (rank 1) and
 # which nodes line up as backups (ranks 2-n).
 # Must be 1 or higher.
-rank = 0
+rank = 1
 
 # TCP socket address the validator listens on for an external
 # PrivValidator process. SignCTRL dials this address to
 # establish a connection to the validator.
 # Must be in host:port format.
-validator_laddr = ""
+validator_laddr = "127.0.0.1:3000"
 
 # TCP socket address the validator's RPC server listens on.
 # Must be in host:port format.
-validator_laddr_rpc = ""
+validator_laddr_rpc = "127.0.0.1:26657"
 
 [file_pv]
 
@@ -170,8 +170,8 @@ Requires=network-online.target
 After=network-online.target
 
 [Service]
-User=ec2-user
-Group=ec2-user
+User=signer
+Group=signer
 PermissionsStartOnly=true
 ExecStart=/home/<user>/go/bin/signctrl start
 KillSignal=SIGTERM
@@ -197,7 +197,7 @@ $ sudo systemctl start signctrl
 and then, start your validator via
 
 ```shell
-$ sudo systemctl simd start
+$ sudo systemctl simd start   // There needs to be some form of configuration to use the remote signer, right?
 ```
 
 > For convenience, you can also chain the commands above with small delays in between:
