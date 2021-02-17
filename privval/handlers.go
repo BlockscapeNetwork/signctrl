@@ -123,7 +123,7 @@ func (p *SCFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest, pubk
 
 	// Check if the validator has permission to sign the vote.
 	if p.Config.Init.Rank > 1 {
-		p.Logger.Printf("[DEBUG] signctrl: Validator is ranked #%v, no permission to sign %v for height %v\n", p.Config.Init.Rank, req.Vote.Type, req.Vote.Height)
+		p.Logger.Printf("[INFO] signctrl: Validator is ranked #%v, no permission to sign %v for height %v\n", p.Config.Init.Rank, req.Vote.Type, req.Vote.Height)
 		rse := &privvalproto.RemoteSignerError{Description: ErrNoSigner.Error()}
 		if _, err := rwc.Writer.WriteMsg(wrapMsg(&privvalproto.SignedVoteResponse{Vote: tmtypes.Vote{}, Error: rse})); err != nil {
 			return err
@@ -132,7 +132,7 @@ func (p *SCFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest, pubk
 		return ErrNoSigner
 	}
 
-	p.Logger.Printf("[DEBUG] signctrl: Validator is ranked #%v, signing %v...\n", p.Config.Init.Rank, req.Vote.Type)
+	p.Logger.Printf("[INFO] signctrl: Validator is ranked #%v, signing %v...\n", p.Config.Init.Rank, req.Vote.Type)
 
 	// Sign the vote.
 	if err := p.SignVote(p.Config.FilePV.ChainID, req.Vote); err != nil {
@@ -145,7 +145,7 @@ func (p *SCFilePV) handleSignVoteRequest(req *privvalproto.SignVoteRequest, pubk
 		return err
 	}
 
-	p.Logger.Printf("[DEBUG] signctrl: Signed %v for block height %v (signature: %v)\n", req.Vote.Type, req.Vote.Height, strings.ToUpper(hex.EncodeToString(req.Vote.Signature)))
+	p.Logger.Printf("[INFO] signctrl: Signed %v for block height %v (signature: %v)\n", req.Vote.Type, req.Vote.Height, strings.ToUpper(hex.EncodeToString(req.Vote.Signature)))
 	if _, err := rwc.Writer.WriteMsg(wrapMsg(&privvalproto.SignedVoteResponse{Vote: *req.Vote, Error: nil})); err != nil {
 		return err
 	}
@@ -224,7 +224,7 @@ func (p *SCFilePV) handleSignProposalRequest(req *privvalproto.SignProposalReque
 
 	// Check if the validator has permission to sign the proposal.
 	if p.Config.Init.Rank > 1 {
-		p.Logger.Printf("[DEBUG] signctrl: Validator is ranked #%v, no permission to sign %v for height %v\n", p.Config.Init.Rank, req.Proposal.Type, req.Proposal.Height)
+		p.Logger.Printf("[INFO] signctrl: Validator is ranked #%v, no permission to sign %v for height %v\n", p.Config.Init.Rank, req.Proposal.Type, req.Proposal.Height)
 		rse := &privvalproto.RemoteSignerError{Description: ErrNoSigner.Error()}
 		if _, err := rwc.Writer.WriteMsg(wrapMsg(&privvalproto.SignedProposalResponse{Proposal: tmtypes.Proposal{}, Error: rse})); err != nil {
 			return err
@@ -233,7 +233,7 @@ func (p *SCFilePV) handleSignProposalRequest(req *privvalproto.SignProposalReque
 		return ErrNoSigner
 	}
 
-	p.Logger.Printf("[DEBUG] signctrl: Validator is ranked #%v, signing %v...", p.Config.Init.Rank, req.Proposal.Type)
+	p.Logger.Printf("[INFO] signctrl: Validator is ranked #%v, signing %v...", p.Config.Init.Rank, req.Proposal.Type)
 
 	// Sign the proposal.
 	if err := p.SignProposal(p.Config.FilePV.ChainID, req.Proposal); err != nil {
@@ -246,7 +246,7 @@ func (p *SCFilePV) handleSignProposalRequest(req *privvalproto.SignProposalReque
 		return err
 	}
 
-	p.Logger.Printf("[DEBUG] signctrl: Signed %v for block height %v (signature: %v)\n", req.Proposal.Type, req.Proposal.Height, strings.ToUpper(hex.EncodeToString(req.Proposal.Signature)))
+	p.Logger.Printf("[INFO] signctrl: Signed %v for block height %v (signature: %v)\n", req.Proposal.Type, req.Proposal.Height, strings.ToUpper(hex.EncodeToString(req.Proposal.Signature)))
 	if _, err := rwc.Writer.WriteMsg(wrapMsg(&privvalproto.SignedProposalResponse{Proposal: *req.Proposal, Error: nil})); err != nil {
 		return err
 	}
