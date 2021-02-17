@@ -2,7 +2,7 @@
 
 This is a step-by-step guide on how to migrate from an existing node setup to a SignCTRL setup. For this guide, we're going to assume a single-node setup.
 
-> :information_source: Please follow the [Setup Guide](../guides/setup.md) first, until you're ready to run your validator with SignCTRL. Before starting 
+> :information_source: Please follow the [Setup Guide](../guides/setup.md) first, until you're ready to run your validator with SignCTRL.
 
 ## Rolling Migration
 
