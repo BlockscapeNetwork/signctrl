@@ -163,7 +163,7 @@ state_file_path = "/Users/myuser/.signctrl/priv_validator_state.json"
 
 It is recommended to use `systemctl` to run SignCTRL. Here's an example of a `signctrl.service` unit file:
 
-```text
+```toml
 [Unit]
 Description=signctrl
 Requires=network-online.target
