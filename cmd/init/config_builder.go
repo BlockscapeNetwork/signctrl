@@ -47,11 +47,13 @@ validator_laddr_rpc = "127.0.0.1:26657"
 chain_id = ""
 
 # The path to the priv_validator_key.json file.
-# Defaults to $SIGNCTRL_CONFIG_DIR/priv_validator_key.json if left empty.
+# If left empty, defaults to $SIGNCTRL_CONFIG_DIR/priv_validator_key.json
+# If that is not set, it falls back to $HOME/.signctrl/priv_validator_key.json.
 key_file_path = ""
 
 # The path to the priv_validator_state.json file.
-# Defaults to $SIGNCTRL_CONFIG_DIR/priv_validator_state.json if left empty.
+# If left empty, defaults to $SIGNCTRL_CONFIG_DIR/priv_validator_state.json.
+# If that is not set, it falls back to $SIGNCTRL_CONFIG_DIR/priv_validator_state.json.
 state_file_path = ""
 `
 
