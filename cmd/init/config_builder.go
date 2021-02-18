@@ -10,7 +10,7 @@ const configTemplate = `[init]
 
 # Minimum log level for SignCTRL logs.
 # Must be either DEBUG, INFO, WARN or ERR.
-log_level = ""
+log_level = "INFO"
 
 # Number of SignCTRL validator nodes running in parallel.
 # This number cannot be changed during operation anymore.
@@ -18,12 +18,12 @@ log_level = ""
 # nodes, modify the configuration on each node and start
 # them up again.
 # Must be 2 or higher.
-set_size = 0
+set_size = 2
 
 # Number of missed blocks in a row that triggers a rank
 # update in the set.
 # Must be 1 or higher.
-threshold = 0
+threshold = 10
 
 # SignCTRL node's rank on startup. It is used to determine
 # which node in the set is currently signing (rank 1) and
@@ -35,11 +35,11 @@ rank = 0
 # PrivValidator process. SignCTRL dials this address to
 # establish a connection to the validator.
 # Must be in host:port format.
-validator_laddr = ""
+validator_laddr = "127.0.0.1:3000"
 
 # TCP socket address the validator's RPC server listens on.
 # Must be in host:port format.
-validator_laddr_rpc = ""
+validator_laddr_rpc = "127.0.0.1:26657"
 
 [file_pv]
 

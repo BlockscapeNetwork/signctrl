@@ -58,4 +58,4 @@ $ signctrl start
 
 ## Getting Started
 
-To get started, please see [Getting Started](docs/guides/README.md).
+To get started, please see the [Guides/Tutorials](docs/guides/README.md).
