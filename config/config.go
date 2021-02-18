@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -124,9 +125,8 @@ func (c *Config) validateInitConfig() error {
 			}
 		}
 	}
-
 	if errs != "" {
-		return fmt.Errorf("%v", errs)
+		return errors.New(strings.TrimSuffix(errs, "\n"))
 	}
 
 	return nil
@@ -150,9 +150,8 @@ func (c *Config) validateFilePVConfig() error {
 	if _, err := os.Stat(c.FilePV.StateFilePath); err != nil {
 		errs += "\tstate_file_path does not exist\n"
 	}
-
 	if errs != "" {
-		return fmt.Errorf("%v", errs)
+		return errors.New(strings.TrimSuffix(errs, "\n"))
 	}
 
 	return nil
@@ -160,16 +159,16 @@ func (c *Config) validateFilePVConfig() error {
 
 // validate validates the entire configuration.
 func (c *Config) validate() error {
-	errs := ""
+	errs := "\n"
 	if err := c.validateInitConfig(); err != nil {
 		errs += err.Error()
 	}
+	errs += "\n"
 	if err := c.validateFilePVConfig(); err != nil {
 		errs += err.Error()
 	}
-
 	if errs != "" {
-		return fmt.Errorf("invalid config:\n%v", errs)
+		return errors.New(errs)
 	}
 
 	return nil
