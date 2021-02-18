@@ -173,7 +173,7 @@ After=network-online.target
 User=signer
 Group=signer
 PermissionsStartOnly=true
-ExecStart=/home/<user>/go/bin/signctrl start
+ExecStart=/home/signer/go/bin/signctrl start
 KillSignal=SIGTERM
 LimitNOFILE=4096
 Environment=SIGNCTRL_CONFIG_DIR=/Users/<user>/.signctrl
