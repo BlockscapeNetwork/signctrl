@@ -75,7 +75,7 @@ threshold = 10
 # which node in the set is currently signing (rank 1) and
 # which nodes line up as backups (ranks 2-n).
 # Must be 1 or higher.
-rank = 1
+rank = 0
 
 # TCP socket address the validator listens on for an external
 # PrivValidator process. SignCTRL dials this address to
@@ -197,7 +197,7 @@ $ sudo systemctl start signctrl
 and then, start your validator via
 
 ```shell
-$ sudo systemctl simd start   // There needs to be some form of configuration to use the remote signer, right?
+$ sudo systemctl simd start
 ```
 
 > For convenience, you can also chain the commands above with small delays in between:
