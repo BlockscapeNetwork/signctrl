@@ -126,7 +126,7 @@ func (c *Config) validateInitConfig() error {
 		}
 	}
 	if errs != "" {
-		return errors.New(strings.TrimSuffix(errs, "\n"))
+		return errors.New(errs)
 	}
 
 	return nil
@@ -151,7 +151,7 @@ func (c *Config) validateFilePVConfig() error {
 		errs += "\tstate_file_path does not exist\n"
 	}
 	if errs != "" {
-		return errors.New(strings.TrimSuffix(errs, "\n"))
+		return errors.New(errs)
 	}
 
 	return nil
@@ -159,16 +159,15 @@ func (c *Config) validateFilePVConfig() error {
 
 // validate validates the entire configuration.
 func (c *Config) validate() error {
-	errs := "\n"
+	errs := ""
 	if err := c.validateInitConfig(); err != nil {
 		errs += err.Error()
 	}
-	errs += "\n"
 	if err := c.validateFilePVConfig(); err != nil {
 		errs += err.Error()
 	}
 	if errs != "" {
-		return errors.New(errs)
+		return errors.New("\n" + errs)
 	}
 
 	return nil
