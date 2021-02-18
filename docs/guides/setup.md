@@ -75,7 +75,7 @@ threshold = 10
 # which node in the set is currently signing (rank 1) and
 # which nodes line up as backups (ranks 2-n).
 # Must be 1 or higher.
-rank = 1
+rank = 0
 
 # TCP socket address the validator listens on for an external
 # PrivValidator process. SignCTRL dials this address to
