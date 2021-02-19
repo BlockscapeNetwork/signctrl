@@ -59,6 +59,11 @@ func (bsc *BaseSignCtrled) UnlockCounter() {
 	}
 }
 
+// GetRank returns the validators current rank.
+func (bsc *BaseSignCtrled) GetRank() int {
+	return bsc.rank
+}
+
 // Missed updates the counter for missed blocks in a row. Errors are returned if...
 //
 // 1) the threshold of too many blocks missed in a row is exceeded
