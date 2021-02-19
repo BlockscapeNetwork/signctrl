@@ -1,0 +1,9 @@
+####################################################
+### Privval defines the types of private         ###
+### validators that sign incoming sign requests. ###
+####################################################
+
+[privval]
+
+# The chain the validator validates for.
+chain_id = ""

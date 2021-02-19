@@ -1,0 +1,40 @@
+#################################################
+### Init defines the configuration parameters ###
+### that SignCTRL needs on initialization.    ###
+#################################################
+
+[init]
+
+# Minimum log level for SignCTRL logs.
+# Must be either DEBUG, INFO, WARN or ERR.
+log_level = "INFO"
+
+# Number of validators in the SignCTRL set.
+# This value must be the same across all validators
+# in the set.
+# Must be 2 or higher.
+set_size = 2
+
+# Number of missed blocks in a row that triggers
+# a rank update in the set.
+# This value must be the same across all validators
+# in the set.
+# Must be 1 or higher.
+threshold = 10
+
+# Rank of the validator on startup.
+# Rank 1 signs, while ranks 2..n serve as backups
+# until the threshold is exceeded and ranks are
+# updated.
+# Must be 1 or higher.
+rank = 0
+
+# TCP socket address the validator listens on for
+# an external PrivValidator process.
+# Must be a TCP address in the host:port format.
+validator_laddr = "tcp://127.0.0.1:3000"
+
+# TCP socket address the validator's RPC server
+# listens on.
+# Must be a TCP address in the host:port format.
+validator_laddr_rpc = "tcp://127.0.0.1:26657"
