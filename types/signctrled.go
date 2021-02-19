@@ -31,15 +31,15 @@ type SignCtrled interface {
 type BaseSignCtrled struct {
 	Logger        *log.Logger
 	counterLocked bool
-	missedInARow  uint
-	threshold     uint
-	rank          uint
+	missedInARow  int
+	threshold     int
+	rank          int
 
 	impl SignCtrled
 }
 
 // NewBaseSignCtrled creates a new instance of BaseSignCtrled.
-func NewBaseSignCtrled(logger *log.Logger, threshold uint, rank uint, impl SignCtrled) *BaseSignCtrled {
+func NewBaseSignCtrled(logger *log.Logger, threshold int, rank int, impl SignCtrled) *BaseSignCtrled {
 	return &BaseSignCtrled{
 		Logger:        logger,
 		counterLocked: true,
