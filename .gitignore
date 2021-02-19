@@ -1,0 +1,2 @@
+# Ignore locally built binary
+build/
