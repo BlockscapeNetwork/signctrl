@@ -33,7 +33,7 @@ const (
 // goPath returns the $GOPATH directory. It is retrieved using the 'go env GOPATH'
 // command.
 func goPath() string {
-	gopath, err := exec.Command("go", "enc", "GOPATH").Output()
+	gopath, err := exec.Command("go", "env", "GOPATH").Output()
 	if err != nil {
 		return ""
 	}
