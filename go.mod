@@ -3,7 +3,6 @@ module github.com/BlockscapeNetwork/signctrl
 go 1.15
 
 require (
-	github.com/gogo/protobuf v1.3.2
 	github.com/hashicorp/logutils v1.0.0
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/viper v1.7.1
