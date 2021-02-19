@@ -12,10 +12,8 @@ import (
 )
 
 var (
-	newKey bool
-	// external bool
-
-	initCmd = &cobra.Command{
+	newPrivval bool
+	initCmd    = &cobra.Command{
 		Use:   "init",
 		Short: "Initializes the SignCTRL node",
 		Long:  "Creates the .signctrl/ directory, including a config.toml and a conn.key file",
@@ -42,8 +40,8 @@ var (
 				os.Exit(1)
 			}
 
-			// Create new private validator key and state files if --new-key flag is set.
-			if newKey {
+			// Create new priv_validator_key.json and priv_validator_state.json files if --new-pv flag is set.
+			if newPrivval {
 				if err := init_util.CreateKeyAndStateFiles(cfgDir); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -55,6 +53,6 @@ var (
 
 func init() {
 	rootCmd.AddCommand(initCmd)
-	initCmd.Flags().BoolVar(&newKey, "new-key", false, "Generates a new private validator key along with a state file in the config directory")
-	viper.BindPFlag("new-key", initCmd.Flags().Lookup("new-key"))
+	initCmd.Flags().BoolVar(&newPrivval, "new-pv", false, "Creates a new priv_validator_key.json and a priv_validator_state.json file in the configuration directory")
+	viper.BindPFlag("new-pv", initCmd.Flags().Lookup("new-pv"))
 }
