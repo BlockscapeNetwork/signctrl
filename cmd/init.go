@@ -26,7 +26,7 @@ var (
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			fmt.Printf("Created %v\n", cfgDir)
+			fmt.Printf("Created configuration directory (%v)\n", cfgDir)
 
 			// Create the config file.
 			if err := init_util.CreateConfigFile(cfgDir); err != nil {
