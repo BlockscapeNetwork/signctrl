@@ -21,12 +21,16 @@ var (
 			// Get the config directory.
 			cfgDir := config.Dir()
 
-			// Create the config directory.
-			if err := os.MkdirAll(cfgDir, config.PermConfigDir); err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+			// Create the config directory if it doesn't already exist.
+			if _, err := os.Stat(cfgDir); os.IsNotExist(err) {
+				if err := os.MkdirAll(cfgDir, config.PermConfigDir); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				fmt.Printf("Created configuration directory (%v)\n", cfgDir)
+			} else {
+				fmt.Printf("Found existing configuration directory (%v)\n", cfgDir)
 			}
-			fmt.Printf("Created configuration directory (%v)\n", cfgDir)
 
 			// Create the config file.
 			if err := init_util.CreateConfigFile(cfgDir); err != nil {
