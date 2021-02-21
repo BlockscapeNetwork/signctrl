@@ -17,24 +17,29 @@ LDFLAGS += $(LDFLAGS)
 # Build for local system
 build:
 	@echo "--> Building SignCTRL..."
-	@go build -o build/signctrl *.go
+	@go build -ldflags "$(LDFLAGS)" -o build/signctrl *.go
+.PHONY: build
 
 # Build for linux
 build-linux:
 	@echo "--> Building SignCTRL for linux/amd64..."
 	GOOS=linux GOARCH=amd64 $(MAKE) build
+.PHONY: build-linux
 
 # Install the binary to $GOPATH/bin
 install:
-	@echo "--> Installing SignCTRL to "$(shell go env GOPATH)"/bin..."
-	@go build -o $(shell go env GOPATH)/bin/signctrl *.go
+	@echo "--> Installing SignCTRL to "$(GOPATH)"/bin..."
+	@go build -ldflags "$(LDFLAGS)" -o $(GOPATH)/bin/signctrl *.go
+.PHONY: install
 
 # Download dependencies
-go-mod-cache:
+go-mod-cache: go.sum
 	@echo "--> Downloading dependencies for SignCTRL..."
 	@go mod download
+.PHONY: go-mod-cache
 
 # Verify dependencies
-go.sum:
+go.sum: go.mod
 	@echo "--> Ensuring dependencies for SignCTRL have not been modified..."
 	@go mod verify
+.PHONY: go.sum
