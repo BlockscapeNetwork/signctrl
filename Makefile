@@ -2,7 +2,7 @@ GOPATH := $(shell go env GOPATH)
 
 # If building a release, checkout the version tag to get the correct version setting
 ifneq ($(shell git symbolic-ref -q --short HEAD),)
-	VERSION := unreleased-$(shell git symbolic-ref -q --short HEAD)-$(shell git rev-parse HEAD)
+	VERSION := unreleased-$(shell git symbolic-ref -q --short HEAD)
 else
 	VERSION := $(shell git describe --tags)
 endif
