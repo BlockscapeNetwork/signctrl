@@ -19,7 +19,8 @@ var (
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf(`SignCTRL
   Version:    %v
-  Git commit: %v`, SemVer, GitCommit)
+  Git commit: %v
+`, SemVer, GitCommit)
 		},
 	}
 )
