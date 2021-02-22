@@ -62,11 +62,8 @@ var (
 			select {
 			case <-pv.Quit(): // The quit channel from BaseService is used for self-terminating behavior
 				pv.Logger.Println("\n[INFO] signctrl: Terminating SignCTRL... (stopped)")
-				return
-
 			case <-sigs: // The sigs channel is only used for OS interrupt signals
 				pv.Logger.Println("\n[INFO] signctrl: Terminating SignCTRL... (interrupt)")
-				return
 			}
 		},
 	}
