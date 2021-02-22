@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/BlockscapeNetwork/signctrl/config"
-	"github.com/BlockscapeNetwork/signctrl/connection"
 	"github.com/BlockscapeNetwork/signctrl/privval"
+	"github.com/hashicorp/logutils"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -20,9 +22,6 @@ var (
 		Use:   "start",
 		Short: "Starts the SignCTRL node",
 		Run: func(cmd *cobra.Command, args []string) {
-			// Get the config directory.
-			cfgDir := config.Dir()
-
 			// Load the config into memory.
 			cfg, err := config.Load()
 			if err != nil {
@@ -30,35 +29,45 @@ var (
 				os.Exit(1)
 			}
 
+			// Set the logger and its mininum log level.
+			logger := log.New(os.Stderr, "", 0)
+			filter := &logutils.LevelFilter{
+				Levels:   config.LogLevels,
+				MinLevel: logutils.LogLevel(cfg.Init.LogLevel),
+				Writer:   os.Stderr,
+			}
+			logger.SetOutput(filter)
+
 			// Initialize a new SCFilePV.
+			cfgDir := config.Dir()
 			pv := privval.NewSCFilePV(
-				log.New(os.Stderr, "", 0),
+				logger,
 				cfg,
-				tm_privval.LoadOrGenFilePV(privval.KeyFilePath(cfgDir), privval.StateFilePath(cfgDir)),
+				tm_privval.LoadOrGenFilePV(
+					privval.KeyFilePath(cfgDir),
+					privval.StateFilePath(cfgDir),
+				),
 			)
 
-			// Load the connection key from the config directory.
-			connKey, err := connection.LoadConnKey(cfgDir)
-			if err != nil {
-				fmt.Printf("Couldn't load conn.key: %v", err)
+			// Start the SignCTRL service.
+			if err := pv.Start(); err != nil {
+				fmt.Println(err)
 				os.Exit(1)
 			}
 
-			// Dial the validator.
-			secretConn, err := connection.RetrySecretDialTCP(
-				cfg.Init.ValidatorListenAddress,
-				connKey,
-				pv.Logger,
-			)
-			if err != nil {
-				fmt.Printf("Couldn't dial validator: %v", err)
-				os.Exit(1)
-			}
-			defer secretConn.Close()
+			// Wait either for the service itself or a system call to quit the process.
+			sigs := make(chan os.Signal, 1)
+			signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-			// Start main goroutine for message handling.
-			// Wait for SIGINT or SIGTERM to terminate SignCTRL.
-			<-pv.Start(secretConn)
+			select {
+			case <-pv.Quit(): // The quit channel from BaseService is used for self-terminating behavior
+				pv.Logger.Println("\n[INFO] signctrl: Terminating SignCTRL... (stopped)")
+				return
+
+			case <-sigs: // The sigs channel is only used for OS interrupt signals
+				pv.Logger.Println("\n[INFO] signctrl: Terminating SignCTRL... (interrupt)")
+				return
+			}
 		},
 	}
 )
