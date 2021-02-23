@@ -76,8 +76,8 @@ func (bsc *BaseSignCtrled) Missed() error {
 		return ErrCounterLocked
 	}
 
-	bsc.Logger.Printf("[INFO] signctrl: Missed a block (%v/%v)", bsc.missedInARow, bsc.threshold)
 	bsc.missedInARow++
+	bsc.Logger.Printf("[INFO] signctrl: Missed a block (%v/%v)", bsc.missedInARow, bsc.threshold)
 
 	if bsc.missedInARow == bsc.threshold {
 		bsc.Logger.Printf("[INFO] signctrl: Missed too many blocks in a row (%v/%v)", bsc.missedInARow, bsc.threshold)
