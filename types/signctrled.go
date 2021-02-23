@@ -111,7 +111,7 @@ func (bsc *BaseSignCtrled) promote() error {
 		return ErrMustShutdown
 	}
 
-	bsc.Logger.Printf("[INFO] signctrl: Promote validator (%v -> %v)", bsc.rank, bsc.rank+1)
+	bsc.Logger.Printf("[INFO] signctrl: Promote validator (%v -> %v)", bsc.rank, bsc.rank-1)
 	bsc.rank--
 	bsc.Reset()
 
