@@ -65,6 +65,9 @@ var (
 			case <-sigs: // The sigs channel is only used for OS interrupt signals
 				pv.Logger.Println("\n[INFO] signctrl: Terminating SignCTRL... (interrupt)")
 			}
+
+			// Terminate the process gracefully with exit code 0.
+			os.Exit(0)
 		},
 	}
 )
