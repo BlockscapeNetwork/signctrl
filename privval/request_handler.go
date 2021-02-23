@@ -136,7 +136,7 @@ func handleSignVoteRequest(req *tm_privvalproto.SignVoteRequest, pv *SCFilePV) (
 
 	// Prevent the node from signing if it's not ranked first in the set.
 	if pv.GetRank() > 1 {
-		err := fmt.Errorf("no signing permission (rank %v is too low)", pv.GetRank())
+		err := fmt.Errorf("no signing permission for %v on block height %v (rank: %v)", req.Vote.Type, req.Vote.Height, pv.GetRank())
 		return wrapMsg(&tm_privvalproto.SignedVoteResponse{
 			Vote:  tm_typesproto.Vote{},
 			Error: &tm_privvalproto.RemoteSignerError{Description: err.Error()},
@@ -209,7 +209,7 @@ func handleSignProposalRequest(req *tm_privvalproto.SignProposalRequest, pv *SCF
 
 	// Prevent the node from signing if it's not ranked first in the set.
 	if pv.GetRank() > 1 {
-		err := fmt.Errorf("no signing permission (rank %v is too low)", pv.GetRank())
+		err := fmt.Errorf("no signing permission for %v on block height %v (rank: %v)", req.Proposal.Type, req.Proposal.Height, pv.GetRank())
 		return wrapMsg(&tm_privvalproto.SignedProposalResponse{
 			Proposal: tm_typesproto.Proposal{},
 			Error:    &tm_privvalproto.RemoteSignerError{Description: err.Error()},
