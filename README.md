@@ -1,5 +1,7 @@
 # SignCTRL
 
+[![License](https://img.shields.io/badge/License-Apache%202.0-olive.svg)](https://opensource.org/licenses/Apache-2.0)
+
 SignCTRL is a high availability solution for Tendermint that enables the creation of a highly available, self-managing set of validators that uses the blockchain itself as a perfectly synchronous communication line for double-signing protection.
 
 > :warning: Be mindful of key security as SignCTRL currently only supports Tendermint's file-based signer. Make sure to properly secure your validator instance from unauthorized access.
