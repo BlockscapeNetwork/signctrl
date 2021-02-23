@@ -33,7 +33,7 @@ $ make build       # local os/arch
 $ make build-linux # linux/amd64
 ```
 
-To install the binary directly to your `$GOPATH/bin`, use
+Alternatively, install the binary directly to your `$GOPATH/bin` via
 
 ```shell
 $ make install
