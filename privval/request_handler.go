@@ -144,8 +144,6 @@ func handleSignVoteRequest(req *tm_privvalproto.SignVoteRequest, pv *SCFilePV) (
 		}), err
 	}
 
-	pv.Logger.Printf("[DEBUG] signctrl: validator has signing permission for %v on block height %v", req.Vote.Type, req.Vote.Height)
-
 	// The node has permission to sign the vote, so sign it.
 	if err := pv.TMFilePV.SignVote(pv.Config.Privval.ChainID, req.Vote); err != nil {
 		err := fmt.Errorf("failed to sign %v for block height %v: %v", req.Vote.Type, req.Vote.Height, err)
