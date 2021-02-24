@@ -49,7 +49,7 @@ func hasSignedCommit(valaddr tm_types.Address, commitsigs *[]tm_types.CommitSig)
 // handlePingRequest handles a PingRequest by returning a
 // PingResponse.
 func handlePingRequest(pv *SCFilePV) (*tm_privvalproto.Message, error) {
-	pv.Logger.Println("[DEBUG] signctrl: Received PinRequest")
+	pv.Logger.Println("[DEBUG] signctrl: Received PingRequest")
 	return wrapMsg(&tm_privvalproto.PingResponse{}), nil
 }
 
