@@ -41,6 +41,7 @@ type SCFilePV struct {
 	Config        *config.Config
 	TMFilePV      *tm_privval.FilePV
 	SecretConn    net.Conn
+	TermCh        chan struct{}
 }
 
 // KeyFilePath returns the absolute path to the priv_validator_key.json file.
@@ -60,6 +61,7 @@ func NewSCFilePV(logger *log.Logger, cfg *config.Config, tmpv *tm_privval.FilePV
 		CurrentHeight: 1, // Start on genesis height
 		Config:        cfg,
 		TMFilePV:      tmpv,
+		TermCh:        make(chan struct{}),
 	}
 	pv.BaseService = *types.NewBaseService(
 		logger,
@@ -109,7 +111,7 @@ func (pv *SCFilePV) run() {
 				if err == types.ErrMustShutdown {
 					r.Close()
 					w.Close()
-					pv.Quit() <- struct{}{} // Signal termination to SCFilePV's run() goroutine
+					pv.TermCh <- struct{}{} // Signal termination
 					return
 				}
 			}
