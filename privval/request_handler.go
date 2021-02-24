@@ -121,6 +121,7 @@ func handleSignVoteRequest(req *tm_privvalproto.SignVoteRequest, pv *SCFilePV) (
 		if !hasSignedCommit(pv.TMFilePV.GetAddress(), &rb.Block.LastCommit.Signatures) {
 			// Check if the threshold of too many missed blocks in a row is exceeded.
 			if err := pv.Missed(); err != nil {
+				pv.Logger.Printf("[DEBUG] signctrl: err returned on missed block: %v", err)
 				return wrapMsg(&tm_privvalproto.SignedVoteResponse{
 					Vote:  tm_typesproto.Vote{},
 					Error: &tm_privvalproto.RemoteSignerError{Description: err.Error()},
@@ -142,6 +143,8 @@ func handleSignVoteRequest(req *tm_privvalproto.SignVoteRequest, pv *SCFilePV) (
 			Error: &tm_privvalproto.RemoteSignerError{Description: err.Error()},
 		}), err
 	}
+
+	pv.Logger.Printf("[DEBUG] signctrl: validator has signing permission for %v on block height %v", req.Vote.Type, req.Vote.Height)
 
 	// The node has permission to sign the vote, so sign it.
 	if err := pv.TMFilePV.SignVote(pv.Config.Privval.ChainID, req.Vote); err != nil {
