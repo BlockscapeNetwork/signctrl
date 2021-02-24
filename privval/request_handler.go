@@ -121,7 +121,6 @@ func handleSignVoteRequest(req *tm_privvalproto.SignVoteRequest, pv *SCFilePV) (
 		if !hasSignedCommit(pv.TMFilePV.GetAddress(), &rb.Block.LastCommit.Signatures) {
 			// Check if the threshold of too many missed blocks in a row is exceeded.
 			if err := pv.Missed(); err != nil {
-				pv.Logger.Printf("[DEBUG] signctrl: err returned on missed block: %v", err)
 				return wrapMsg(&tm_privvalproto.SignedVoteResponse{
 					Vote:  tm_typesproto.Vote{},
 					Error: &tm_privvalproto.RemoteSignerError{Description: err.Error()},
