@@ -84,6 +84,8 @@ func NewSCFilePV(logger *log.Logger, cfg *config.Config, tmpv *tm_privval.FilePV
 func (pv *SCFilePV) run() {
 	r := tm_protoio.NewDelimitedReader(pv.SecretConn, maxRemoteSignerMsgSize)
 	w := tm_protoio.NewDelimitedWriter(pv.SecretConn)
+	defer r.Close()
+	defer w.Close()
 
 	for {
 		var msg tm_privvalproto.Message
@@ -103,10 +105,8 @@ func (pv *SCFilePV) run() {
 			pv.Logger.Printf("[ERR] signctrl: couldn't handle request: %v\n", err)
 			if err == types.ErrMustShutdown {
 				pv.Logger.Printf("[DEBUG] signctrl: Terminating run() goroutine")
-				r.Close()
-				w.Close()
 				pv.Stop()
-				return
+				break
 			}
 		}
 	}
