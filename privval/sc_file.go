@@ -102,6 +102,7 @@ func (pv *SCFilePV) run() {
 			}
 
 			resp, err := HandleRequest(&msg, pv)
+			pv.Logger.Printf("[DEBUG] signctrl: err returned by HandleRequest: %v\n", err)
 			if _, err := w.WriteMsg(resp); err != nil {
 				pv.Logger.Printf("[ERR] signctrl: couldn't write message: %v\n", err)
 			}
