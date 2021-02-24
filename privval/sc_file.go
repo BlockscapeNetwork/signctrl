@@ -82,6 +82,9 @@ func NewSCFilePV(logger *log.Logger, cfg *config.Config, tmpv *tm_privval.FilePV
 // In order to stop the goroutine, Stop() should only be called outside of run(). The
 // goroutine returns on its own once SignCTRL is forced to shut down.
 func (pv *SCFilePV) run() {
+	r := tm_protoio.NewDelimitedReader(pv.SecretConn, maxRemoteSignerMsgSize)
+	w := tm_protoio.NewDelimitedWriter(pv.SecretConn)
+
 	for {
 		select {
 		case <-pv.Quit():
@@ -90,7 +93,6 @@ func (pv *SCFilePV) run() {
 
 		default:
 			var msg tm_privvalproto.Message
-			r := tm_protoio.NewDelimitedReader(pv.SecretConn, maxRemoteSignerMsgSize)
 			if _, err := r.ReadMsg(&msg); err != nil {
 				if err == io.EOF {
 					// Prevent the logs from being spammed with EOF errors
@@ -99,13 +101,10 @@ func (pv *SCFilePV) run() {
 				pv.Logger.Printf("[ERR] signctrl: couldn't read message: %v\n", err)
 			}
 
-			w := tm_protoio.NewDelimitedWriter(pv.SecretConn)
 			resp, err := HandleRequest(&msg, pv)
-
 			if _, err := w.WriteMsg(resp); err != nil {
 				pv.Logger.Printf("[ERR] signctrl: couldn't write message: %v\n", err)
 			}
-
 			if err != nil {
 				pv.Logger.Printf("[ERR] signctrl: couldn't handle request: %v\n", err)
 				if err == types.ErrMustShutdown {
