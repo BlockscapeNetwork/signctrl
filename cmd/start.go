@@ -67,10 +67,6 @@ var (
 			}
 
 			// Terminate the process gracefully with exit code 0.
-			if r := recover(); r != nil {
-				fmt.Println(r)
-				os.Exit(1)
-			}
 			os.Exit(0)
 		},
 	}
