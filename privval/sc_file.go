@@ -109,6 +109,7 @@ func (pv *SCFilePV) run() {
 				if err == types.ErrMustShutdown {
 					r.Close()
 					w.Close()
+					pv.Quit() <- struct{}{} // Signal termination to SCFilePV's run() goroutine
 					return
 				}
 			}
