@@ -109,6 +109,7 @@ func (pv *SCFilePV) run() {
 			if err != nil {
 				pv.Logger.Printf("[ERR] signctrl: %v\n", err)
 				if err == types.ErrMustShutdown {
+					pv.Logger.Printf("[DEBUG] signctrl: Terminating run() goroutine")
 					r.Close()
 					w.Close()
 					pv.TermCh <- struct{}{} // Signal termination
