@@ -98,7 +98,6 @@ func handleSignVoteRequest(req *tm_privvalproto.SignVoteRequest, pv *SCFilePV) (
 			Vote:  tm_typesproto.Vote{},
 			Error: &tm_privvalproto.RemoteSignerError{Description: err.Error()},
 		}), err
-
 	}
 
 	// Only check the commitsigs once for each block height.
