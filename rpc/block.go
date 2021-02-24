@@ -28,7 +28,7 @@ func GetBlock(rpcladdr string, height int64, logger *log.Logger) (*tm_coretypes.
 
 	logger.Printf("[DEBUG] signctrl: GET /block?height=%v", height)
 	laddrWithoutProtocol := strings.SplitAfter(rpcladdr, "://")
-	client := &http.Client{Timeout: 5 * time.Second} // TODO: Use approximation of blocktime*0.8 as timeout.
+	client := &http.Client{Timeout: 5 * time.Second} // TODO: Only timeout if new sign request comes in.
 	resp, err := client.Get(fmt.Sprintf("http://%v/block?height=%v", laddrWithoutProtocol[1], height))
 	if err != nil {
 		return nil, err
