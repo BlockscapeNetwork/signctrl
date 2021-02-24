@@ -87,6 +87,9 @@ func (pv *SCFilePV) run() {
 	defer r.Close()
 	defer w.Close()
 
+	defer pv.SecretConn.Close()                // Close the encrypted connection to the validator
+	defer func() { pv.TermCh <- struct{}{} }() // Signal termination
+
 	for {
 		var msg tm_privvalproto.Message
 		if _, err := r.ReadMsg(&msg); err != nil {
@@ -143,6 +146,4 @@ func (pv *SCFilePV) OnStart() (err error) {
 // Implements the Service interface.
 func (pv *SCFilePV) OnStop() {
 	pv.Logger.Printf("[INFO] signctrl: Stopping SignCTRL... (rank: %v)", pv.GetRank())
-	pv.SecretConn.Close()   // Close the encrypted connection to the validator
-	pv.TermCh <- struct{}{} // Signal termination
 }
