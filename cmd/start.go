@@ -59,8 +59,6 @@ var (
 			sigs := make(chan os.Signal, 1)
 			signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-			pv.Logger.Println("[DEBUG] signctrl: Waiting for termination signal...")
-
 			select {
 			case <-pv.TermCh: // TermCh is used for self-terminating behavior
 				pv.Logger.Println("\n[INFO] signctrl: Terminating SignCTRL... (stopped)")
@@ -68,10 +66,8 @@ var (
 				pv.Logger.Println("\n[INFO] signctrl: Terminating SignCTRL... (interrupt)")
 			}
 
-			pv.Logger.Println("[DEBUG] signctrl: Got termination signal!")
-
-			// Terminate the process gracefully with SIGTERM.
-			os.Exit(int(syscall.SIGTERM))
+			// Terminate the process gracefully with exit code 0.
+			os.Exit(0)
 		},
 	}
 )
