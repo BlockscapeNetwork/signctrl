@@ -3,6 +3,7 @@ package rpc
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -20,11 +21,12 @@ type BlockResult struct {
 }
 
 // GetBlock gets the block for the specified height.
-func GetBlock(rpcladdr string, height int64) (*tm_coretypes.ResultBlock, error) {
+func GetBlock(rpcladdr string, height int64, logger *log.Logger) (*tm_coretypes.ResultBlock, error) {
 	if height < 1 {
 		return nil, fmt.Errorf("block height %v does not exist", height)
 	}
 
+	logger.Printf("[DEBUG] signctrl: GET /block?height=%v", height)
 	laddrWithoutProtocol := strings.SplitAfter(rpcladdr, "://")
 	client := &http.Client{Timeout: 5 * time.Second} // TODO: Use approximation of blocktime*0.8 as timeout.
 	resp, err := client.Get(fmt.Sprintf("http://%v/block?height=%v", laddrWithoutProtocol[1], height))
@@ -32,6 +34,7 @@ func GetBlock(rpcladdr string, height int64) (*tm_coretypes.ResultBlock, error) 
 		return nil, err
 	}
 	defer resp.Body.Close()
+	logger.Printf("[DEBUG] signctrl: Received result for GET /block?height=%v", height)
 
 	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
