@@ -123,7 +123,6 @@ func (bs *BaseService) Stop() error {
 	}
 
 	bs.Logger.Printf("[DEBUG] signctrl: Stopping %v service", bs.name)
-	bs.quit <- struct{}{} // Signal termination to SCFilePV's run() goroutine
 	bs.impl.OnStop()
 	bs.running = false
 

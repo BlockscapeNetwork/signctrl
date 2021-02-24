@@ -86,35 +86,28 @@ func (pv *SCFilePV) run() {
 	w := tm_protoio.NewDelimitedWriter(pv.SecretConn)
 
 	for {
-		select {
-		case <-pv.Quit():
-			pv.Logger.Printf("[DEBUG] signctrl: Terminating run() goroutine")
-			return
-
-		default:
-			var msg tm_privvalproto.Message
-			if _, err := r.ReadMsg(&msg); err != nil {
-				if err == io.EOF {
-					// Prevent the logs from being spammed with EOF errors
-					continue
-				}
-				pv.Logger.Printf("[ERR] signctrl: couldn't read message: %v\n", err)
+		var msg tm_privvalproto.Message
+		if _, err := r.ReadMsg(&msg); err != nil {
+			if err == io.EOF {
+				// Prevent the logs from being spammed with EOF errors
+				continue
 			}
+			pv.Logger.Printf("[ERR] signctrl: couldn't read message: %v\n", err)
+		}
 
-			resp, err := HandleRequest(&msg, pv)
-			pv.Logger.Printf("[DEBUG] signctrl: err returned by HandleRequest: %v\n", err)
-			if _, err := w.WriteMsg(resp); err != nil {
-				pv.Logger.Printf("[ERR] signctrl: couldn't write message: %v\n", err)
-			}
-			if err != nil {
-				pv.Logger.Printf("[ERR] signctrl: couldn't handle request: %v\n", err)
-				if err == types.ErrMustShutdown {
-					pv.Logger.Printf("[DEBUG] signctrl: Terminating run() goroutine")
-					r.Close()
-					w.Close()
-					pv.TermCh <- struct{}{} // Signal termination
-					return
-				}
+		resp, err := HandleRequest(&msg, pv)
+		pv.Logger.Printf("[DEBUG] signctrl: err returned by HandleRequest: %v\n", err)
+		if _, err := w.WriteMsg(resp); err != nil {
+			pv.Logger.Printf("[ERR] signctrl: couldn't write message: %v\n", err)
+		}
+		if err != nil {
+			pv.Logger.Printf("[ERR] signctrl: couldn't handle request: %v\n", err)
+			if err == types.ErrMustShutdown {
+				pv.Logger.Printf("[DEBUG] signctrl: Terminating run() goroutine")
+				r.Close()
+				w.Close()
+				pv.Stop()
+				return
 			}
 		}
 	}
@@ -151,5 +144,6 @@ func (pv *SCFilePV) OnStart() (err error) {
 // Implements the Service interface.
 func (pv *SCFilePV) OnStop() {
 	pv.Logger.Printf("[INFO] signctrl: Stopping SignCTRL... (rank: %v)", pv.GetRank())
-	pv.SecretConn.Close() // Close the encrypted connection to the validator
+	pv.SecretConn.Close()   // Close the encrypted connection to the validator
+	pv.TermCh <- struct{}{} // Signal termination
 }
