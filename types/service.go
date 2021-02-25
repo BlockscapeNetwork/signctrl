@@ -115,7 +115,8 @@ func (bs *BaseService) Start() error {
 // Implements the Service interface.
 func (bs *BaseService) OnStart() {}
 
-// Stop stops a service. An error is returned if the service is already stopped.
+// Stop stops a service and closes the quit channel. An error is returned if the
+// service is already stopped.
 // Implements the Service interface.
 func (bs *BaseService) Stop() error {
 	if !bs.running {
@@ -123,8 +124,9 @@ func (bs *BaseService) Stop() error {
 	}
 
 	bs.Logger.Printf("[DEBUG] signctrl: Stopping %v service", bs.name)
-	bs.impl.OnStop()
 	bs.running = false
+	close(bs.quit)
+	bs.impl.OnStop()
 
 	return nil
 }
