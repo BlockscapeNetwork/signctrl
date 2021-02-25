@@ -173,6 +173,7 @@ Requires=network-online.target
 After=network-online.target
 
 [Service]
+Restart=on-failure
 User=signer
 Group=signer
 PermissionsStartOnly=true
@@ -184,8 +185,6 @@ Environment=SIGNCTRL_CONFIG_DIR=/Users/signer/.signctrl
 [Install]
 WantedBy=multi-user.target
 ```
-
-> :warning: Do under no circumstances use any restart options in your SignCTRL unit file, as they currently carry the risk of double-signing.
 
 ### Running
 
