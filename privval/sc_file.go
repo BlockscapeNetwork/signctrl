@@ -138,6 +138,13 @@ func (pv *SCFilePV) OnStart() (err error) {
 	// Run the main loop.
 	go pv.run()
 
+	// Wait for the service to be stopped and send termination signal to
+	// terminate the SignCTRL process.
+	go func() {
+		pv.Wait()
+		pv.TermCh <- struct{}{}
+	}()
+
 	return nil
 }
 
@@ -145,6 +152,5 @@ func (pv *SCFilePV) OnStart() (err error) {
 // Implements the Service interface.
 func (pv *SCFilePV) OnStop() {
 	pv.Logger.Printf("[INFO] signctrl: Stopping SignCTRL... (rank: %v)", pv.GetRank())
-	pv.TermCh <- struct{}{} // Signal termination
-	pv.SecretConn.Close()   // Close the encrypted connection to the validator
+	pv.SecretConn.Close() // Close the encrypted connection to the validator
 }
