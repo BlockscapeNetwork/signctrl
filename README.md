@@ -16,7 +16,7 @@ SignCTRL is a high availability solution for Tendermint that enables the creatio
 
 ## Requirements
 
-* Go `v1.15+`
+* Go `v1.16+`
 * Tendermint `v0.34+` (with protobuf support)
 
 ## Download
