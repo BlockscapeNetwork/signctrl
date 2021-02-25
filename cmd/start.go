@@ -25,7 +25,7 @@ var (
 			// Load the config into memory.
 			cfg, err := config.Load()
 			if err != nil {
-				fmt.Printf("Couldn't load config.toml:\n%v", err)
+				fmt.Printf("Couldn't load %v:\n%v", config.File, err)
 				os.Exit(1)
 			}
 
