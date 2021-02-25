@@ -108,7 +108,6 @@ func (pv *SCFilePV) run() {
 				pv.Logger.Printf("[DEBUG] signctrl: Terminating run() goroutine")
 				time.Sleep(500 * time.Millisecond)
 				pv.Stop()
-				time.Sleep(500 * time.Millisecond)
 				break
 			}
 		}
