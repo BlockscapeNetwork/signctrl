@@ -31,8 +31,8 @@ type Service interface {
 	// Return true if the service is running, and false if not.
 	IsRunning() bool
 
-	// Returns a channel which can be used to signal termination in goroutines.
-	Quit() chan struct{}
+	// Returns a channel which is closed once the service is stopped.
+	Quit() <-chan struct{}
 
 	// Returns a string representation of the service.
 	String() string
@@ -140,9 +140,15 @@ func (bs *BaseService) IsRunning() bool {
 	return bs.running
 }
 
-// Quit returns a channel that is used to terminate a service.
+// Wait blocks until the service is stopped.
 // Implements the Service interface.
-func (bs *BaseService) Quit() chan struct{} {
+func (bs *BaseService) Wait() {
+	<-bs.quit
+}
+
+// Quit returns a quit channel.
+// Implements the Service interface.
+func (bs *BaseService) Quit() <-chan struct{} {
 	return bs.quit
 }
 
