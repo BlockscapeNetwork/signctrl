@@ -106,8 +106,9 @@ func (pv *SCFilePV) run() {
 			pv.Logger.Printf("[ERR] signctrl: couldn't handle request: %v\n", err)
 			if err == types.ErrMustShutdown {
 				pv.Logger.Printf("[DEBUG] signctrl: Terminating run() goroutine")
-				time.Sleep(time.Second)
+				time.Sleep(500 * time.Millisecond)
 				pv.Stop()
+				time.Sleep(500 * time.Millisecond)
 				break
 			}
 		}
