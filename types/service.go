@@ -90,7 +90,6 @@ func NewBaseService(logger *log.Logger, name string, impl Service) *BaseService 
 		Logger:  logger,
 		name:    name,
 		running: false,
-		quit:    make(chan struct{}),
 		impl:    impl,
 	}
 }
@@ -104,6 +103,7 @@ func (bs *BaseService) Start() error {
 
 	bs.Logger.Printf("[DEBUG] signctrl: Starting %v service", bs.name)
 	bs.running = true
+	bs.quit = make(chan struct{})
 	if err := bs.impl.OnStart(); err != nil {
 		return err
 	}
