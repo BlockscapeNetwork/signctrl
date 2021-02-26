@@ -61,9 +61,9 @@ var (
 
 			select {
 			case <-pv.TermCh: // TermCh is used for self-terminating behavior
-				pv.Logger.Println("\n[INFO] signctrl: Terminating SignCTRL... (stopped)")
+				pv.Logger.Println("[INFO] signctrl: Shutting SignCTRL down... ⏻ (self-shutdown)")
 			case <-sigs: // The sigs channel is only used for OS interrupt signals
-				pv.Logger.Println("\n[INFO] signctrl: Terminating SignCTRL... (interrupt)")
+				pv.Logger.Println("[INFO] signctrl: Shutting SignCTRL down... ⏻ (user/os interrupt)")
 			}
 
 			// Terminate the process gracefully with exit code 0.

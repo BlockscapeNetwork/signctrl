@@ -125,12 +125,12 @@ func (pv *SCFilePV) run() {
 // OnStart starts the main loop of the SignCtrled PrivValidator.
 // Implements the Service interface.
 func (pv *SCFilePV) OnStart() (err error) {
-	pv.Logger.Printf("[INFO] signctrl: Starting SignCTRL... (rank: %v)", pv.GetRank())
+	pv.Logger.Printf("[INFO] signctrl: Starting SignCTRL on rank %v...\n", pv.GetRank())
 
 	// Load the connection key from the config directory.
 	connKey, err := connection.LoadConnKey(config.Dir())
 	if err != nil {
-		return fmt.Errorf("Couldn't load conn.key: %v", err)
+		return fmt.Errorf("couldn't load conn.key: %v", err)
 	}
 
 	// Dial the validator.
@@ -140,7 +140,7 @@ func (pv *SCFilePV) OnStart() (err error) {
 		pv.Logger,
 	)
 	if err != nil {
-		return fmt.Errorf("Couldn't dial validator: %v", err)
+		return fmt.Errorf("couldn't dial validator: %v", err)
 	}
 
 	// Run the main loop.
