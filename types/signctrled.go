@@ -64,6 +64,11 @@ func (bsc *BaseSignCtrled) GetRank() int {
 	return bsc.rank
 }
 
+// SetRank sets the validator's rank to the given rank.
+func (bsc *BaseSignCtrled) SetRank(rank int) {
+	bsc.rank = rank
+}
+
 // Missed updates the counter for missed blocks in a row. Errors are returned if...
 //
 // 1) the threshold of too many blocks missed in a row is exceeded

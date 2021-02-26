@@ -25,7 +25,7 @@ var (
 			// Load the config into memory.
 			cfg, err := config.Load()
 			if err != nil {
-				fmt.Printf("Couldn't load config.toml:\n%v", err)
+				fmt.Printf("Couldn't load %v:\n%v", config.File, err)
 				os.Exit(1)
 			}
 
@@ -48,6 +48,10 @@ var (
 					privval.StateFilePath(cfgDir),
 				),
 			)
+			if err := pv.CheckAndLoadLastRank(cfgDir, logger); err != nil {
+				fmt.Printf("Couldn't load %v: %v\n", privval.LastRankFile, err)
+				os.Exit(1)
+			}
 
 			// Start the SignCTRL service.
 			if err := pv.Start(); err != nil {
@@ -66,8 +70,14 @@ var (
 				pv.Logger.Println("\n[INFO] signctrl: Terminating SignCTRL... (interrupt)")
 			}
 
+			// Save rank to last_rank.json file.
+			if err := pv.Save(cfgDir, pv.Logger); err != nil {
+				fmt.Printf("[ERR] signctrl: Couldn't save rank to %v: %v", privval.LastRankFile, err)
+				os.Exit(1)
+			}
+
 			// Terminate the process gracefully with exit code 0.
-			os.Exit(1)
+			os.Exit(0)
 		},
 	}
 )
