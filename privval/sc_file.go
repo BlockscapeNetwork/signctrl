@@ -87,28 +87,36 @@ func (pv *SCFilePV) run() {
 	w := tm_protoio.NewDelimitedWriter(pv.SecretConn)
 	defer r.Close()
 	defer w.Close()
+	defer pv.SecretConn.Close()
 
 	for {
-		var msg tm_privvalproto.Message
-		if _, err := r.ReadMsg(&msg); err != nil {
-			if err == io.EOF {
-				// Prevent the logs from being spammed with EOF errors
-				continue
-			}
-			pv.Logger.Printf("[ERR] signctrl: couldn't read message: %v\n", err)
-		}
+		select {
+		case <-pv.Quit():
+			pv.Logger.Printf("[DEBUG] signctrl: Terminating run() goroutine: service stopped")
+			return
 
-		resp, err := HandleRequest(&msg, pv)
-		if _, err := w.WriteMsg(resp); err != nil {
-			pv.Logger.Printf("[ERR] signctrl: couldn't write message: %v\n", err)
-		}
-		if err != nil {
-			pv.Logger.Printf("[ERR] signctrl: couldn't handle request: %v\n", err)
-			if err == types.ErrMustShutdown {
-				pv.Logger.Printf("[DEBUG] signctrl: Terminating run() goroutine")
-				time.Sleep(500 * time.Millisecond)
-				pv.Stop()
-				break
+		default:
+			var msg tm_privvalproto.Message
+			if _, err := r.ReadMsg(&msg); err != nil {
+				if err == io.EOF {
+					// Prevent the logs from being spammed with EOF errors
+					continue
+				}
+				pv.Logger.Printf("[ERR] signctrl: couldn't read message: %v\n", err)
+			}
+
+			resp, err := HandleRequest(&msg, pv)
+			if _, err := w.WriteMsg(resp); err != nil {
+				pv.Logger.Printf("[ERR] signctrl: couldn't write message: %v\n", err)
+			}
+			if err != nil {
+				pv.Logger.Printf("[ERR] signctrl: couldn't handle request: %v\n", err)
+				if err == types.ErrMustShutdown {
+					pv.Logger.Printf("[DEBUG] signctrl: Terminating run() goroutine: %v\n", err)
+					time.Sleep(500 * time.Millisecond) // TODO: Default logger is async, so sleep is needed for now. Make logger sync.
+					pv.Stop()
+					break
+				}
 			}
 		}
 	}
@@ -151,6 +159,5 @@ func (pv *SCFilePV) OnStart() (err error) {
 // OnStop terminates the main loop of the SignCtrled PrivValidator.
 // Implements the Service interface.
 func (pv *SCFilePV) OnStop() {
-	pv.Logger.Printf("[INFO] signctrl: Stopping SignCTRL... (rank: %v)", pv.GetRank())
-	pv.SecretConn.Close() // Close the encrypted connection to the validator
+	pv.Logger.Printf("[INFO] signctrl: Stopping SignCTRL on rank %v...\n", pv.GetRank())
 }

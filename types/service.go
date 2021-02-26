@@ -125,8 +125,8 @@ func (bs *BaseService) Stop() error {
 
 	bs.Logger.Printf("[DEBUG] signctrl: Stopping %v service", bs.name)
 	bs.running = false
-	close(bs.quit)
 	bs.impl.OnStop()
+	close(bs.quit)
 
 	return nil
 }
