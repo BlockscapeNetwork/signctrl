@@ -36,11 +36,10 @@ type SCFilePV struct {
 	types.BaseService
 	types.BaseSignCtrled
 
-	CurrentHeight int64
-	Logger        *log.Logger
-	Config        *config.Config
-	TMFilePV      *tm_privval.FilePV
-	SecretConn    net.Conn
+	Logger     *log.Logger
+	Config     *config.Config
+	TMFilePV   *tm_privval.FilePV
+	SecretConn net.Conn
 }
 
 // KeyFilePath returns the absolute path to the priv_validator_key.json file.
@@ -56,10 +55,9 @@ func StateFilePath(cfgDir string) string {
 // NewSCFilePV creates a new instance of SCFilePV.
 func NewSCFilePV(logger *log.Logger, cfg *config.Config, tmpv *tm_privval.FilePV) *SCFilePV {
 	pv := &SCFilePV{
-		Logger:        logger,
-		CurrentHeight: 1, // Start on genesis height
-		Config:        cfg,
-		TMFilePV:      tmpv,
+		Logger:   logger,
+		Config:   cfg,
+		TMFilePV: tmpv,
 	}
 	pv.BaseService = *types.NewBaseService(
 		logger,

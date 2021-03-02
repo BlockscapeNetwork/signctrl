@@ -104,7 +104,7 @@ func handleSignVoteRequest(req *tm_privvalproto.SignVoteRequest, pv *SCFilePV) (
 	// Only check the commitsigs once for each block height.
 	// Also, only start checking for block heights greater than 1.
 	// This is due to the genesis block not having any commitsigs.
-	if req.Vote.Height > pv.CurrentHeight && req.Vote.Height > 1 {
+	if req.Vote.Height > pv.BaseSignCtrled.GetCurrentHeight() && req.Vote.Height > 1 {
 		// Get block information from the validator's /block endpoint.
 		rb, err := rpc.GetBlock(pv.Config.Init.ValidatorListenAddressRPC, req.Vote.Height-1, pv.Logger)
 		if err != nil {
@@ -115,7 +115,7 @@ func handleSignVoteRequest(req *tm_privvalproto.SignVoteRequest, pv *SCFilePV) (
 		}
 
 		// Update the current height to the height of the request.
-		pv.CurrentHeight = req.Vote.Height
+		pv.BaseSignCtrled.SetCurrentHeight(req.Vote.Height)
 
 		// Check if the commitsigs in the block are signed by the validator.
 		if !hasSignedCommit(pv.TMFilePV.GetAddress(), &rb.Block.LastCommit.Signatures) {
@@ -126,12 +126,6 @@ func handleSignVoteRequest(req *tm_privvalproto.SignVoteRequest, pv *SCFilePV) (
 						Vote:  tm_typesproto.Vote{},
 						Error: &tm_privvalproto.RemoteSignerError{Description: err.Error()},
 					}), err
-				} else if err == types.ErrThresholdExceeded {
-					// When a rank update due to ErrThresholdExceeded is triggered, it is expected
-					// that the next block will not contain the validator's signature. This is due
-					// to a block containing the commit of the previous height which we know wasn't
-					// signed. Therefore, skip ahead.
-					pv.CurrentHeight++
 				}
 			}
 		} else {
@@ -185,7 +179,7 @@ func handleSignProposalRequest(req *tm_privvalproto.SignProposalRequest, pv *SCF
 	// Only check the commitsigs once for each block height.
 	// Also, only start checking for block heights greater than 1.
 	// This is due to the genesis block not having any commitsigs.
-	if req.Proposal.Height > pv.CurrentHeight && req.Proposal.Height > 1 {
+	if req.Proposal.Height > pv.BaseSignCtrled.GetCurrentHeight() && req.Proposal.Height > 1 {
 		// Get block information from the validator's /block endpoint.
 		rb, err := rpc.GetBlock(pv.Config.Init.ValidatorListenAddressRPC, req.Proposal.Height-1, pv.Logger)
 		if err != nil {
@@ -196,7 +190,7 @@ func handleSignProposalRequest(req *tm_privvalproto.SignProposalRequest, pv *SCF
 		}
 
 		// Update the current height to the height of the request.
-		pv.CurrentHeight = req.Proposal.Height
+		pv.BaseSignCtrled.SetCurrentHeight(req.Proposal.Height)
 
 		// Check if the commitsigs in the block are signed by the validator.
 		if !hasSignedCommit(pv.TMFilePV.GetAddress(), &rb.Block.LastCommit.Signatures) {
@@ -207,12 +201,6 @@ func handleSignProposalRequest(req *tm_privvalproto.SignProposalRequest, pv *SCF
 						Proposal: tm_typesproto.Proposal{},
 						Error:    &tm_privvalproto.RemoteSignerError{Description: err.Error()},
 					}), err
-				} else if err == types.ErrThresholdExceeded {
-					// When a rank update due to ErrThresholdExceeded is triggered, it is expected
-					// that the next block will not contain the validator's signature. This is due
-					// to a block containing the commit of the previous height which we know wasn't
-					// signed. Therefore, skip ahead.
-					pv.CurrentHeight++
 				}
 			}
 		} else {
