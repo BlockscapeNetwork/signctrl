@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/BlockscapeNetwork/signctrl/config"
 	"github.com/BlockscapeNetwork/signctrl/privval"
@@ -64,18 +65,23 @@ var (
 			signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 			select {
-			case <-pv.Quit(): // Terminate SignCTRL if the service is stopped
+			case <-pv.Quit(): // Used for self-induced shutdown
 				pv.Logger.Println("[INFO] signctrl: Shutting SignCTRL down... ⏻ (quit)")
 			case <-sigs: // The sigs channel is only used for OS interrupt signals
 				pv.Logger.Println("[INFO] signctrl: Shutting SignCTRL down... ⏻ (user/os interrupt)")
 				pv.Stop()
+
+				// Save rank to last_rank.json file if the shutdown was not self-induced.
+				if err := pv.Save(cfgDir, pv.Logger); err != nil {
+					fmt.Printf("[ERR] signctrl: Couldn't save rank to %v: %v", privval.LastRankFile, err)
+					os.Exit(1)
+				}
 			}
 
-			// Save rank to last_rank.json file.
-			if err := pv.Save(cfgDir, pv.Logger); err != nil {
-				fmt.Printf("[ERR] signctrl: Couldn't save rank to %v: %v", privval.LastRankFile, err)
-				os.Exit(1)
-			}
+			// TODO: The current logger is async which is why some of the last log messages before
+			// shutdown aren't printed out. Make the logger sync. For now, wait a second for everything
+			// to be printed out.
+			time.Sleep(time.Second)
 
 			// Terminate the process gracefully with exit code 0.
 			os.Exit(0)
