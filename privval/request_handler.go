@@ -120,11 +120,19 @@ func handleSignVoteRequest(req *tm_privvalproto.SignVoteRequest, pv *SCFilePV) (
 		// Check if the commitsigs in the block are signed by the validator.
 		if !hasSignedCommit(pv.TMFilePV.GetAddress(), &rb.Block.LastCommit.Signatures) {
 			// Check if the threshold of too many missed blocks in a row is exceeded.
-			if err := pv.Missed(); err == types.ErrMustShutdown {
-				return wrapMsg(&tm_privvalproto.SignedVoteResponse{
-					Vote:  tm_typesproto.Vote{},
-					Error: &tm_privvalproto.RemoteSignerError{Description: err.Error()},
-				}), err
+			if err := pv.Missed(); err != nil {
+				if err == types.ErrMustShutdown {
+					return wrapMsg(&tm_privvalproto.SignedVoteResponse{
+						Vote:  tm_typesproto.Vote{},
+						Error: &tm_privvalproto.RemoteSignerError{Description: err.Error()},
+					}), err
+				} else if err == types.ErrThresholdExceeded {
+					// When a rank update due to ErrThresholdExceeded is triggered, it is expected
+					// that the next block will not contain the validator's signature. This is due
+					// to a block containing the commit of the previous height which we know wasn't
+					// signed. Therefore, skip ahead.
+					pv.CurrentHeight++
+				}
 			}
 		} else {
 			// If the commit was signed, reset the counter for missed blocks in a row
@@ -193,11 +201,19 @@ func handleSignProposalRequest(req *tm_privvalproto.SignProposalRequest, pv *SCF
 		// Check if the commitsigs in the block are signed by the validator.
 		if !hasSignedCommit(pv.TMFilePV.GetAddress(), &rb.Block.LastCommit.Signatures) {
 			// Check if the threshold of too many missed blocks in a row is exceeded.
-			if err := pv.Missed(); err == types.ErrMustShutdown {
-				return wrapMsg(&tm_privvalproto.SignedProposalResponse{
-					Proposal: tm_typesproto.Proposal{},
-					Error:    &tm_privvalproto.RemoteSignerError{Description: err.Error()},
-				}), err
+			if err := pv.Missed(); err != nil {
+				if err == types.ErrMustShutdown {
+					return wrapMsg(&tm_privvalproto.SignedProposalResponse{
+						Proposal: tm_typesproto.Proposal{},
+						Error:    &tm_privvalproto.RemoteSignerError{Description: err.Error()},
+					}), err
+				} else if err == types.ErrThresholdExceeded {
+					// When a rank update due to ErrThresholdExceeded is triggered, it is expected
+					// that the next block will not contain the validator's signature. This is due
+					// to a block containing the commit of the previous height which we know wasn't
+					// signed. Therefore, skip ahead.
+					pv.CurrentHeight++
+				}
 			}
 		} else {
 			// If the commit was signed, reset the counter for missed blocks in a row
