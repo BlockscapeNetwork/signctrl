@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/BlockscapeNetwork/signctrl/rpc"
+	"github.com/BlockscapeNetwork/signctrl/types"
 	"github.com/gogo/protobuf/proto"
 	tm_cryptoenc "github.com/tendermint/tendermint/crypto/encoding"
 	tm_cryptoproto "github.com/tendermint/tendermint/proto/tendermint/crypto"
@@ -119,7 +120,7 @@ func handleSignVoteRequest(req *tm_privvalproto.SignVoteRequest, pv *SCFilePV) (
 		// Check if the commitsigs in the block are signed by the validator.
 		if !hasSignedCommit(pv.TMFilePV.GetAddress(), &rb.Block.LastCommit.Signatures) {
 			// Check if the threshold of too many missed blocks in a row is exceeded.
-			if err := pv.Missed(); err != nil {
+			if err := pv.Missed(); err == types.ErrMustShutdown {
 				return wrapMsg(&tm_privvalproto.SignedVoteResponse{
 					Vote:  tm_typesproto.Vote{},
 					Error: &tm_privvalproto.RemoteSignerError{Description: err.Error()},
@@ -192,7 +193,7 @@ func handleSignProposalRequest(req *tm_privvalproto.SignProposalRequest, pv *SCF
 		// Check if the commitsigs in the block are signed by the validator.
 		if !hasSignedCommit(pv.TMFilePV.GetAddress(), &rb.Block.LastCommit.Signatures) {
 			// Check if the threshold of too many missed blocks in a row is exceeded.
-			if err := pv.Missed(); err != nil {
+			if err := pv.Missed(); err == types.ErrMustShutdown {
 				return wrapMsg(&tm_privvalproto.SignedProposalResponse{
 					Proposal: tm_typesproto.Proposal{},
 					Error:    &tm_privvalproto.RemoteSignerError{Description: err.Error()},
