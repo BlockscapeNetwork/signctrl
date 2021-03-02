@@ -60,10 +60,11 @@ var (
 			signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 			select {
-			case <-pv.TermCh: // TermCh is used for self-terminating behavior
-				pv.Logger.Println("[INFO] signctrl: Shutting SignCTRL down... ⏻ (self-shutdown)")
+			case <-pv.Quit(): // Terminate SignCTRL if the service is stopped
+				pv.Logger.Println("[INFO] signctrl: Shutting SignCTRL down... ⏻ (quit)")
 			case <-sigs: // The sigs channel is only used for OS interrupt signals
 				pv.Logger.Println("[INFO] signctrl: Shutting SignCTRL down... ⏻ (user/os interrupt)")
+				pv.Stop()
 			}
 
 			// Terminate the process gracefully with exit code 0.

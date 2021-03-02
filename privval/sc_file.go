@@ -42,7 +42,6 @@ type SCFilePV struct {
 	Config        *config.Config
 	TMFilePV      *tm_privval.FilePV
 	SecretConn    net.Conn
-	TermCh        chan struct{}
 }
 
 // KeyFilePath returns the absolute path to the priv_validator_key.json file.
@@ -62,7 +61,6 @@ func NewSCFilePV(logger *log.Logger, cfg *config.Config, tmpv *tm_privval.FilePV
 		CurrentHeight: 1, // Start on genesis height
 		Config:        cfg,
 		TMFilePV:      tmpv,
-		TermCh:        make(chan struct{}),
 	}
 	pv.BaseService = *types.NewBaseService(
 		logger,
@@ -99,8 +97,7 @@ func (pv *SCFilePV) run() {
 			var msg tm_privvalproto.Message
 			if _, err := r.ReadMsg(&msg); err != nil {
 				if err == io.EOF {
-					// Prevent the logs from being spammed with EOF errors
-					continue
+					continue // Prevent the logs from being spammed with EOF errors
 				}
 				pv.Logger.Printf("[ERR] signctrl: couldn't read message: %v\n", err)
 			}
@@ -113,9 +110,9 @@ func (pv *SCFilePV) run() {
 				pv.Logger.Printf("[ERR] signctrl: couldn't handle request: %v\n", err)
 				if err == types.ErrMustShutdown {
 					pv.Logger.Printf("[DEBUG] signctrl: Terminating run() goroutine: %v\n", err)
-					time.Sleep(500 * time.Millisecond) // TODO: Default logger is async, so sleep is needed for now. Make logger sync.
+					time.Sleep(time.Second) // TODO: Default logger is async, so sleep is needed for now. Make logger sync.
 					pv.Stop()
-					break
+					return
 				}
 			}
 		}
@@ -145,13 +142,6 @@ func (pv *SCFilePV) OnStart() (err error) {
 
 	// Run the main loop.
 	go pv.run()
-
-	// Wait for the service to be stopped and send termination signal to
-	// terminate the SignCTRL process.
-	go func() {
-		pv.Wait()
-		pv.TermCh <- struct{}{}
-	}()
 
 	return nil
 }

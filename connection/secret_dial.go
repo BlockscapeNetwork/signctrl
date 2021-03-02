@@ -26,7 +26,6 @@ func RetrySecretDialTCP(address string, privkey tm_ed25519.PrivKey, logger *log.
 	logger.Printf("[INFO] signctrl: Dialing %v... (Use Ctrl+C to abort)", address)
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	defer close(sigs)
 
 	// RetryDialInterval is the interval in which SignCTRL tries to repeatedly dial
 	// the validator.
