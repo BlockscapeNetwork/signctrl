@@ -17,3 +17,5 @@ A node's rank determines which blocks exactly it has permission to sign and whic
 ![Rank Updates](../imgs/rank-update.gif)
 
 In order to detect missed blocks, the validators closely monitor every single block in the blockchain. This includes looking into every last block's commit signatures and checking for the own validator's signature. If the signature is missing, every validator in the set will see it and increment an internal counter for missed blocks in a row. If a certain threshold is exceeded, ranks 2..n will notice first and accordingly move up one rank each. Once rank 1 becomes available again, it will have to sync up its blockchain state. Eventually, while syncing, it will also notice that is has been replaced and needs to shut itself down. It can then later be readded to the set with the lowest rank, though.
+
+Before the node shuts itself down, though, it persists its last rank in a separate `last_rank.json` file which indicates that its last rank was different than the rank specified in the `config.toml`. On startup it then checks for the last rank and starts up with that instead of the one specified in the configuration file.
