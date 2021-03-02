@@ -75,8 +75,8 @@ func NewSCFilePV(logger *log.Logger, cfg *config.Config, tmpv *tm_privval.FilePV
 }
 
 // run runs the main loop of SignCTRL. It handles incoming messages from the validator.
-// In order to stop the goroutine, Stop() should only be called outside of run(). The
-// goroutine returns on its own once SignCTRL is forced to shut down.
+// In order to stop the goroutine, Stop() can be called outside of run(). The goroutine
+// returns on its own once SignCTRL is forced to shut down.
 func (pv *SCFilePV) run() {
 	r := tm_protoio.NewDelimitedReader(pv.SecretConn, maxRemoteSignerMsgSize)
 	w := tm_protoio.NewDelimitedWriter(pv.SecretConn)
