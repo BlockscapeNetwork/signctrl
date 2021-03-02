@@ -68,7 +68,7 @@ var (
 			}
 
 			// Terminate the process gracefully with exit code 0.
-			os.Exit(1)
+			os.Exit(0)
 		},
 	}
 )
