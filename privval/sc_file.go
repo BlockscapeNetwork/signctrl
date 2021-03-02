@@ -5,7 +5,6 @@ import (
 	"io"
 	"log"
 	"net"
-	"time"
 
 	"github.com/BlockscapeNetwork/signctrl/config"
 	"github.com/BlockscapeNetwork/signctrl/connection"
@@ -110,7 +109,6 @@ func (pv *SCFilePV) run() {
 				pv.Logger.Printf("[ERR] signctrl: couldn't handle request: %v\n", err)
 				if err == types.ErrMustShutdown {
 					pv.Logger.Printf("[DEBUG] signctrl: Terminating run() goroutine: %v\n", err)
-					time.Sleep(time.Second) // TODO: Default logger is async, so sleep is needed for now. Make logger sync.
 					pv.Stop()
 					return
 				}

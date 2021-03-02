@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/BlockscapeNetwork/signctrl/config"
 	"github.com/BlockscapeNetwork/signctrl/privval"
@@ -66,6 +67,10 @@ var (
 				pv.Logger.Println("[INFO] signctrl: Shutting SignCTRL down... ⏻ (user/os interrupt)")
 				pv.Stop()
 			}
+
+			// TODO: Wait a second for all the logs to be printed out.
+			// Default logger is async, so sleep is needed for now. Make logger sync.
+			time.Sleep(time.Second)
 
 			// Terminate the process gracefully with exit code 0.
 			os.Exit(0)
