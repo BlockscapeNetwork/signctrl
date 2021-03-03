@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"time"
 
 	"github.com/BlockscapeNetwork/signctrl/config"
 	"github.com/BlockscapeNetwork/signctrl/connection"
@@ -24,6 +25,11 @@ const (
 	// maxRemoteSignerMsgSize determines the maximum size in bytes for the delimited
 	// reader.
 	maxRemoteSignerMsgSize = 1024 * 10
+
+	// retryDialTimeout determines the default time in seconds SignCTRL waits for
+	// a message from the validator until it assumes it has lost connection and
+	// retries dialing it.
+	retryDialTimeout = 15
 )
 
 // SCFilePV must implement the SignCtrled interface.
@@ -78,11 +84,7 @@ func NewSCFilePV(logger *log.Logger, cfg *config.Config, tmpv *tm_privval.FilePV
 // In order to stop the goroutine, Stop() can be called outside of run(). The goroutine
 // returns on its own once SignCTRL is forced to shut down.
 func (pv *SCFilePV) run() {
-	r := tm_protoio.NewDelimitedReader(pv.SecretConn, maxRemoteSignerMsgSize)
-	w := tm_protoio.NewDelimitedWriter(pv.SecretConn)
-	defer r.Close()
-	defer w.Close()
-	defer pv.SecretConn.Close()
+	timeout := time.NewTimer(retryDialTimeout * time.Second)
 
 	for {
 		select {
@@ -90,8 +92,33 @@ func (pv *SCFilePV) run() {
 			pv.Logger.Printf("[DEBUG] signctrl: Terminating run() goroutine: service stopped")
 			return
 
+		case <-timeout.C:
+			pv.Logger.Printf("[INFO] signctrl: Lost connection to the validator... (no message for %v seconds)\n", retryDialTimeout)
+			pv.SecretConn.Close()
+
+			// Load the connection key from the config directory.
+			connKey, err := connection.LoadConnKey(config.Dir())
+			if err != nil {
+				pv.Logger.Printf("couldn't load conn.key: %v", err)
+				pv.Stop()
+				return
+			}
+
+			// Dial the validator.
+			pv.SecretConn, err = connection.RetrySecretDialTCP(
+				pv.Config.Init.ValidatorListenAddress,
+				connKey,
+				pv.Logger,
+			)
+			if err != nil {
+				pv.Logger.Printf("couldn't dial validator: %v", err)
+				pv.Stop()
+				return
+			}
+
 		default:
 			var msg tm_privvalproto.Message
+			r := tm_protoio.NewDelimitedReader(pv.SecretConn, maxRemoteSignerMsgSize)
 			if _, err := r.ReadMsg(&msg); err != nil {
 				if err == io.EOF {
 					continue // Prevent the logs from being spammed with EOF errors
@@ -99,7 +126,10 @@ func (pv *SCFilePV) run() {
 				pv.Logger.Printf("[ERR] signctrl: couldn't read message: %v\n", err)
 			}
 
+			timeout.Reset(retryDialTimeout * time.Second)
+
 			resp, err := HandleRequest(&msg, pv)
+			w := tm_protoio.NewDelimitedWriter(pv.SecretConn)
 			if _, err := w.WriteMsg(resp); err != nil {
 				pv.Logger.Printf("[ERR] signctrl: couldn't write message: %v\n", err)
 			}
@@ -108,6 +138,7 @@ func (pv *SCFilePV) run() {
 				if err == types.ErrMustShutdown {
 					pv.Logger.Printf("[DEBUG] signctrl: Terminating run() goroutine: %v\n", err)
 					pv.Stop()
+					pv.SecretConn.Close()
 					return
 				}
 			}
