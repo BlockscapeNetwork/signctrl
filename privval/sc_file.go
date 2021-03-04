@@ -1,6 +1,7 @@
 package privval
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -85,11 +86,13 @@ func NewSCFilePV(logger *log.Logger, cfg *config.Config, tmpv *tm_privval.FilePV
 // returns on its own once SignCTRL is forced to shut down.
 func (pv *SCFilePV) run() {
 	timeout := time.NewTimer(retryDialTimeout * time.Second)
+	ctx, cancel := context.WithCancel(context.Background())
 
 	for {
 		select {
 		case <-pv.Quit():
-			pv.Logger.Printf("[DEBUG] signctrl: Terminating run() goroutine: service stopped")
+			pv.Logger.Printf("[DEBUG] signctrl: Terminating run goroutine: service stopped")
+			cancel()
 			return
 
 		case <-timeout.C:
@@ -99,7 +102,8 @@ func (pv *SCFilePV) run() {
 			// Load the connection key from the config directory.
 			connKey, err := connection.LoadConnKey(config.Dir())
 			if err != nil {
-				pv.Logger.Printf("couldn't load conn.key: %v", err)
+				pv.Logger.Printf("[ERR] signctrl: couldn't load conn.key: %v", err)
+				cancel()
 				pv.Stop()
 				return
 			}
@@ -111,7 +115,8 @@ func (pv *SCFilePV) run() {
 				pv.Logger,
 			)
 			if err != nil {
-				pv.Logger.Printf("couldn't dial validator: %v", err)
+				pv.Logger.Printf("[ERR] signctrl: couldn't dial validator: %v", err)
+				cancel()
 				pv.Stop()
 				return
 			}
@@ -120,15 +125,17 @@ func (pv *SCFilePV) run() {
 			var msg tm_privvalproto.Message
 			r := tm_protoio.NewDelimitedReader(pv.SecretConn, maxRemoteSignerMsgSize)
 			if _, err := r.ReadMsg(&msg); err != nil {
-				if err == io.EOF {
-					continue // Prevent the logs from being spammed with EOF errors
+				if err != io.EOF {
+					pv.Logger.Printf("[ERR] signctrl: couldn't read message: %v\n", err)
 				}
-				pv.Logger.Printf("[ERR] signctrl: couldn't read message: %v\n", err)
+				continue
 			}
 
 			timeout.Reset(retryDialTimeout * time.Second)
+			cancel()
 
-			resp, err := HandleRequest(&msg, pv)
+			ctx, cancel = context.WithCancel(context.Background())
+			resp, err := HandleRequest(ctx, &msg, pv)
 			w := tm_protoio.NewDelimitedWriter(pv.SecretConn)
 			if _, err := w.WriteMsg(resp); err != nil {
 				pv.Logger.Printf("[ERR] signctrl: couldn't write message: %v\n", err)
@@ -136,7 +143,8 @@ func (pv *SCFilePV) run() {
 			if err != nil {
 				pv.Logger.Printf("[ERR] signctrl: couldn't handle request: %v\n", err)
 				if err == types.ErrMustShutdown {
-					pv.Logger.Printf("[DEBUG] signctrl: Terminating run() goroutine: %v\n", err)
+					pv.Logger.Printf("[DEBUG] signctrl: Terminating run goroutine: %v\n", err)
+					cancel()
 					pv.Stop()
 					pv.SecretConn.Close()
 					return

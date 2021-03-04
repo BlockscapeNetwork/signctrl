@@ -1,12 +1,12 @@
 package rpc
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strings"
-	"time"
+	"regexp"
 
 	tm_json "github.com/tendermint/tendermint/libs/json"
 	tm_coretypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -20,34 +20,63 @@ type BlockResult struct {
 	Result  *tm_coretypes.ResultBlock `json:"result"`
 }
 
-// GetBlock gets the block for the specified height.
-func GetBlock(rpcladdr string, height int64, logger *log.Logger) (*tm_coretypes.ResultBlock, error) {
+// ResultChannelResponse defines the data passed into the result channel that is
+// retrieved from the /block endpoint.
+type ResultChannelResponse struct {
+	Result *tm_coretypes.ResultBlock
+	Error  error
+}
+
+// QueryBlock gets the block for the specified height.
+func QueryBlock(ctx context.Context, rpcladdr string, height int64, resultCh chan *ResultChannelResponse, logger *log.Logger) (*tm_coretypes.ResultBlock, error) {
 	if height < 1 {
 		return nil, fmt.Errorf("block height %v does not exist", height)
 	}
 
-	logger.Printf("[DEBUG] signctrl: GET /block?height=%v", height)
-	laddrWithoutProtocol := strings.SplitAfter(rpcladdr, "://")
-	client := &http.Client{Timeout: 5 * time.Second} // TODO: Only timeout if new sign request comes in.
-	resp, err := client.Get(fmt.Sprintf("http://%v/block?height=%v", laddrWithoutProtocol[1], height))
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	logger.Printf("[DEBUG] signctrl: Received result for GET /block?height=%v", height)
+	// Cut the protocol from rpcladdr.
+	rpcladdrHostPort := regexp.MustCompile(`(tcp|unix)://`).ReplaceAllString(rpcladdr, "")
+	url := fmt.Sprintf("http://%v/block?height=%v", rpcladdrHostPort, height)
 
-	bytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
+	go func() {
+		// Query the block.
+		logger.Printf("[DEBUG] signctrl: GET /block?height=%v", height)
+		req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+		if err != nil {
+			resultCh <- &ResultChannelResponse{nil, err}
+			return
+		}
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			resultCh <- &ResultChannelResponse{nil, err}
+			return
+		}
+		logger.Printf("[DEBUG] signctrl: Received result for GET /block?height=%v", height)
 
-	var block BlockResult
-	if err = tm_json.Unmarshal(bytes, &block); err != nil {
-		return nil, err
-	}
-	if block.Result == nil {
-		return nil, fmt.Errorf("result block for height %v is nil", height)
-	}
+		// Read from the response body.
+		bytes, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			resultCh <- &ResultChannelResponse{nil, err}
+			return
+		}
 
-	return block.Result, nil
+		var block BlockResult
+		if err = tm_json.Unmarshal(bytes, &block); err != nil {
+			resultCh <- &ResultChannelResponse{nil, err}
+			return
+		}
+		if block.Result == nil {
+			resultCh <- &ResultChannelResponse{nil, err}
+			return
+		}
+
+		resultCh <- &ResultChannelResponse{block.Result, nil}
+	}()
+
+	// Wait for the query to return a result or be canceled.
+	select {
+	case <-ctx.Done():
+		return nil, fmt.Errorf("request was canceled")
+	case rcr := <-resultCh:
+		return rcr.Result, rcr.Error
+	}
 }
