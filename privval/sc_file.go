@@ -162,7 +162,7 @@ func (pv *SCFilePV) OnStart() (err error) {
 	// Load the connection key from the config directory.
 	connKey, err := connection.LoadConnKey(config.Dir())
 	if err != nil {
-		return fmt.Errorf("couldn't load conn.key: %v", err)
+		return fmt.Errorf("[ERR] signctrl: couldn't load conn.key: %v", err)
 	}
 
 	// Dial the validator.
@@ -172,7 +172,7 @@ func (pv *SCFilePV) OnStart() (err error) {
 		pv.Logger,
 	)
 	if err != nil {
-		return fmt.Errorf("couldn't dial validator: %v", err)
+		return fmt.Errorf("[ERR] signctrl: couldn't dial validator: %v", err)
 	}
 
 	// Run the main loop.
