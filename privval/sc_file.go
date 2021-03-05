@@ -27,11 +27,6 @@ const (
 	// maxRemoteSignerMsgSize determines the maximum size in bytes for the delimited
 	// reader.
 	maxRemoteSignerMsgSize = 1024 * 10
-
-	// retryDialTimeout determines the default time in seconds SignCTRL waits for
-	// a message from the validator until it assumes it has lost connection and
-	// retries dialing it.
-	retryDialTimeout = 15
 )
 
 // SCFilePV must implement the SignCtrled interface.
@@ -45,8 +40,8 @@ type SCFilePV struct {
 	types.BaseSignCtrled
 
 	Logger     *log.Logger
-	Config     *config.Config
-	TMFilePV   *tm_privval.FilePV
+	Config     config.Config
+	TMFilePV   tm_privval.FilePV
 	SecretConn net.Conn
 }
 
@@ -61,7 +56,7 @@ func StateFilePath(cfgDir string) string {
 }
 
 // NewSCFilePV creates a new instance of SCFilePV.
-func NewSCFilePV(logger *log.Logger, cfg *config.Config, tmpv *tm_privval.FilePV) *SCFilePV {
+func NewSCFilePV(logger *log.Logger, cfg config.Config, tmpv tm_privval.FilePV) *SCFilePV {
 	pv := &SCFilePV{
 		Logger:   logger,
 		Config:   cfg,
@@ -86,7 +81,8 @@ func NewSCFilePV(logger *log.Logger, cfg *config.Config, tmpv *tm_privval.FilePV
 // In order to stop the goroutine, Stop() can be called outside of run(). The goroutine
 // returns on its own once SignCTRL is forced to shut down.
 func (pv *SCFilePV) run() {
-	timeout := time.NewTimer(retryDialTimeout * time.Second)
+	retryDialTimeout := config.GetRetryDialTime(pv.Config.Base.RetryDialAfter)
+	timeout := time.NewTimer(retryDialTimeout)
 	ctx, cancel := context.WithCancel(context.Background())
 
 	for {
@@ -98,7 +94,7 @@ func (pv *SCFilePV) run() {
 			return
 
 		case <-timeout.C:
-			pv.Logger.Printf("[INFO] signctrl: Lost connection to the validator... (no message for %v seconds)\n", retryDialTimeout)
+			pv.Logger.Printf("[INFO] signctrl: Lost connection to the validator... (no message for %v)\n", retryDialTimeout.String())
 			pv.SecretConn.Close()
 
 			// Load the connection key from the config directory.
@@ -133,7 +129,7 @@ func (pv *SCFilePV) run() {
 				continue
 			}
 
-			timeout.Reset(retryDialTimeout * time.Second)
+			timeout.Reset(retryDialTimeout)
 			cancel()
 
 			ctx, cancel = context.WithCancel(context.Background())
