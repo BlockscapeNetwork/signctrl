@@ -34,7 +34,7 @@ var (
 			logger := log.New(os.Stderr, "", 0)
 			filter := &logutils.LevelFilter{
 				Levels:   config.LogLevels,
-				MinLevel: logutils.LogLevel(cfg.Init.LogLevel),
+				MinLevel: logutils.LogLevel(cfg.Base.LogLevel),
 				Writer:   os.Stderr,
 			}
 			logger.SetOutput(filter)

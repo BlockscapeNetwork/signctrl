@@ -20,9 +20,9 @@ const (
 )
 
 var (
-	// Embed the init.toml into the SignCTRL binary.
-	//go:embed templates/init.toml
-	initTemplate embed.FS
+	// Embed the base.toml into the SignCTRL binary.
+	//go:embed templates/base.toml
+	baseTemplate embed.FS
 
 	// Embed the privval.toml into the SignCTRL binary.
 	//go:embed templates/privval.toml
@@ -33,8 +33,8 @@ var (
 type Section uint8
 
 const (
-	// InitSection defines the [init] section of the configuration file.
-	InitSection Section = iota
+	// BaseSection defines the [base] section of the configuration file.
+	BaseSection Section = iota
 
 	// PrivvalSection defines the [privval] section of the configuration file.
 	PrivvalSection
@@ -52,18 +52,16 @@ func goPath() string {
 }
 
 // Create writes configuration templates to the configuration file at the specified
-// configuration directory. The init and privval sections are created by default.
+// configuration directory. The base and privval sections are created by default.
 func Create(cfgDir string, sections ...Section) error {
 	var cfg bytes.Buffer
-
-	initBytes, err := initTemplate.ReadFile("templates/init.toml")
+	baseBytes, err := baseTemplate.ReadFile("templates/base.toml")
 	if err != nil {
 		return err
 	}
-	if _, err := cfg.Write(initBytes); err != nil {
+	if _, err := cfg.Write(baseBytes); err != nil {
 		return err
 	}
-
 	privvalBytes, err := privvalTemplate.ReadFile("templates/privval.toml")
 	if err != nil {
 		return err
@@ -71,7 +69,6 @@ func Create(cfgDir string, sections ...Section) error {
 	if _, err := cfg.Write(privvalBytes); err != nil {
 		return err
 	}
-
 	if err := ioutil.WriteFile(FilePath(cfgDir), cfg.Bytes(), PermConfigToml); err != nil {
 		return err
 	}

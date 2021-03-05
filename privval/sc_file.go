@@ -74,8 +74,8 @@ func NewSCFilePV(logger *log.Logger, cfg *config.Config, tmpv *tm_privval.FilePV
 	)
 	pv.BaseSignCtrled = *types.NewBaseSignCtrled(
 		logger,
-		pv.Config.Init.Threshold,
-		pv.Config.Init.Rank,
+		pv.Config.Base.Threshold,
+		pv.Config.Base.StartRank,
 		pv,
 	)
 
@@ -112,7 +112,7 @@ func (pv *SCFilePV) run() {
 
 			// Dial the validator.
 			pv.SecretConn, err = connection.RetrySecretDialTCP(
-				pv.Config.Init.ValidatorListenAddress,
+				pv.Config.Base.ValidatorListenAddress,
 				connKey,
 				pv.Logger,
 			)
@@ -169,7 +169,7 @@ func (pv *SCFilePV) OnStart() (err error) {
 
 	// Dial the validator.
 	pv.SecretConn, err = connection.RetrySecretDialTCP(
-		pv.Config.Init.ValidatorListenAddress,
+		pv.Config.Base.ValidatorListenAddress,
 		connKey,
 		pv.Logger,
 	)

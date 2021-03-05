@@ -53,7 +53,7 @@ func (pv *SCFilePV) CheckAndLoadLastRank(cfgDir string, logger *log.Logger) erro
 		return nil
 	}
 
-	logger.Printf("[DEBUG] signctrl: No %v found at %v, using rank %v from config", LastRankFile, cfgDir, pv.Config.Init.Rank)
+	logger.Printf("[DEBUG] signctrl: No %v found at %v, using rank %v from config", LastRankFile, cfgDir, pv.Config.Base.StartRank)
 
 	return nil
 }

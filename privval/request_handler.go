@@ -107,7 +107,7 @@ func handleSignVoteRequest(ctx context.Context, req *tm_privvalproto.SignVoteReq
 	// This is due to the genesis block not having any commitsigs.
 	if req.Vote.Height > pv.BaseSignCtrled.GetCurrentHeight() && req.Vote.Height > 1 {
 		// Get block information from the validator's /block endpoint.
-		rb, err := rpc.QueryBlock(ctx, pv.Config.Init.ValidatorListenAddressRPC, req.Vote.Height-1, pv.Logger)
+		rb, err := rpc.QueryBlock(ctx, pv.Config.Base.ValidatorListenAddressRPC, req.Vote.Height-1, pv.Logger)
 		if err != nil {
 			return wrapMsg(&tm_privvalproto.SignedVoteResponse{
 				Vote:  tm_typesproto.Vote{},
@@ -182,7 +182,7 @@ func handleSignProposalRequest(ctx context.Context, req *tm_privvalproto.SignPro
 	// This is due to the genesis block not having any commitsigs.
 	if req.Proposal.Height > pv.BaseSignCtrled.GetCurrentHeight() && req.Proposal.Height > 1 {
 		// Get block information from the validator's /block endpoint.
-		rb, err := rpc.QueryBlock(ctx, pv.Config.Init.ValidatorListenAddressRPC, req.Proposal.Height-1, pv.Logger)
+		rb, err := rpc.QueryBlock(ctx, pv.Config.Base.ValidatorListenAddressRPC, req.Proposal.Height-1, pv.Logger)
 		if err != nil {
 			return wrapMsg(&tm_privvalproto.SignedProposalResponse{
 				Proposal: tm_typesproto.Proposal{},
