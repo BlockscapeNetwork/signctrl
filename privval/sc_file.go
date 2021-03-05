@@ -185,4 +185,10 @@ func (pv *SCFilePV) OnStart() (err error) {
 // Implements the Service interface.
 func (pv *SCFilePV) OnStop() {
 	pv.Logger.Printf("[INFO] signctrl: Stopping SignCTRL on rank %v...\n", pv.GetRank())
+
+	// Save rank to last_rank.json file if the shutdown was not self-induced.
+	if err := pv.Save(config.Dir(), pv.Logger); err != nil {
+		fmt.Printf("[ERR] signctrl: Couldn't save rank to %v: %v", LastRankFile, err)
+		os.Exit(1)
+	}
 }
