@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
 	"time"
 
 	"github.com/BlockscapeNetwork/signctrl/config"
@@ -93,6 +94,7 @@ func (pv *SCFilePV) run() {
 		case <-pv.Quit():
 			pv.Logger.Printf("[DEBUG] signctrl: Terminating run goroutine: service stopped")
 			cancel()
+			// Note: Don't use pv.Stop() in here as it closes the pv.Quit() channel.
 			return
 
 		case <-timeout.C:
@@ -117,7 +119,7 @@ func (pv *SCFilePV) run() {
 			if err != nil {
 				pv.Logger.Printf("[ERR] signctrl: couldn't dial validator: %v", err)
 				cancel()
-				pv.Stop()
+				// Note: Don't use pv.Stop() in here, as RetrySecretDialTCP can only be stopped via SIGINT/SIGTERM.
 				return
 			}
 
