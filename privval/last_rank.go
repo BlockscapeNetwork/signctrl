@@ -60,7 +60,7 @@ func (pv *SCFilePV) CheckAndLoadLastRank(cfgDir string, logger *log.Logger) erro
 
 // Save saves the last rank to the last_rank.json file.
 func (pv *SCFilePV) Save(cfgDir string, logger *log.Logger) error {
-	pv.Logger.Printf("[INFO] signctrl: Saving current rank %v to %v...", pv.BaseSignCtrled.GetRank(), LastRankFile)
+	pv.Logger.Printf("[DEBUG] signctrl: Saving current rank %v to %v...", pv.BaseSignCtrled.GetRank(), LastRankFile)
 	lrFile, err := tm_json.MarshalIndent(&LastRank{Rank: pv.BaseSignCtrled.GetRank()}, "", "\t")
 	if err != nil {
 		return err
