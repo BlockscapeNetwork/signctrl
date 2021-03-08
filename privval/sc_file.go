@@ -25,6 +25,11 @@ const (
 	// maxRemoteSignerMsgSize determines the maximum size in bytes for the delimited
 	// reader.
 	maxRemoteSignerMsgSize = 1024 * 10
+
+	// retryDialTimeout determines the default time in seconds SignCTRL waits for
+	// a message from the validator until it assumes it has lost connection and
+	// retries dialing it.
+	retryDialTimeout = 15
 )
 
 // SCFilePV must implement the SignCtrled interface.
@@ -37,12 +42,10 @@ type SCFilePV struct {
 	types.BaseService
 	types.BaseSignCtrled
 
-	CurrentHeight int64
-	Logger        *log.Logger
-	Config        *config.Config
-	TMFilePV      *tm_privval.FilePV
-	SecretConn    net.Conn
-	TermCh        chan struct{}
+	Logger     *log.Logger
+	Config     *config.Config
+	TMFilePV   *tm_privval.FilePV
+	SecretConn net.Conn
 }
 
 // KeyFilePath returns the absolute path to the priv_validator_key.json file.
@@ -58,11 +61,9 @@ func StateFilePath(cfgDir string) string {
 // NewSCFilePV creates a new instance of SCFilePV.
 func NewSCFilePV(logger *log.Logger, cfg *config.Config, tmpv *tm_privval.FilePV) *SCFilePV {
 	pv := &SCFilePV{
-		Logger:        logger,
-		CurrentHeight: 1, // Start on genesis height
-		Config:        cfg,
-		TMFilePV:      tmpv,
-		TermCh:        make(chan struct{}),
+		Logger:   logger,
+		Config:   cfg,
+		TMFilePV: tmpv,
 	}
 	pv.BaseService = *types.NewBaseService(
 		logger,
@@ -80,35 +81,66 @@ func NewSCFilePV(logger *log.Logger, cfg *config.Config, tmpv *tm_privval.FilePV
 }
 
 // run runs the main loop of SignCTRL. It handles incoming messages from the validator.
-// In order to stop the goroutine, Stop() should only be called outside of run(). The
-// goroutine returns on its own once SignCTRL is forced to shut down.
+// In order to stop the goroutine, Stop() can be called outside of run(). The goroutine
+// returns on its own once SignCTRL is forced to shut down.
 func (pv *SCFilePV) run() {
-	r := tm_protoio.NewDelimitedReader(pv.SecretConn, maxRemoteSignerMsgSize)
-	w := tm_protoio.NewDelimitedWriter(pv.SecretConn)
-	defer r.Close()
-	defer w.Close()
+	timeout := time.NewTimer(retryDialTimeout * time.Second)
 
 	for {
-		var msg tm_privvalproto.Message
-		if _, err := r.ReadMsg(&msg); err != nil {
-			if err == io.EOF {
-				// Prevent the logs from being spammed with EOF errors
-				continue
-			}
-			pv.Logger.Printf("[ERR] signctrl: couldn't read message: %v\n", err)
-		}
+		select {
+		case <-pv.Quit():
+			pv.Logger.Printf("[DEBUG] signctrl: Terminating run() goroutine: service stopped")
+			return
 
-		resp, err := HandleRequest(&msg, pv)
-		if _, err := w.WriteMsg(resp); err != nil {
-			pv.Logger.Printf("[ERR] signctrl: couldn't write message: %v\n", err)
-		}
-		if err != nil {
-			pv.Logger.Printf("[ERR] signctrl: couldn't handle request: %v\n", err)
-			if err == types.ErrMustShutdown {
-				pv.Logger.Printf("[DEBUG] signctrl: Terminating run() goroutine")
-				time.Sleep(500 * time.Millisecond)
+		case <-timeout.C:
+			pv.Logger.Printf("[INFO] signctrl: Lost connection to the validator... (no message for %v seconds)\n", retryDialTimeout)
+			pv.SecretConn.Close()
+
+			// Load the connection key from the config directory.
+			connKey, err := connection.LoadConnKey(config.Dir())
+			if err != nil {
+				pv.Logger.Printf("couldn't load conn.key: %v", err)
 				pv.Stop()
-				break
+				return
+			}
+
+			// Dial the validator.
+			pv.SecretConn, err = connection.RetrySecretDialTCP(
+				pv.Config.Init.ValidatorListenAddress,
+				connKey,
+				pv.Logger,
+			)
+			if err != nil {
+				pv.Logger.Printf("couldn't dial validator: %v", err)
+				pv.Stop()
+				return
+			}
+
+		default:
+			var msg tm_privvalproto.Message
+			r := tm_protoio.NewDelimitedReader(pv.SecretConn, maxRemoteSignerMsgSize)
+			if _, err := r.ReadMsg(&msg); err != nil {
+				if err == io.EOF {
+					continue // Prevent the logs from being spammed with EOF errors
+				}
+				pv.Logger.Printf("[ERR] signctrl: couldn't read message: %v\n", err)
+			}
+
+			timeout.Reset(retryDialTimeout * time.Second)
+
+			resp, err := HandleRequest(&msg, pv)
+			w := tm_protoio.NewDelimitedWriter(pv.SecretConn)
+			if _, err := w.WriteMsg(resp); err != nil {
+				pv.Logger.Printf("[ERR] signctrl: couldn't write message: %v\n", err)
+			}
+			if err != nil {
+				pv.Logger.Printf("[ERR] signctrl: couldn't handle request: %v\n", err)
+				if err == types.ErrMustShutdown {
+					pv.Logger.Printf("[DEBUG] signctrl: Terminating run() goroutine: %v\n", err)
+					pv.Stop()
+					pv.SecretConn.Close()
+					return
+				}
 			}
 		}
 	}
@@ -117,12 +149,12 @@ func (pv *SCFilePV) run() {
 // OnStart starts the main loop of the SignCtrled PrivValidator.
 // Implements the Service interface.
 func (pv *SCFilePV) OnStart() (err error) {
-	pv.Logger.Printf("[INFO] signctrl: Starting SignCTRL... (rank: %v)", pv.GetRank())
+	pv.Logger.Printf("[INFO] signctrl: Starting SignCTRL on rank %v...\n", pv.GetRank())
 
 	// Load the connection key from the config directory.
 	connKey, err := connection.LoadConnKey(config.Dir())
 	if err != nil {
-		return fmt.Errorf("Couldn't load conn.key: %v", err)
+		return fmt.Errorf("couldn't load conn.key: %v", err)
 	}
 
 	// Dial the validator.
@@ -132,18 +164,11 @@ func (pv *SCFilePV) OnStart() (err error) {
 		pv.Logger,
 	)
 	if err != nil {
-		return fmt.Errorf("Couldn't dial validator: %v", err)
+		return fmt.Errorf("couldn't dial validator: %v", err)
 	}
 
 	// Run the main loop.
 	go pv.run()
-
-	// Wait for the service to be stopped and send termination signal to
-	// terminate the SignCTRL process.
-	go func() {
-		pv.Wait()
-		pv.TermCh <- struct{}{}
-	}()
 
 	return nil
 }
@@ -151,6 +176,5 @@ func (pv *SCFilePV) OnStart() (err error) {
 // OnStop terminates the main loop of the SignCtrled PrivValidator.
 // Implements the Service interface.
 func (pv *SCFilePV) OnStop() {
-	pv.Logger.Printf("[INFO] signctrl: Stopping SignCTRL... (rank: %v)", pv.GetRank())
-	pv.SecretConn.Close() // Close the encrypted connection to the validator
+	pv.Logger.Printf("[INFO] signctrl: Stopping SignCTRL on rank %v...\n", pv.GetRank())
 }

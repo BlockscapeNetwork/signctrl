@@ -31,6 +31,7 @@ type SignCtrled interface {
 type BaseSignCtrled struct {
 	Logger        *log.Logger
 	counterLocked bool
+	currentHeight int64
 	missedInARow  int
 	threshold     int
 	rank          int
@@ -43,6 +44,7 @@ func NewBaseSignCtrled(logger *log.Logger, threshold int, rank int, impl SignCtr
 	return &BaseSignCtrled{
 		Logger:        logger,
 		counterLocked: true,
+		currentHeight: 1,
 		threshold:     threshold,
 		rank:          rank,
 		impl:          impl,
@@ -57,6 +59,16 @@ func (bsc *BaseSignCtrled) UnlockCounter() {
 		bsc.Logger.Println("[INFO] signctrl: Found first commitsig from validator since fully synced, start counting missed blocks in a row...")
 		bsc.counterLocked = false
 	}
+}
+
+// GetCurrentHeight returns the validator's current height.
+func (bsc *BaseSignCtrled) GetCurrentHeight() int64 {
+	return bsc.currentHeight
+}
+
+// SetCurrentHeight sets the current height to the given value.
+func (bsc *BaseSignCtrled) SetCurrentHeight(height int64) {
+	bsc.currentHeight = height
 }
 
 // GetRank returns the validators current rank.
@@ -90,6 +102,11 @@ func (bsc *BaseSignCtrled) Missed() error {
 			return err
 		}
 
+		// When a rank update due to ErrThresholdExceeded is triggered, it is expected
+		// that the next block will not contain the validator's signature. This is due
+		// to a block containing the commit of the previous height which we know wasn't
+		// signed. Therefore, skip ahead.
+		bsc.currentHeight++
 		return ErrThresholdExceeded
 	}
 
