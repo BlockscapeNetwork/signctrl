@@ -26,7 +26,7 @@ var (
 			// Load the config into memory.
 			cfg, err := config.Load()
 			if err != nil {
-				fmt.Printf("Couldn't load %v:\n%v", config.File, err)
+				fmt.Printf("couldn't load %v:\n%v", config.File, err)
 				os.Exit(1)
 			}
 
@@ -50,7 +50,7 @@ var (
 				),
 			)
 			if err := pv.CheckAndLoadLastRank(cfgDir, logger); err != nil {
-				fmt.Printf("Couldn't load %v: %v\n", privval.LastRankFile, err)
+				fmt.Printf("couldn't load %v: %v\n", privval.LastRankFile, err)
 				os.Exit(1)
 			}
 
