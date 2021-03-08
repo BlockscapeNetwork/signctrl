@@ -97,26 +97,14 @@ func (pv *SCFilePV) run() {
 			pv.Logger.Printf("[INFO] signctrl: Lost connection to the validator... (no message for %v)\n", retryDialTimeout.String())
 			pv.SecretConn.Close()
 
-			// Load the connection key from the config directory.
-			connKey, err := connection.LoadConnKey(config.Dir())
-			if err != nil {
-				pv.Logger.Printf("[ERR] signctrl: couldn't load conn.key: %v", err)
-				cancel()
-				pv.Stop()
-				return
-			}
-
-			// Dial the validator.
-			pv.SecretConn, err = connection.RetrySecretDialTCP(
+			var err error
+			if pv.SecretConn, err = connection.RetryDial(
 				pv.Config.Base.ValidatorListenAddress,
-				connKey,
 				pv.Logger,
-			)
-			if err != nil {
-				pv.Logger.Printf("[ERR] signctrl: couldn't dial validator: %v", err)
+			); err != nil {
+				pv.Logger.Printf("[ERR] signctrl: couldn't dial validator: %v\n", err)
 				cancel()
-				// Note: Don't use pv.Stop() in here, as RetrySecretDialTCP can only be stopped via SIGINT/SIGTERM.
-				return
+				// Note: Don't use pv.Stop() in here, as RetryDialTCP can only be stopped via SIGINT/SIGTERM.
 			}
 
 		default:
@@ -157,20 +145,12 @@ func (pv *SCFilePV) run() {
 func (pv *SCFilePV) OnStart() (err error) {
 	pv.Logger.Printf("[INFO] signctrl: Starting SignCTRL on rank %v...\n", pv.GetRank())
 
-	// Load the connection key from the config directory.
-	connKey, err := connection.LoadConnKey(config.Dir())
-	if err != nil {
-		return fmt.Errorf("[ERR] signctrl: couldn't load conn.key: %v", err)
-	}
-
 	// Dial the validator.
-	pv.SecretConn, err = connection.RetrySecretDialTCP(
+	if pv.SecretConn, err = connection.RetryDial(
 		pv.Config.Base.ValidatorListenAddress,
-		connKey,
 		pv.Logger,
-	)
-	if err != nil {
-		return fmt.Errorf("[ERR] signctrl: couldn't dial validator: %v", err)
+	); err != nil {
+		return err
 	}
 
 	// Run the main loop.
