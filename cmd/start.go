@@ -34,7 +34,7 @@ var (
 			logger := log.New(os.Stderr, "", 0)
 			filter := &logutils.LevelFilter{
 				Levels:   config.LogLevels,
-				MinLevel: logutils.LogLevel(cfg.Init.LogLevel),
+				MinLevel: logutils.LogLevel(cfg.Base.LogLevel),
 				Writer:   os.Stderr,
 			}
 			logger.SetOutput(filter)
@@ -44,7 +44,7 @@ var (
 			pv := privval.NewSCFilePV(
 				logger,
 				cfg,
-				tm_privval.LoadOrGenFilePV(
+				*tm_privval.LoadOrGenFilePV(
 					privval.KeyFilePath(cfgDir),
 					privval.StateFilePath(cfgDir),
 				),
@@ -67,15 +67,14 @@ var (
 			select {
 			case <-pv.Quit(): // Used for self-induced shutdown
 				pv.Logger.Println("[INFO] signctrl: Shutting SignCTRL down... ⏻ (quit)")
+
+				// The last_rank.json should only be created for user/os interrups, so delete it if
+				// the node shut itself down on its own.
+				// TODO: Later, when no more shutdowns are needed, this can be removed.
+				os.Remove(privval.LastRankFilePath(cfgDir))
 			case <-sigs: // The sigs channel is only used for OS interrupt signals
 				pv.Logger.Println("[INFO] signctrl: Shutting SignCTRL down... ⏻ (user/os interrupt)")
 				pv.Stop()
-
-				// Save rank to last_rank.json file if the shutdown was not self-induced.
-				if err := pv.Save(cfgDir, pv.Logger); err != nil {
-					fmt.Printf("[ERR] signctrl: Couldn't save rank to %v: %v", privval.LastRankFile, err)
-					os.Exit(1)
-				}
 			}
 
 			// TODO: The current logger is async which is why some of the last log messages before

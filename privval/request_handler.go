@@ -2,6 +2,7 @@ package privval
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 
 	"github.com/BlockscapeNetwork/signctrl/rpc"
@@ -88,7 +89,7 @@ func handlePubKeyRequest(req *tm_privvalproto.PubKeyRequest, pv *SCFilePV) (*tm_
 
 // handleSignVoteRequest handles a SignVoteRequest by returning
 // a SignVoteResponse.
-func handleSignVoteRequest(req *tm_privvalproto.SignVoteRequest, pv *SCFilePV) (*tm_privvalproto.Message, error) {
+func handleSignVoteRequest(ctx context.Context, req *tm_privvalproto.SignVoteRequest, pv *SCFilePV) (*tm_privvalproto.Message, error) {
 	pv.Logger.Printf("[DEBUG] signctrl: Received SignVoteRequest: %v", req) // TODO: Add toString() for tm_privvalproto.SignVoteRequest
 
 	// Check if the SignVoteRequest is for the chain ID specified
@@ -106,7 +107,7 @@ func handleSignVoteRequest(req *tm_privvalproto.SignVoteRequest, pv *SCFilePV) (
 	// This is due to the genesis block not having any commitsigs.
 	if req.Vote.Height > pv.BaseSignCtrled.GetCurrentHeight() && req.Vote.Height > 1 {
 		// Get block information from the validator's /block endpoint.
-		rb, err := rpc.GetBlock(pv.Config.Init.ValidatorListenAddressRPC, req.Vote.Height-1, pv.Logger)
+		rb, err := rpc.QueryBlock(ctx, pv.Config.Base.ValidatorListenAddressRPC, req.Vote.Height-1, pv.Logger)
 		if err != nil {
 			return wrapMsg(&tm_privvalproto.SignedVoteResponse{
 				Vote:  tm_typesproto.Vote{},
@@ -163,7 +164,7 @@ func handleSignVoteRequest(req *tm_privvalproto.SignVoteRequest, pv *SCFilePV) (
 
 // handleSignProposalRequest handles a SignProposalRequest by
 // returning a SignProposalResponse.
-func handleSignProposalRequest(req *tm_privvalproto.SignProposalRequest, pv *SCFilePV) (*tm_privvalproto.Message, error) {
+func handleSignProposalRequest(ctx context.Context, req *tm_privvalproto.SignProposalRequest, pv *SCFilePV) (*tm_privvalproto.Message, error) {
 	pv.Logger.Printf("[DEBUG] signctrl: Received SignProposalRequest: %v", req) // TODO: Add toString() for tm_privvalproto.SignProposalRequest
 
 	// Check if the SignProposalRequest is for the chain ID specified
@@ -181,7 +182,7 @@ func handleSignProposalRequest(req *tm_privvalproto.SignProposalRequest, pv *SCF
 	// This is due to the genesis block not having any commitsigs.
 	if req.Proposal.Height > pv.BaseSignCtrled.GetCurrentHeight() && req.Proposal.Height > 1 {
 		// Get block information from the validator's /block endpoint.
-		rb, err := rpc.GetBlock(pv.Config.Init.ValidatorListenAddressRPC, req.Proposal.Height-1, pv.Logger)
+		rb, err := rpc.QueryBlock(ctx, pv.Config.Base.ValidatorListenAddressRPC, req.Proposal.Height-1, pv.Logger)
 		if err != nil {
 			return wrapMsg(&tm_privvalproto.SignedProposalResponse{
 				Proposal: tm_typesproto.Proposal{},
@@ -237,16 +238,16 @@ func handleSignProposalRequest(req *tm_privvalproto.SignProposalRequest, pv *SCF
 }
 
 // HandleRequest handles all incoming requests from the validator.
-func HandleRequest(msg *tm_privvalproto.Message, pv *SCFilePV) (*tm_privvalproto.Message, error) {
+func HandleRequest(ctx context.Context, msg *tm_privvalproto.Message, pv *SCFilePV) (*tm_privvalproto.Message, error) {
 	switch msg.Sum.(type) {
 	case *tm_privvalproto.Message_PingRequest:
 		return handlePingRequest(pv)
 	case *tm_privvalproto.Message_PubKeyRequest:
 		return handlePubKeyRequest(msg.GetPubKeyRequest(), pv)
 	case *tm_privvalproto.Message_SignVoteRequest:
-		return handleSignVoteRequest(msg.GetSignVoteRequest(), pv)
+		return handleSignVoteRequest(ctx, msg.GetSignVoteRequest(), pv)
 	case *tm_privvalproto.Message_SignProposalRequest:
-		return handleSignProposalRequest(msg.GetSignProposalRequest(), pv)
+		return handleSignProposalRequest(ctx, msg.GetSignProposalRequest(), pv)
 	default:
 		return nil, fmt.Errorf("unknown message: %v", msg)
 	}

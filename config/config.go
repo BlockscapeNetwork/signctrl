@@ -6,7 +6,9 @@ import (
 	"net"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/logutils"
 	"github.com/spf13/viper"
@@ -22,8 +24,8 @@ var (
 	LogLevels = []logutils.LogLevel{"DEBUG", "INFO", "WARN", "ERR"}
 )
 
-// Init defines the configuration parameters that SignCTRL needs on initialization.
-type Init struct {
+// Base defines the base configuration parameters for SignCTRL.
+type Base struct {
 	// LogLevel determines the minimum log level for SignCTRL logs.
 	// Can be DEBUG, INFO, WARN or ERR.
 	LogLevel string `mapstructure:"log_level"`
@@ -31,13 +33,13 @@ type Init struct {
 	// SetSize determines the number of validators in the SignCTRL set.
 	SetSize int `mapstructure:"set_size"`
 
-	// Threshold determines the threshold value of missed blocks in a row that triggers
-	// a rank update in the SignCTRL set.
+	// Threshold determines the threshold value of missed blocks in a row that
+	// triggers a rank update in the SignCTRL set.
 	Threshold int `mapstructure:"threshold"`
 
-	// Rank determines the validator's rank and therefore whether it has permission
-	// to sign votes/proposals or not.
-	Rank int `mapstructure:"rank"`
+	// StartRank determines the validator's rank on startup and therefore whether it
+	// has permission to sign votes/proposals or not.
+	StartRank int `mapstructure:"start_rank"`
 
 	// ValidatorListenAddress is the TCP socket address the validator listens on for
 	// an external PrivValidator process. SignCTRL dials this address to establish a
@@ -47,6 +49,10 @@ type Init struct {
 	// ValidatorListenAddressRPC is the TCP socket address the validator's RPC server
 	// listens on.
 	ValidatorListenAddressRPC string `mapstructure:"validator_laddr_rpc"`
+
+	// RetryDialAfter is the time after which SignCTRL assumes it lost connection to
+	// the validator and retries dialing it.
+	RetryDialAfter string `mapstructure:"retry_dial_after"`
 }
 
 // PrivValidator defines the types of private validators that sign incoming sign
@@ -58,8 +64,8 @@ type PrivValidator struct {
 
 // Config defines the structure of SignCTRL's configuration file.
 type Config struct {
-	// Init defines the [init] section of the configuration file.
-	Init Init `mapstructure:"init"`
+	// Base defines the [base] section of the configuration file.
+	Base Base `mapstructure:"base"`
 
 	// Privval defines the [privval] section of the configuration file.
 	Privval PrivValidator `mapstructure:"privval"`
@@ -88,6 +94,25 @@ func FilePath(cfgDir string) string {
 	return cfgDir + "/" + File
 }
 
+// GetRetryDialTime converts the string representation of RetryDialAfter into
+// time.Duration and returns it.
+func GetRetryDialTime(timeString string) time.Duration {
+	t := regexp.MustCompile(`[1-9][0-9]+`).FindString(timeString)
+	tConv, _ := strconv.Atoi(t)
+
+	tUnit := regexp.MustCompile(`s|m|h`).FindString(timeString)
+	switch tUnit {
+	case "s":
+		return time.Duration(tConv) * time.Second
+	case "m":
+		return time.Duration(tConv) * time.Minute
+	case "h":
+		return time.Duration(tConv) * time.Hour
+	}
+
+	return 0
+}
+
 // logLevelsToRegExp returns a regular expression for the validation of log levels.
 func logLevelsToRegExp(levels *[]logutils.LogLevel) string {
 	var regExp string
@@ -101,25 +126,25 @@ func logLevelsToRegExp(levels *[]logutils.LogLevel) string {
 	return regExp
 }
 
-// validateInit validates the configuration's init section.
-func validateInit(c *Config) error {
+// validateBase validates the configuration's base section.
+func validateBase(c Config) error {
 	var errs string
-	if match, _ := regexp.MatchString(logLevelsToRegExp(&LogLevels), c.Init.LogLevel); !match {
+	if match, _ := regexp.MatchString(logLevelsToRegExp(&LogLevels), c.Base.LogLevel); !match {
 		errs += fmt.Sprintf("\tlog_level must be one of the following: %v\n", LogLevels)
 	}
-	if c.Init.SetSize < 2 {
+	if c.Base.SetSize < 2 {
 		errs += "\tset_size must be 2 or higher\n"
 	}
-	if c.Init.Threshold < 1 {
+	if c.Base.Threshold < 1 {
 		errs += "\tthreshold must be 1 or higher\n"
 	}
-	if c.Init.Rank < 1 {
-		errs += "\trank must be 1 or higher\n"
+	if c.Base.StartRank < 1 {
+		errs += "\tstart_rank must be 1 or higher\n"
 	}
-	if !strings.HasPrefix(c.Init.ValidatorListenAddress, "tcp://") {
+	if !strings.HasPrefix(c.Base.ValidatorListenAddress, "tcp://") {
 		errs += "\tvalidator_laddr is missing the protocol\n"
 	} else {
-		host, _, err := net.SplitHostPort(strings.Trim(c.Init.ValidatorListenAddress, "tcp://"))
+		host, _, err := net.SplitHostPort(strings.Trim(c.Base.ValidatorListenAddress, "tcp://"))
 		if err != nil {
 			errs += "\tvalidator_laddr is not in the host:port format\n"
 		} else {
@@ -128,16 +153,28 @@ func validateInit(c *Config) error {
 			}
 		}
 	}
-	if !strings.HasPrefix(c.Init.ValidatorListenAddressRPC, "tcp://") {
+	if !strings.HasPrefix(c.Base.ValidatorListenAddressRPC, "tcp://") {
 		errs += "\tvalidator_laddr_rpc is missing the protocol\n"
 	} else {
-		host, _, err := net.SplitHostPort(strings.Trim(c.Init.ValidatorListenAddressRPC, "tcp://"))
+		host, _, err := net.SplitHostPort(strings.Trim(c.Base.ValidatorListenAddressRPC, "tcp://"))
 		if err != nil {
 			errs += "\tvalidator_laddr_rpc is not in the host:port format\n"
 		} else {
 			if ip := net.ParseIP(host); ip == nil {
 				errs += "\tvalidator_laddr_rpc is not a valid IPv4 address\n"
 			}
+		}
+	}
+	if c.Base.RetryDialAfter == "" {
+		errs += "\tretry_dial_after must not be empty\n"
+	} else {
+		time := regexp.MustCompile(`[1-9][0-9]+`).FindString(c.Base.RetryDialAfter)
+		if time == "" {
+			errs += "\tretry_dial_after is missing the time\n"
+		}
+		timeUnit := regexp.MustCompile(`s|m|h`).FindString(c.Base.RetryDialAfter)
+		if timeUnit == "" {
+			errs += "\tretry_dial_after is missing the unit of time\n"
 		}
 	}
 	if errs != "" {
@@ -148,7 +185,7 @@ func validateInit(c *Config) error {
 }
 
 // validatePrivValidator validates the configuration's privval section.
-func validatePrivValidator(c *Config) error {
+func validatePrivValidator(c Config) error {
 	var errs string
 	if c.Privval.ChainID == "" {
 		errs += "\tchain_id must not be empty\n"
@@ -161,9 +198,9 @@ func validatePrivValidator(c *Config) error {
 }
 
 // validate validates the configuration.
-func validate(c *Config) error {
+func validate(c Config) error {
 	var errs string
-	if err := validateInit(c); err != nil {
+	if err := validateBase(c); err != nil {
 		errs += err.Error()
 	}
 	if err := validatePrivValidator(c); err != nil {
@@ -177,15 +214,15 @@ func validate(c *Config) error {
 }
 
 // Load loads and validates the configuration file.
-func Load() (c *Config, err error) {
+func Load() (c Config, err error) {
 	if err = viper.ReadInConfig(); err != nil {
-		return nil, err
+		return Config{}, err
 	}
 	if err = viper.Unmarshal(&c); err != nil {
-		return nil, err
+		return Config{}, err
 	}
 	if err = validate(c); err != nil {
-		return nil, err
+		return Config{}, err
 	}
 
 	return c, nil

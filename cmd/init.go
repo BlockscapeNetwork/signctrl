@@ -27,7 +27,7 @@ var (
 					fmt.Println(err)
 					os.Exit(1)
 				}
-				fmt.Printf("Created configuration directory (%v)\n", cfgDir)
+				fmt.Printf("Created configuration directory (%v) ✓\n", cfgDir)
 			} else {
 				fmt.Printf("Found existing configuration directory (%v)\n", cfgDir)
 			}
