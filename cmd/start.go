@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -48,6 +49,7 @@ var (
 					privval.KeyFilePath(cfgDir),
 					privval.StateFilePath(cfgDir),
 				),
+				&http.Server{},
 			)
 			if err := pv.CheckAndLoadLastRank(cfgDir, logger); err != nil {
 				fmt.Printf("couldn't load %v: %v\n", privval.LastRankFile, err)
