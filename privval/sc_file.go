@@ -90,7 +90,7 @@ func (pv *SCFilePV) run() {
 		case <-pv.Quit():
 			pv.Logger.Printf("[DEBUG] signctrl: Terminating run goroutine: service stopped")
 			cancel()
-			// Note: Don't use pv.Stop() in here as it closes the pv.Quit() channel.
+			// Note: Don't use pv.Stop() in here, as it closes the pv.Quit() channel.
 			return
 
 		case <-timeout.C:
@@ -104,7 +104,7 @@ func (pv *SCFilePV) run() {
 			); err != nil {
 				pv.Logger.Printf("[ERR] signctrl: couldn't dial validator: %v\n", err)
 				cancel()
-				// Note: Don't use pv.Stop() in here, as RetryDialTCP can only be stopped via SIGINT/SIGTERM.
+				// Note: Don't use pv.Stop() in here, as RetryDial can only be stopped via SIGINT/SIGTERM.
 			}
 
 		default:
