@@ -105,6 +105,7 @@ func (pv *SCFilePV) run() {
 				pv.Logger.Printf("[ERR] signctrl: couldn't dial validator: %v\n", err)
 				cancel()
 				// Note: Don't use pv.Stop() in here, as RetryDial can only be stopped via SIGINT/SIGTERM.
+				return
 			}
 
 		default:
