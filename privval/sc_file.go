@@ -13,6 +13,8 @@ import (
 	"github.com/BlockscapeNetwork/signctrl/config"
 	"github.com/BlockscapeNetwork/signctrl/connection"
 	"github.com/BlockscapeNetwork/signctrl/types"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	tm_protoio "github.com/tendermint/tendermint/libs/protoio"
 	tm_privval "github.com/tendermint/tendermint/privval"
 	tm_privvalproto "github.com/tendermint/tendermint/proto/tendermint/privval"
@@ -45,6 +47,7 @@ type SCFilePV struct {
 	TMFilePV   tm_privval.FilePV
 	SecretConn net.Conn
 	HTTP       *http.Server
+	gauges     map[string]prometheus.Gauge
 }
 
 // KeyFilePath returns the absolute path to the priv_validator_key.json file.
@@ -76,6 +79,14 @@ func NewSCFilePV(logger *log.Logger, cfg config.Config, tmpv tm_privval.FilePV, 
 		pv.Config.Base.StartRank,
 		pv,
 	)
+	pv.gauges["signctrl_rank"] = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "signctrl_rank",
+		Help: "Current rank of the SignCTRL validator.",
+	})
+	pv.gauges["signctrl_missed_blocks_in_a_row"] = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "signctrl_missed_blocks_in_a_row",
+		Help: "Number of blocks missed in a row",
+	})
 
 	return pv
 }
@@ -173,6 +184,7 @@ func (pv *SCFilePV) OnStop() {
 	pv.Logger.Printf("[INFO] signctrl: Stopping SignCTRL on rank %v...\n", pv.GetRank())
 
 	// Close the http server.
+	pv.Logger.Println("[INFO] signctrl: Stopping the HTTP server...")
 	pv.HTTP.Close()
 
 	// Save rank to last_rank.json file if the shutdown was not self-induced.
@@ -180,4 +192,19 @@ func (pv *SCFilePV) OnStop() {
 		fmt.Printf("[ERR] signctrl: couldn't save rank to %v: %v", LastRankFile, err)
 		os.Exit(1)
 	}
+}
+
+// OnMissedTooMany sets the prometheus gauge for the validator's counter for missed
+// blocks in a row.
+// Implements the SignCtrled interface.
+func (pv *SCFilePV) OnMissedTooMany() {
+	pv.Logger.Printf("[DEBUG] signctrl: Setting signctrl_missed_blocks_in_a_row gauge to %v\n", pv.GetMissedInARow())
+	pv.gauges["signctrl_missed_blocks_in_a_row"].Set(float64(pv.GetMissedInARow()))
+}
+
+// OnPromote sets the prometheus gauge for the validator's rank.
+// Implements the SignCtrled interface.
+func (pv *SCFilePV) OnPromote() {
+	pv.Logger.Printf("[DEBUG] signctrl: Setting signctrl_rank gauge to %v\n", pv.GetRank())
+	pv.gauges["signctrl_rank"].Set(float64(pv.GetRank()))
 }
