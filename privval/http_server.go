@@ -34,7 +34,7 @@ func (pv *SCFilePV) statusHandler(rw http.ResponseWriter, r *http.Request) {
 
 // StartHTTPServer starts an HTTP server.
 func (pv *SCFilePV) StartHTTPServer() error {
-	pv.Logger.Println("[DEBUG] signctrl: Starting HTTP server...")
+	pv.Logger.Println("[INFO] signctrl: Starting HTTP server...")
 
 	var errCh chan error
 	go func() {
