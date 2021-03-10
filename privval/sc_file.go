@@ -67,6 +67,7 @@ func NewSCFilePV(logger *log.Logger, cfg config.Config, tmpv tm_privval.FilePV, 
 		Config:   cfg,
 		TMFilePV: tmpv,
 		HTTP:     http,
+		gauges:   make(map[string]prometheus.Gauge),
 	}
 	pv.BaseService = *types.NewBaseService(
 		logger,
