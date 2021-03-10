@@ -39,7 +39,7 @@ func (pv *SCFilePV) StartHTTPServer() error {
 	var errCh chan error
 	go func() {
 		http.HandleFunc("/status", pv.statusHandler)
-		if err := http.ListenAndServe(":8080", nil); err != nil {
+		if err := pv.HTTP.ListenAndServe(); err != nil {
 			errCh <- err
 		}
 	}()

@@ -49,7 +49,7 @@ var (
 					privval.KeyFilePath(cfgDir),
 					privval.StateFilePath(cfgDir),
 				),
-				&http.Server{},
+				&http.Server{Addr: ":8080"},
 			)
 			if err := pv.CheckAndLoadLastRank(cfgDir, logger); err != nil {
 				fmt.Printf("couldn't load %v: %v\n", privval.LastRankFile, err)
