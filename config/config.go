@@ -141,16 +141,21 @@ func validateBase(c Config) error {
 	if c.Base.StartRank < 1 {
 		errs += "\tstart_rank must be 1 or higher\n"
 	}
-	if !strings.HasPrefix(c.Base.ValidatorListenAddress, "tcp://") {
+	protocol := regexp.MustCompile(`(tcp|unix)://`).FindString(c.Base.ValidatorListenAddress)
+	if protocol == "" {
 		errs += "\tvalidator_laddr is missing the protocol\n"
-	} else {
-		host, _, err := net.SplitHostPort(strings.Trim(c.Base.ValidatorListenAddress, "tcp://"))
+	} else if protocol == "tcp://" {
+		host, _, err := net.SplitHostPort(strings.TrimPrefix(c.Base.ValidatorListenAddress, protocol))
 		if err != nil {
 			errs += "\tvalidator_laddr is not in the host:port format\n"
 		} else {
 			if ip := net.ParseIP(host); ip == nil {
 				errs += "\tvalidator_laddr is not a valid IPv4 address\n"
 			}
+		}
+	} else if protocol == "unix://" {
+		if !strings.HasSuffix(c.Base.ValidatorListenAddress, ".sock") {
+			errs += "\nvalidator_laddr is not a unix domain socket address\n"
 		}
 	}
 	if !strings.HasPrefix(c.Base.ValidatorListenAddressRPC, "tcp://") {

@@ -26,7 +26,7 @@ var (
 			// Load the config into memory.
 			cfg, err := config.Load()
 			if err != nil {
-				fmt.Printf("Couldn't load %v:\n%v", config.File, err)
+				fmt.Printf("couldn't load %v:\n%v", config.File, err)
 				os.Exit(1)
 			}
 
@@ -50,7 +50,7 @@ var (
 				),
 			)
 			if err := pv.CheckAndLoadLastRank(cfgDir, logger); err != nil {
-				fmt.Printf("Couldn't load %v: %v\n", privval.LastRankFile, err)
+				fmt.Printf("couldn't load %v: %v\n", privval.LastRankFile, err)
 				os.Exit(1)
 			}
 
@@ -68,7 +68,7 @@ var (
 			case <-pv.Quit(): // Used for self-induced shutdown
 				pv.Logger.Println("[INFO] signctrl: Shutting SignCTRL down... ⏻ (quit)")
 
-				// The last_rank.json should only be created for user/os interrups, so delete it if
+				// The last_rank.json should only be created for user/os interrupts, so delete it if
 				// the node shut itself down on its own.
 				// TODO: Later, when no more shutdowns are needed, this can be removed.
 				os.Remove(privval.LastRankFilePath(cfgDir))
