@@ -202,8 +202,8 @@ func validatePrivValidator(c Config) error {
 	return nil
 }
 
-// validate validates the configuration.
-func validate(c Config) error {
+// validateConfig validates the configuration.
+func validateConfig(c Config) error {
 	var errs string
 	if err := validateBase(c); err != nil {
 		errs += err.Error()
@@ -226,7 +226,7 @@ func Load() (c Config, err error) {
 	if err = viper.Unmarshal(&c); err != nil {
 		return Config{}, err
 	}
-	if err = validate(c); err != nil {
+	if err = validateConfig(c); err != nil {
 		return Config{}, err
 	}
 
