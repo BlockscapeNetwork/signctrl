@@ -159,6 +159,9 @@ func handleSignVoteRequest(ctx context.Context, req *tm_privvalproto.SignVoteReq
 			// and unlock it if it hasn't already been unlocked.
 			pv.Reset()
 			pv.UnlockCounter()
+
+			// Set the last signed height to the height from the vote request.
+			pv.State.LastSignedHeight = req.Vote.Height
 		}
 	}
 
@@ -243,6 +246,9 @@ func handleSignProposalRequest(ctx context.Context, req *tm_privvalproto.SignPro
 			// and unlock it if it hasn't already been unlocked.
 			pv.Reset()
 			pv.UnlockCounter()
+
+			// Set the last signed height to the height from the proposal request.
+			pv.State.LastSignedHeight = req.Proposal.Height
 		}
 	}
 
