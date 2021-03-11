@@ -55,9 +55,21 @@ func NewBaseSignCtrled(logger *log.Logger, threshold int, rank int, impl SignCtr
 	}
 }
 
+// LockCounter locks the counter for missed blocks in a row.
+// This lock is crucial for mitigating the risk of double-signing on startup of the
+// validators in the set if they are started up in incorrect order, and if a reconnect
+// takes place.
+func (bsc *BaseSignCtrled) LockCounter() {
+	if !bsc.counterLocked {
+		bsc.Logger.Println("[INFO] signctrl: Looking for first commitsig from validator after reconnect, stop counting missed blocks in a row...")
+		bsc.counterLocked = true
+	}
+}
+
 // UnlockCounter unlocks the counter for missed blocks in a row.
 // This lock is crucial for mitigating the risk of double-signing on startup of the
-// validators in the set if they are started up in incorrect order.
+// validators in the set if they are started up in incorrect order, and if a reconnect
+// takes place.
 func (bsc *BaseSignCtrled) UnlockCounter() {
 	if bsc.counterLocked {
 		bsc.Logger.Println("[INFO] signctrl: Found first commitsig from validator since fully synced, start counting missed blocks in a row...")

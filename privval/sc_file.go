@@ -110,6 +110,11 @@ func (pv *SCFilePV) run() {
 
 		case <-timeout.C:
 			pv.Logger.Printf("[INFO] signctrl: Lost connection to the validator... (no message for %v)\n", retryDialTimeout.String())
+
+			// Lock the counter for missed blocks in a row again.
+			pv.LockCounter()
+
+			// Close the connection and establish a new one.
 			pv.SecretConn.Close()
 
 			var err error
