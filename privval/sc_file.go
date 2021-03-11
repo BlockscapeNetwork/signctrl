@@ -44,10 +44,12 @@ type SCFilePV struct {
 
 	Logger     *log.Logger
 	Config     config.Config
+	State      *config.State
 	TMFilePV   tm_privval.FilePV
 	SecretConn net.Conn
 	HTTP       *http.Server
-	gauges     map[string]prometheus.Gauge
+
+	gauges map[string]prometheus.Gauge
 }
 
 // KeyFilePath returns the absolute path to the priv_validator_key.json file.
@@ -61,10 +63,11 @@ func StateFilePath(cfgDir string) string {
 }
 
 // NewSCFilePV creates a new instance of SCFilePV.
-func NewSCFilePV(logger *log.Logger, cfg config.Config, tmpv tm_privval.FilePV, http *http.Server) *SCFilePV {
+func NewSCFilePV(logger *log.Logger, cfg config.Config, state *config.State, tmpv tm_privval.FilePV, http *http.Server) *SCFilePV {
 	pv := &SCFilePV{
 		Logger:   logger,
 		Config:   cfg,
+		State:    state,
 		TMFilePV: tmpv,
 		HTTP:     http,
 		gauges:   make(map[string]prometheus.Gauge),
@@ -148,7 +151,7 @@ func (pv *SCFilePV) run() {
 			}
 			if err != nil {
 				pv.Logger.Printf("[ERR] signctrl: couldn't handle request: %v\n", err)
-				if err == types.ErrMustShutdown {
+				if err == types.ErrMustShutdown || err == ErrRankObsolete {
 					pv.Logger.Printf("[DEBUG] signctrl: Terminating run goroutine: %v\n", err)
 					cancel()
 					pv.Stop()
@@ -194,8 +197,8 @@ func (pv *SCFilePV) OnStop() {
 	pv.HTTP.Close()
 
 	// Save rank to last_rank.json file if the shutdown was not self-induced.
-	if err := pv.Save(config.Dir(), pv.Logger); err != nil {
-		fmt.Printf("[ERR] signctrl: couldn't save rank to %v: %v", LastRankFile, err)
+	if err := config.SaveState(config.Dir(), *pv.State); err != nil {
+		fmt.Printf("[ERR] signctrl: couldn't save rank to %v: %v", config.StateFile, err)
 		os.Exit(1)
 	}
 }
