@@ -95,6 +95,13 @@ validator_laddr = "tcp://127.0.0.1:3000"
 # Must be a TCP address in the host:port format.
 validator_laddr_rpc = "tcp://127.0.0.1:26657"
 
+# Time after which SignCTRL assumes it lost the
+# connection to the validator and retries dialing
+# it.
+# Must be 1 or higher. Use 's' for seconds, 'm' for
+# minutes and 'h' for hours.
+retry_dial_after = "15s"
+
 ####################################################
 ### Privval defines the types of private         ###
 ### validators that sign incoming sign requests. ###
@@ -134,6 +141,7 @@ threshold = 5 # Shared value
 rank = 1 # Unique
 validator_laddr = "tcp://127.0.0.1:3000"
 validator_laddr_rpc = "tcp://127.0.0.1:26657"
+retry_dial_after = "15s"
 
 [privval]
 
@@ -152,6 +160,7 @@ threshold = 5 # Shared value
 rank = 2 # Unique
 validator_laddr = "tcp://127.0.0.1:3000"
 validator_laddr_rpc = "tcp://127.0.0.1:26657"
+retry_dial_after = "15s"
 
 [privval]
 
