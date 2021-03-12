@@ -23,8 +23,12 @@ var (
 // blockchain for missed blocks in a row and keeps its rank up to date.
 type SignCtrled interface {
 	Missed() error
+	OnMissedTooMany()
+
 	Reset()
-	promote() error
+
+	Promote() error
+	OnPromote()
 }
 
 // BaseSignCtrled is a base implementation of SignCtrled.
@@ -71,6 +75,17 @@ func (bsc *BaseSignCtrled) SetCurrentHeight(height int64) {
 	bsc.currentHeight = height
 }
 
+// GetThreshold returns the threshold of blocks missed in a row that trigger a rank
+// update.
+func (bsc *BaseSignCtrled) GetThreshold() int {
+	return bsc.threshold
+}
+
+// GetMissedInARow returns the number of blocks missed in a row.
+func (bsc *BaseSignCtrled) GetMissedInARow() int {
+	return bsc.missedInARow
+}
+
 // GetRank returns the validators current rank.
 func (bsc *BaseSignCtrled) GetRank() int {
 	return bsc.rank
@@ -98,7 +113,8 @@ func (bsc *BaseSignCtrled) Missed() error {
 		bsc.Logger.Printf("[INFO] signctrl: Missed a block (%v/%v)", bsc.missedInARow, bsc.threshold)
 	} else if bsc.missedInARow == bsc.threshold {
 		bsc.Logger.Printf("[INFO] signctrl: Missed too many blocks in a row (%v/%v)", bsc.missedInARow, bsc.threshold)
-		if err := bsc.promote(); err != nil {
+		bsc.OnMissedTooMany()
+		if err := bsc.Promote(); err != nil {
 			return err
 		}
 
@@ -113,6 +129,10 @@ func (bsc *BaseSignCtrled) Missed() error {
 	return nil
 }
 
+// OnMissedTooMany does nothing. This way, users don't need to call BaseSignCtrled.OnMissedTooMany().
+// Implements the SignCtrled interface.
+func (bsc *BaseSignCtrled) OnMissedTooMany() {}
+
 // Reset resets the counter for missed blocks in a row to 0.
 // Implements the SignCtrled interface.
 func (bsc *BaseSignCtrled) Reset() {
@@ -122,12 +142,12 @@ func (bsc *BaseSignCtrled) Reset() {
 	}
 }
 
-// promote moves the validator up one rank. An error is returned if the validator
+// Promote moves the validator up one rank. An error is returned if the validator
 // cannot be promoted anymore and it has to be shut down consequently.
 // This method is only supposed to be called from within the Missed method and never
 // on its own.
 // Implements the SignCtrled interface.
-func (bsc *BaseSignCtrled) promote() error {
+func (bsc *BaseSignCtrled) Promote() error {
 	if bsc.rank == 1 {
 		return ErrMustShutdown
 	}
@@ -135,6 +155,11 @@ func (bsc *BaseSignCtrled) promote() error {
 	bsc.Logger.Printf("[INFO] signctrl: Promote validator (%v -> %v)", bsc.rank, bsc.rank-1)
 	bsc.rank--
 	bsc.Reset()
+	bsc.OnPromote()
 
 	return nil
 }
+
+// OnPromote does nothing. This way, users don't have to call BaseSignCtrled.OnPromote().
+// Implements the SignCtrled interface.
+func (bsc *BaseSignCtrled) OnPromote() {}
