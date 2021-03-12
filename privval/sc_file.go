@@ -197,8 +197,8 @@ func (pv *SCFilePV) OnStop() {
 	pv.HTTP.Close()
 
 	// Save rank to last_rank.json file if the shutdown was not self-induced.
-	if err := config.SaveState(config.Dir(), *pv.State); err != nil {
-		fmt.Printf("[ERR] signctrl: couldn't save rank to %v: %v", config.StateFile, err)
+	if err := pv.State.Save(config.Dir()); err != nil {
+		fmt.Printf("[ERR] signctrl: couldn't save state to %v: %v", config.StateFile, err)
 		os.Exit(1)
 	}
 }

@@ -42,7 +42,7 @@ var (
 			logger.SetOutput(filter)
 
 			// Load the state.
-			state, err := config.LoadState(cfgDir)
+			state, err := config.LoadOrGenState(cfgDir)
 			if err != nil {
 				fmt.Printf("couldn't load %v: %v\n", config.StateFile, err)
 				os.Exit(1)

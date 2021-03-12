@@ -24,13 +24,8 @@ type State struct {
 	LastRank         int   `json:"last_rank"`
 }
 
-// StateFilePath returns the absolute path to the signctrl_state.json file.
-func StateFilePath(cfgDir string) string {
-	return cfgDir + "/" + StateFile
-}
-
-// validateState validates the contents of the signctrl_state.json file.
-func validateState(s State) error {
+// validate validates the contents of the signctrl_state.json file.
+func (s State) validate() error {
 	var errs string
 	if s.LastSignedHeight < 1 {
 		errs += "\tlast_signed_height in signctrl_state.json must be 1 or higher\n"
@@ -45,10 +40,22 @@ func validateState(s State) error {
 	return nil
 }
 
-// LoadState loads the contents of the signctrl_state.json file and returns them.
-func LoadState(cfgDir string) (State, error) {
+// StateFilePath returns the absolute path to the signctrl_state.json file.
+func StateFilePath(cfgDir string) string {
+	return cfgDir + "/" + StateFile
+}
+
+// LoadOrGenState loads the contents of the signctrl_state.json file and returns them
+// if it exists, or generetas a new one.
+func LoadOrGenState(cfgDir string) (State, error) {
 	if _, err := os.Stat(StateFilePath(cfgDir)); os.IsNotExist(err) {
-		return State{}, err
+		state := State{
+			LastSignedHeight: 1,
+			LastRank:         0, // TODO: Load rank from config in here.
+		}
+		state.Save(cfgDir)
+
+		return state, nil
 	}
 
 	bytes, err := ioutil.ReadFile(StateFilePath(cfgDir))
@@ -60,15 +67,15 @@ func LoadState(cfgDir string) (State, error) {
 	if err := tm_json.Unmarshal(bytes, &s); err != nil {
 		return State{}, err
 	}
-	if err := validateState(s); err != nil {
+	if err := s.validate(); err != nil {
 		return State{}, err
 	}
 
 	return s, nil
 }
 
-// SaveState saves the current state to the signctrl_state.json file.
-func SaveState(cfgDir string, s State) error {
+// Save saves the current state to the signctrl_state.json file.
+func (s *State) Save(cfgDir string) error {
 	lrFile, err := tm_json.MarshalIndent(&State{
 		LastRank:         s.LastRank,
 		LastSignedHeight: s.LastSignedHeight,
