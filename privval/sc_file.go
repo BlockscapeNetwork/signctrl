@@ -6,7 +6,6 @@ import (
 	"io"
 	"log"
 	"net"
-	"net/http"
 	"os"
 	"time"
 
@@ -44,7 +43,6 @@ type SCFilePV struct {
 	Config     config.Config
 	TMFilePV   tm_privval.FilePV
 	SecretConn net.Conn
-	HTTP       *http.Server
 }
 
 // KeyFilePath returns the absolute path to the priv_validator_key.json file.
@@ -58,12 +56,11 @@ func StateFilePath(cfgDir string) string {
 }
 
 // NewSCFilePV creates a new instance of SCFilePV.
-func NewSCFilePV(logger *log.Logger, cfg config.Config, tmpv tm_privval.FilePV, http *http.Server) *SCFilePV {
+func NewSCFilePV(logger *log.Logger, cfg config.Config, tmpv tm_privval.FilePV) *SCFilePV {
 	pv := &SCFilePV{
 		Logger:   logger,
 		Config:   cfg,
 		TMFilePV: tmpv,
-		HTTP:     http,
 	}
 	pv.BaseService = *types.NewBaseService(
 		logger,
@@ -149,11 +146,6 @@ func (pv *SCFilePV) run() {
 func (pv *SCFilePV) OnStart() (err error) {
 	pv.Logger.Printf("[INFO] signctrl: Starting SignCTRL on rank %v...\n", pv.GetRank())
 
-	// Start http server.
-	if err := pv.StartHTTPServer(); err != nil {
-		return err
-	}
-
 	// Dial the validator.
 	if pv.SecretConn, err = connection.RetryDial(
 		pv.Config.Base.ValidatorListenAddress,
@@ -172,9 +164,6 @@ func (pv *SCFilePV) OnStart() (err error) {
 // Implements the Service interface.
 func (pv *SCFilePV) OnStop() {
 	pv.Logger.Printf("[INFO] signctrl: Stopping SignCTRL on rank %v...\n", pv.GetRank())
-
-	// Close the http server.
-	pv.HTTP.Close()
 
 	// Save rank to last_rank.json file if the shutdown was not self-induced.
 	if err := pv.Save(config.Dir(), pv.Logger); err != nil {

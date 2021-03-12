@@ -71,17 +71,6 @@ func (bsc *BaseSignCtrled) SetCurrentHeight(height int64) {
 	bsc.currentHeight = height
 }
 
-// GetThreshold returns the threshold of blocks missed in a row that trigger a rank
-// update.
-func (bsc *BaseSignCtrled) GetThreshold() int {
-	return bsc.threshold
-}
-
-// GetMissedInARow returns the number of blocks missed in a row.
-func (bsc *BaseSignCtrled) GetMissedInARow() int {
-	return bsc.missedInARow
-}
-
 // GetRank returns the validators current rank.
 func (bsc *BaseSignCtrled) GetRank() int {
 	return bsc.rank
