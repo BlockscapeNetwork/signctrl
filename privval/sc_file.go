@@ -13,8 +13,6 @@ import (
 	"github.com/BlockscapeNetwork/signctrl/config"
 	"github.com/BlockscapeNetwork/signctrl/connection"
 	"github.com/BlockscapeNetwork/signctrl/types"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	tm_protoio "github.com/tendermint/tendermint/libs/protoio"
 	tm_privval "github.com/tendermint/tendermint/privval"
 	tm_privvalproto "github.com/tendermint/tendermint/proto/tendermint/privval"
@@ -48,8 +46,7 @@ type SCFilePV struct {
 	TMFilePV   tm_privval.FilePV
 	SecretConn net.Conn
 	HTTP       *http.Server
-
-	gauges map[string]prometheus.Gauge
+	Gauges     types.Gauges
 }
 
 // KeyFilePath returns the absolute path to the priv_validator_key.json file.
@@ -70,7 +67,6 @@ func NewSCFilePV(logger *log.Logger, cfg config.Config, state *config.State, tmp
 		State:    state,
 		TMFilePV: tmpv,
 		HTTP:     http,
-		gauges:   make(map[string]prometheus.Gauge),
 	}
 	pv.BaseService = *types.NewBaseService(
 		logger,
@@ -83,14 +79,7 @@ func NewSCFilePV(logger *log.Logger, cfg config.Config, state *config.State, tmp
 		pv.Config.Base.StartRank,
 		pv,
 	)
-	pv.gauges["signctrl_rank"] = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "signctrl_rank",
-		Help: "Current rank of the SignCTRL validator.",
-	})
-	pv.gauges["signctrl_missed_blocks_in_a_row"] = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "signctrl_missed_blocks_in_a_row",
-		Help: "Number of blocks missed in a row",
-	})
+	pv.Gauges = types.RegisterGauges()
 
 	return pv
 }
@@ -108,7 +97,7 @@ func (pv *SCFilePV) run() {
 		case <-pv.Quit():
 			pv.Logger.Printf("[DEBUG] signctrl: Terminating run goroutine: service stopped")
 			cancel()
-			// Note: Don't use pv.Stop() in here as it closes the pv.Quit() channel.
+			// Note: Don't use pv.Stop() in here, as it closes the pv.Quit() channel.
 			return
 
 		case <-timeout.C:
@@ -127,7 +116,8 @@ func (pv *SCFilePV) run() {
 			); err != nil {
 				pv.Logger.Printf("[ERR] signctrl: couldn't dial validator: %v\n", err)
 				cancel()
-				// Note: Don't use pv.Stop() in here, as RetryDialTCP can only be stopped via SIGINT/SIGTERM.
+				// Note: Don't use pv.Stop() in here, as RetryDial can only be stopped via SIGINT/SIGTERM.
+				return
 			}
 
 		default:
@@ -208,12 +198,12 @@ func (pv *SCFilePV) OnStop() {
 // Implements the SignCtrled interface.
 func (pv *SCFilePV) OnMissedTooMany() {
 	pv.Logger.Printf("[DEBUG] signctrl: Setting signctrl_missed_blocks_in_a_row gauge to %v\n", pv.GetMissedInARow())
-	pv.gauges["signctrl_missed_blocks_in_a_row"].Set(float64(pv.GetMissedInARow()))
+	pv.Gauges.MissedInARowGauge.Set(float64(pv.GetMissedInARow()))
 }
 
 // OnPromote sets the prometheus gauge for the validator's rank.
 // Implements the SignCtrled interface.
 func (pv *SCFilePV) OnPromote() {
 	pv.Logger.Printf("[DEBUG] signctrl: Setting signctrl_rank gauge to %v\n", pv.GetRank())
-	pv.gauges["signctrl_rank"].Set(float64(pv.GetRank()))
+	pv.Gauges.RankGauge.Set(float64(pv.GetRank()))
 }
