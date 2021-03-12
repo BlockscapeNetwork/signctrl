@@ -56,12 +56,8 @@ func hasSignedCommit(valaddr tm_types.Address, commitsigs *[]tm_types.CommitSig)
 }
 
 // isRankUpToDate checks whether the validator's rank is still up to date or obsolete.
-func isRankUpToDate(lastSignedHeight int64, reqHeight int64, threshold int) bool {
-	if reqHeight-lastSignedHeight > int64(threshold) {
-		return false
-	}
-
-	return true
+func isRankUpToDate(reqHeight int64, lastSignedHeight int64, threshold int) bool {
+	return reqHeight-lastSignedHeight < int64(threshold+1)
 }
 
 // handlePingRequest handles a PingRequest by returning a
