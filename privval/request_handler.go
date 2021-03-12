@@ -117,7 +117,7 @@ func handleSignVoteRequest(ctx context.Context, req *tm_privvalproto.SignVoteReq
 	// If the requested height is at least {threshold+1} higher than last_signed_height,
 	// the node's rank has become obsolete due to a rank update in the set.
 	if !isRankUpToDate(req.Vote.Height, pv.State.LastSignedHeight, pv.GetThreshold()) {
-		pv.Logger.Printf("[INFO] signctrl: (%v - %v) < %v", req.Vote.Height, pv.State.LastSignedHeight, pv.GetThreshold())
+		pv.Logger.Printf("[DEBUG] signctrl: (%v - %v) < %v", req.Vote.Height, pv.State.LastSignedHeight, pv.GetThreshold())
 		return wrapMsg(&tm_privvalproto.SignedVoteResponse{
 			Vote:  tm_typesproto.Vote{},
 			Error: &tm_privvalproto.RemoteSignerError{Description: ErrRankObsolete.Error()},
@@ -156,10 +156,6 @@ func handleSignVoteRequest(ctx context.Context, req *tm_privvalproto.SignVoteReq
 			// and unlock it if it hasn't already been unlocked.
 			pv.Reset()
 			pv.UnlockCounter()
-
-			// Set the last signed height to the height from the vote request.
-			pv.Logger.Printf("[INFO] signctrl: Set LastSignedHeight to %v\n", req.Vote.Height-1)
-			pv.State.LastSignedHeight = req.Vote.Height - 1
 		}
 	}
 
@@ -180,6 +176,10 @@ func handleSignVoteRequest(ctx context.Context, req *tm_privvalproto.SignVoteReq
 			Error: &tm_privvalproto.RemoteSignerError{Description: err.Error()},
 		}), err
 	}
+
+	// Set the last signed height to the height from the vote request.
+	pv.Logger.Printf("[DEBUG] signctrl: Set LastSignedHeight to %v\n", req.Vote.Height)
+	pv.State.LastSignedHeight = req.Vote.Height
 
 	pv.Logger.Printf("[INFO] signctrl: Signed %v for block height %v", req.Vote.Type, req.Vote.Height)
 	return wrapMsg(&tm_privvalproto.SignedVoteResponse{
@@ -206,7 +206,7 @@ func handleSignProposalRequest(ctx context.Context, req *tm_privvalproto.SignPro
 	// If the requested height is at least {threshold} higher than last_signed_height,
 	// the node's rank has become obsolete due to a rank update in the set.
 	if !isRankUpToDate(req.Proposal.Height, pv.State.LastSignedHeight, pv.GetThreshold()) {
-		pv.Logger.Printf("[INFO] signctrl: (%v - %v) < %v", req.Proposal.Height, pv.State.LastSignedHeight, pv.GetThreshold())
+		pv.Logger.Printf("[DEBUG] signctrl: (%v - %v) < %v", req.Proposal.Height, pv.State.LastSignedHeight, pv.GetThreshold())
 		return wrapMsg(&tm_privvalproto.SignedProposalResponse{
 			Proposal: tm_typesproto.Proposal{},
 			Error:    &tm_privvalproto.RemoteSignerError{Description: ErrRankObsolete.Error()},
@@ -245,10 +245,6 @@ func handleSignProposalRequest(ctx context.Context, req *tm_privvalproto.SignPro
 			// and unlock it if it hasn't already been unlocked.
 			pv.Reset()
 			pv.UnlockCounter()
-
-			// Set the last signed height to the height from the proposal request.
-			pv.Logger.Printf("[INFO] signctrl: Set LastSignedHeight to %v\n", req.Proposal.Height-1)
-			pv.State.LastSignedHeight = req.Proposal.Height - 1
 		}
 	}
 
@@ -269,6 +265,10 @@ func handleSignProposalRequest(ctx context.Context, req *tm_privvalproto.SignPro
 			Error:    &tm_privvalproto.RemoteSignerError{Description: err.Error()},
 		}), err
 	}
+
+	// Set the last signed height to the height from the proposal request.
+	pv.Logger.Printf("[DEBUG] signctrl: Set LastSignedHeight to %v\n", req.Proposal.Height)
+	pv.State.LastSignedHeight = req.Proposal.Height
 
 	pv.Logger.Printf("[INFO] signctrl: Signed %v for block height %v", req.Proposal.Type, req.Proposal.Height)
 	return wrapMsg(&tm_privvalproto.SignedProposalResponse{
