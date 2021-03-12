@@ -45,6 +45,7 @@ type SCFilePV struct {
 	TMFilePV   tm_privval.FilePV
 	SecretConn net.Conn
 	HTTP       *http.Server
+	Gauges     types.Gauges
 }
 
 // KeyFilePath returns the absolute path to the priv_validator_key.json file.
@@ -76,6 +77,7 @@ func NewSCFilePV(logger *log.Logger, cfg config.Config, tmpv tm_privval.FilePV, 
 		pv.Config.Base.StartRank,
 		pv,
 	)
+	pv.Gauges = types.RegisterGauges()
 
 	return pv
 }
@@ -173,6 +175,7 @@ func (pv *SCFilePV) OnStop() {
 	pv.Logger.Printf("[INFO] signctrl: Stopping SignCTRL on rank %v...\n", pv.GetRank())
 
 	// Close the http server.
+	pv.Logger.Println("[INFO] signctrl: Stopping the HTTP server...")
 	pv.HTTP.Close()
 
 	// Save rank to last_rank.json file if the shutdown was not self-induced.
@@ -180,4 +183,19 @@ func (pv *SCFilePV) OnStop() {
 		fmt.Printf("[ERR] signctrl: couldn't save rank to %v: %v", LastRankFile, err)
 		os.Exit(1)
 	}
+}
+
+// OnMissedTooMany sets the prometheus gauge for the validator's counter for missed
+// blocks in a row.
+// Implements the SignCtrled interface.
+func (pv *SCFilePV) OnMissedTooMany() {
+	pv.Logger.Printf("[DEBUG] signctrl: Setting signctrl_missed_blocks_in_a_row gauge to %v\n", pv.GetMissedInARow())
+	pv.Gauges.MissedInARowGauge.Set(float64(pv.GetMissedInARow()))
+}
+
+// OnPromote sets the prometheus gauge for the validator's rank.
+// Implements the SignCtrled interface.
+func (pv *SCFilePV) OnPromote() {
+	pv.Logger.Printf("[DEBUG] signctrl: Setting signctrl_rank gauge to %v\n", pv.GetRank())
+	pv.Gauges.RankGauge.Set(float64(pv.GetRank()))
 }
