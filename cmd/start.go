@@ -72,9 +72,9 @@ var (
 
 			select {
 			case <-pv.Quit(): // Used for self-induced shutdown
-				pv.Logger.Println("[INFO] signctrl: Shutting SignCTRL down... ⏻ (quit)")
+				pv.Logger.Println("[INFO] signctrl: Shutting SignCTRL down... \u23FB (quit)")
 			case <-sigs: // The sigs channel is only used for OS interrupt signals
-				pv.Logger.Println("[INFO] signctrl: Shutting SignCTRL down... ⏻ (user/os interrupt)")
+				pv.Logger.Println("[INFO] signctrl: Shutting SignCTRL down... \u23FB (user/os interrupt)")
 				pv.Stop()
 			}
 
