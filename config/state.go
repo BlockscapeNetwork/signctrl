@@ -20,15 +20,15 @@ const (
 
 // State defines the contents of the signctrl_state.json file.
 type State struct {
-	LastSignedHeight int64 `json:"last_signed_height"`
-	LastRank         int   `json:"last_rank"`
+	LastHeight int64 `json:"last_height"`
+	LastRank   int   `json:"last_rank"`
 }
 
 // validate validates the contents of the signctrl_state.json file.
 func (s State) validate() error {
 	var errs string
-	if s.LastSignedHeight < 1 {
-		errs += "\tlast_signed_height in signctrl_state.json must be 1 or higher\n"
+	if s.LastHeight < 1 {
+		errs += "\tlast_height in signctrl_state.json must be 1 or higher\n"
 	}
 	if s.LastRank < 1 {
 		errs += "\tlast_rank in signctrl_state.json must be 1 or higher\n"
@@ -50,8 +50,8 @@ func StateFilePath(cfgDir string) string {
 func LoadOrGenState(cfgDir string) (State, error) {
 	if _, err := os.Stat(StateFilePath(cfgDir)); os.IsNotExist(err) {
 		state := State{
-			LastSignedHeight: 1,
-			LastRank:         0,
+			LastHeight: 1,
+			LastRank:   0,
 		}
 		state.Save(cfgDir)
 
@@ -77,8 +77,8 @@ func LoadOrGenState(cfgDir string) (State, error) {
 // Save saves the current state to the signctrl_state.json file.
 func (s *State) Save(cfgDir string) error {
 	lrFile, err := tm_json.MarshalIndent(&State{
-		LastRank:         s.LastRank,
-		LastSignedHeight: s.LastSignedHeight,
+		LastRank:   s.LastRank,
+		LastHeight: s.LastHeight,
 	}, "", "\t")
 	if err != nil {
 		return err

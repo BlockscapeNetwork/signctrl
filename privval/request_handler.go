@@ -56,8 +56,8 @@ func hasSignedCommit(valaddr tm_types.Address, commitsigs *[]tm_types.CommitSig)
 }
 
 // isRankUpToDate checks whether the validator's rank is still up to date or obsolete.
-func isRankUpToDate(reqHeight int64, lastSignedHeight int64, threshold int) bool {
-	return reqHeight-lastSignedHeight < int64(threshold+1)
+func isRankUpToDate(reqHeight int64, LastHeight int64, threshold int) bool {
+	return reqHeight-LastHeight < int64(threshold+1)
 }
 
 // handlePingRequest handles a PingRequest by returning a
@@ -116,8 +116,8 @@ func handleSignVoteRequest(ctx context.Context, req *tm_privvalproto.SignVoteReq
 
 	// If the requested height is at least {threshold+1} higher than last_signed_height,
 	// the node's rank has become obsolete due to a rank update in the set.
-	if !isRankUpToDate(req.Vote.Height, pv.State.LastSignedHeight, pv.GetThreshold()) {
-		pv.Logger.Printf("[DEBUG] signctrl: (%v - %v) < %v", req.Vote.Height, pv.State.LastSignedHeight, pv.GetThreshold())
+	if !isRankUpToDate(req.Vote.Height, pv.State.LastHeight, pv.GetThreshold()) {
+		pv.Logger.Printf("[DEBUG] signctrl: (%v - %v) < %v", req.Vote.Height, pv.State.LastHeight, pv.GetThreshold())
 		return wrapMsg(&tm_privvalproto.SignedVoteResponse{
 			Vote:  tm_typesproto.Vote{},
 			Error: &tm_privvalproto.RemoteSignerError{Description: ErrRankObsolete.Error()},
@@ -139,6 +139,7 @@ func handleSignVoteRequest(ctx context.Context, req *tm_privvalproto.SignVoteReq
 
 		// Update the current height to the height of the request.
 		pv.BaseSignCtrled.SetCurrentHeight(req.Vote.Height)
+		pv.State.LastHeight = req.Vote.Height
 
 		// Check if the commitsigs in the block are signed by the validator.
 		if !hasSignedCommit(pv.TMFilePV.GetAddress(), &rb.Block.LastCommit.Signatures) {
@@ -177,10 +178,6 @@ func handleSignVoteRequest(ctx context.Context, req *tm_privvalproto.SignVoteReq
 		}), err
 	}
 
-	// Set the last signed height to the height from the vote request.
-	pv.Logger.Printf("[DEBUG] signctrl: Set LastSignedHeight to %v\n", req.Vote.Height)
-	pv.State.LastSignedHeight = req.Vote.Height
-
 	pv.Logger.Printf("[INFO] signctrl: Signed %v for block height %v", req.Vote.Type, req.Vote.Height)
 	return wrapMsg(&tm_privvalproto.SignedVoteResponse{
 		Vote:  *req.Vote,
@@ -205,8 +202,8 @@ func handleSignProposalRequest(ctx context.Context, req *tm_privvalproto.SignPro
 
 	// If the requested height is at least {threshold} higher than last_signed_height,
 	// the node's rank has become obsolete due to a rank update in the set.
-	if !isRankUpToDate(req.Proposal.Height, pv.State.LastSignedHeight, pv.GetThreshold()) {
-		pv.Logger.Printf("[DEBUG] signctrl: (%v - %v) < %v", req.Proposal.Height, pv.State.LastSignedHeight, pv.GetThreshold())
+	if !isRankUpToDate(req.Proposal.Height, pv.State.LastHeight, pv.GetThreshold()) {
+		pv.Logger.Printf("[DEBUG] signctrl: (%v - %v) < %v", req.Proposal.Height, pv.State.LastHeight, pv.GetThreshold())
 		return wrapMsg(&tm_privvalproto.SignedProposalResponse{
 			Proposal: tm_typesproto.Proposal{},
 			Error:    &tm_privvalproto.RemoteSignerError{Description: ErrRankObsolete.Error()},
@@ -228,6 +225,7 @@ func handleSignProposalRequest(ctx context.Context, req *tm_privvalproto.SignPro
 
 		// Update the current height to the height of the request.
 		pv.BaseSignCtrled.SetCurrentHeight(req.Proposal.Height)
+		pv.State.LastHeight = req.Proposal.Height
 
 		// Check if the commitsigs in the block are signed by the validator.
 		if !hasSignedCommit(pv.TMFilePV.GetAddress(), &rb.Block.LastCommit.Signatures) {
@@ -265,10 +263,6 @@ func handleSignProposalRequest(ctx context.Context, req *tm_privvalproto.SignPro
 			Error:    &tm_privvalproto.RemoteSignerError{Description: err.Error()},
 		}), err
 	}
-
-	// Set the last signed height to the height from the proposal request.
-	pv.Logger.Printf("[DEBUG] signctrl: Set LastSignedHeight to %v\n", req.Proposal.Height)
-	pv.State.LastSignedHeight = req.Proposal.Height
 
 	pv.Logger.Printf("[INFO] signctrl: Signed %v for block height %v", req.Proposal.Type, req.Proposal.Height)
 	return wrapMsg(&tm_privvalproto.SignedProposalResponse{
