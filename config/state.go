@@ -51,7 +51,7 @@ func LoadOrGenState(cfgDir string) (State, error) {
 	if _, err := os.Stat(StateFilePath(cfgDir)); os.IsNotExist(err) {
 		state := State{
 			LastSignedHeight: 1,
-			LastRank:         0, // TODO: Load rank from config in here.
+			LastRank:         0,
 		}
 		state.Save(cfgDir)
 
