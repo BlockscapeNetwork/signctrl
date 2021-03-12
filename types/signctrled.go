@@ -23,12 +23,8 @@ var (
 // blockchain for missed blocks in a row and keeps its rank up to date.
 type SignCtrled interface {
 	Missed() error
-	OnMissedTooMany()
-
 	Reset()
-
-	Promote() error
-	OnPromote()
+	promote() error
 }
 
 // BaseSignCtrled is a base implementation of SignCtrled.
@@ -113,8 +109,7 @@ func (bsc *BaseSignCtrled) Missed() error {
 		bsc.Logger.Printf("[INFO] signctrl: Missed a block (%v/%v)", bsc.missedInARow, bsc.threshold)
 	} else if bsc.missedInARow == bsc.threshold {
 		bsc.Logger.Printf("[INFO] signctrl: Missed too many blocks in a row (%v/%v)", bsc.missedInARow, bsc.threshold)
-		bsc.OnMissedTooMany()
-		if err := bsc.Promote(); err != nil {
+		if err := bsc.promote(); err != nil {
 			return err
 		}
 
@@ -129,10 +124,6 @@ func (bsc *BaseSignCtrled) Missed() error {
 	return nil
 }
 
-// OnMissedTooMany does nothing. This way, users don't need to call BaseSignCtrled.OnMissedTooMany().
-// Implements the SignCtrled interface.
-func (bsc *BaseSignCtrled) OnMissedTooMany() {}
-
 // Reset resets the counter for missed blocks in a row to 0.
 // Implements the SignCtrled interface.
 func (bsc *BaseSignCtrled) Reset() {
@@ -142,12 +133,12 @@ func (bsc *BaseSignCtrled) Reset() {
 	}
 }
 
-// Promote moves the validator up one rank. An error is returned if the validator
+// promote moves the validator up one rank. An error is returned if the validator
 // cannot be promoted anymore and it has to be shut down consequently.
 // This method is only supposed to be called from within the Missed method and never
 // on its own.
 // Implements the SignCtrled interface.
-func (bsc *BaseSignCtrled) Promote() error {
+func (bsc *BaseSignCtrled) promote() error {
 	if bsc.rank == 1 {
 		return ErrMustShutdown
 	}
@@ -155,11 +146,6 @@ func (bsc *BaseSignCtrled) Promote() error {
 	bsc.Logger.Printf("[INFO] signctrl: Promote validator (%v -> %v)", bsc.rank, bsc.rank-1)
 	bsc.rank--
 	bsc.Reset()
-	bsc.OnPromote()
 
 	return nil
 }
-
-// OnPromote does nothing. This way, users don't have to call BaseSignCtrled.OnPromote().
-// Implements the SignCtrled interface.
-func (bsc *BaseSignCtrled) OnPromote() {}
