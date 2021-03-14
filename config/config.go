@@ -189,7 +189,7 @@ func FilePath(cfgDir string) string {
 // GetRetryDialTime converts the string representation of RetryDialAfter into
 // time.Duration and returns it.
 func GetRetryDialTime(timeString string) time.Duration {
-	t := regexp.MustCompile(`[1-9][0-9]+`).FindString(timeString)
+	t := regexp.MustCompile(`0|[1-9][0-9]*`).FindString(timeString)
 	tConv, _ := strconv.Atoi(t)
 
 	tUnit := regexp.MustCompile(`s|m|h`).FindString(timeString)
