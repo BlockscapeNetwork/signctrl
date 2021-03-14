@@ -58,7 +58,7 @@ type Base struct {
 // validate validates the configuration's base section.
 func (b Base) validate() error {
 	var errs string
-	if match, _ := regexp.MatchString(logLevelsToRegExp(&LogLevels), b.LogLevel); !match {
+	if match, _ := regexp.MatchString(logLevelsToRegExp(LogLevels), b.LogLevel); !match {
 		errs += fmt.Sprintf("\tlog_level must be one of the following: %v\n", LogLevels)
 	}
 	if b.SetSize < 2 {
