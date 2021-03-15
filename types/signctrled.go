@@ -2,6 +2,7 @@ package types
 
 import (
 	"errors"
+	"io/ioutil"
 	"log"
 )
 
@@ -45,6 +46,10 @@ type BaseSignCtrled struct {
 
 // NewBaseSignCtrled creates a new instance of BaseSignCtrled.
 func NewBaseSignCtrled(logger *log.Logger, threshold int, rank int, impl SignCtrled) *BaseSignCtrled {
+	if logger == nil {
+		logger = log.New(ioutil.Discard, "", 0)
+	}
+
 	return &BaseSignCtrled{
 		Logger:        logger,
 		counterLocked: true,
