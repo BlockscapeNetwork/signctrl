@@ -59,6 +59,7 @@ var (
 				),
 				&http.Server{Addr: fmt.Sprintf(":%v", privval.DefaultHTTPPort)},
 			)
+			pv.Gauges = types.RegisterGauges()
 
 			// Start the SignCTRL service.
 			if err := pv.Start(); err != nil {

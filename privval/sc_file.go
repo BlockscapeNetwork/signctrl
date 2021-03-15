@@ -79,7 +79,6 @@ func NewSCFilePV(logger *log.Logger, cfg config.Config, state *config.State, tmp
 		pv.Config.Base.StartRank,
 		pv,
 	)
-	pv.Gauges = types.RegisterGauges()
 
 	return pv
 }
