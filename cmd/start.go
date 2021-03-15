@@ -57,7 +57,7 @@ var (
 					privval.KeyFilePath(cfgDir),
 					privval.StateFilePath(cfgDir),
 				),
-				&http.Server{Addr: ":8080"},
+				&http.Server{Addr: fmt.Sprintf(":%v", privval.DefaultHTTPPort)},
 			)
 
 			// Start the SignCTRL service.
