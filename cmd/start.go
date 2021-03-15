@@ -12,6 +12,7 @@ import (
 
 	"github.com/BlockscapeNetwork/signctrl/config"
 	"github.com/BlockscapeNetwork/signctrl/privval"
+	"github.com/BlockscapeNetwork/signctrl/types"
 	"github.com/hashicorp/logutils"
 
 	"github.com/spf13/cobra"
