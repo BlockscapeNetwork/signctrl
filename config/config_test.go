@@ -153,6 +153,6 @@ func TestGetRetryDialTime(t *testing.T) {
 
 func TestLogLevelsToRegExp(t *testing.T) {
 	lvls := []logutils.LogLevel{"A", "BC", "DEF"}
-	regexp := logLevelsToRegExp(lvls)
+	regexp := logLevelsToRegExp(&lvls)
 	assert.Equal(t, "A|BC|DEF", regexp)
 }
