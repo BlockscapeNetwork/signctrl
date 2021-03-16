@@ -113,7 +113,7 @@ func (bs *BaseService) Start() error {
 
 // OnStart does nothing. This way, users don't need to call BaseService.OnStart().
 // Implements the Service interface.
-func (bs *BaseService) OnStart() {}
+func (bs *BaseService) OnStart() error { return nil }
 
 // Stop stops a service and closes the quit channel. An error is returned if the
 // service is already stopped.
