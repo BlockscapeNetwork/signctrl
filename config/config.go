@@ -207,10 +207,11 @@ func GetRetryDialTime(timeString string) time.Duration {
 
 // logLevelsToRegExp returns a regular expression for the validation of log levels.
 func logLevelsToRegExp(levels *[]logutils.LogLevel) string {
-	var regExp string
+	regExp := ""
+	maxLevels := len(*levels) - 1
 	for i, lvl := range *levels {
 		regExp += string(lvl)
-		if i < len(*levels)-1 {
+		if i < maxLevels {
 			regExp += "|"
 		}
 	}
