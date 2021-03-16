@@ -18,7 +18,7 @@ func testConfig(t *testing.T) config.Config {
 		Base: config.Base{
 			LogLevel:                  "INFO",
 			SetSize:                   2,
-			Threshold:                 3,
+			Threshold:                 10,
 			StartRank:                 1,
 			ValidatorListenAddress:    "tcp://127.0.0.1:3000",
 			ValidatorListenAddressRPC: "tcp://127.0.0.1:26657",
