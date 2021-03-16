@@ -5,8 +5,6 @@ import (
 	"embed"
 	"io/ioutil"
 	"os"
-	"os/exec"
-	"strings"
 )
 
 const (
@@ -39,17 +37,6 @@ const (
 	// PrivvalSection defines the [privval] section of the configuration file.
 	PrivvalSection
 )
-
-// goPath returns the $GOPATH directory. It is retrieved using the 'go env GOPATH'
-// command.
-func goPath() string {
-	gopath, err := exec.Command("go", "env", "GOPATH").Output()
-	if err != nil {
-		return ""
-	}
-
-	return strings.TrimSuffix(string(gopath), "\n")
-}
 
 // Create writes configuration templates to the configuration file at the specified
 // configuration directory. The base and privval sections are created by default.
