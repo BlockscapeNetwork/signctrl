@@ -53,7 +53,6 @@ func retryDialTCP(address string, connkey tm_ed25519.PrivKey, sigs chan os.Signa
 // returns the connection.
 func retryDialUnix(address string, sigs chan os.Signal, logger *log.Logger) (net.Conn, error) {
 	addrWithoutProtocol := strings.TrimPrefix(address, "unix://")
-	os.RemoveAll(addrWithoutProtocol)
 
 	for {
 		select {
@@ -68,6 +67,7 @@ func retryDialUnix(address string, sigs chan os.Signal, logger *log.Logger) (net
 			}
 
 			// After the first dial, dial in intervals of 1 second.
+			os.RemoveAll(addrWithoutProtocol)
 			RetryDialInterval = time.Second
 			logger.Println("[DEBUG] signctrl: Retry dialing...")
 		}
