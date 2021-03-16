@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/BlockscapeNetwork/signctrl/config"
@@ -51,12 +52,12 @@ type SCFilePV struct {
 
 // KeyFilePath returns the absolute path to the priv_validator_key.json file.
 func KeyFilePath(cfgDir string) string {
-	return cfgDir + "/" + KeyFile
+	return filepath.Join(cfgDir, KeyFile)
 }
 
 // StateFilePath returns the absolute path to the priv_validator_state.json file.
 func StateFilePath(cfgDir string) string {
-	return cfgDir + "/" + StateFile
+	return filepath.Join(cfgDir, StateFile)
 }
 
 // NewSCFilePV creates a new instance of SCFilePV.

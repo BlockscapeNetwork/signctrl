@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -183,7 +184,7 @@ func Dir() string {
 
 // FilePath returns the absolute path to the configuration file.
 func FilePath(cfgDir string) string {
-	return cfgDir + "/" + File
+	return filepath.Join(cfgDir, File)
 }
 
 // GetRetryDialTime converts the string representation of RetryDialAfter into
