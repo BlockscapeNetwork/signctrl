@@ -2,7 +2,6 @@ package privval
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"log"
 	"net"
