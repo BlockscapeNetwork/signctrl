@@ -7,7 +7,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"os"
 	"path/filepath"
 	"time"
 
@@ -180,7 +179,7 @@ func (pv *SCFilePV) OnStart() (err error) {
 
 // OnStop terminates the main loop of the SignCtrled PrivValidator.
 // Implements the Service interface.
-func (pv *SCFilePV) OnStop() {
+func (pv *SCFilePV) OnStop() error {
 	pv.Logger.Printf("[INFO] signctrl: Stopping SignCTRL on rank %v...\n", pv.GetRank())
 
 	// Close the http server.
@@ -190,9 +189,10 @@ func (pv *SCFilePV) OnStop() {
 	// Save rank to last_rank.json file if the shutdown was not self-induced.
 	pv.State.LastRank = pv.GetRank()
 	if err := pv.State.Save(config.Dir()); err != nil {
-		fmt.Printf("[ERR] signctrl: couldn't save state to %v: %v", config.StateFile, err)
-		os.Exit(1)
+		return fmt.Errorf("[ERR] signctrl: couldn't save state to %v: %v", config.StateFile, err)
 	}
+
+	return nil
 }
 
 // OnMissedTooMany sets the prometheus gauge for the validator's counter for missed
