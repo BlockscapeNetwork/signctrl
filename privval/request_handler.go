@@ -3,6 +3,7 @@ package privval
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/BlockscapeNetwork/signctrl/rpc"
@@ -13,6 +14,12 @@ import (
 	tm_privvalproto "github.com/tendermint/tendermint/proto/tendermint/privval"
 	tm_typesproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tm_types "github.com/tendermint/tendermint/types"
+)
+
+var (
+	// ErrRankObsolete is returned if the requested vote height is too far ahead of the last
+	// block the validator signed. The gap must be at least {threshold} blocks.
+	ErrRankObsolete = errors.New("at least one threshold was exceeded between requested vote height and last_signed_height")
 )
 
 // wrapMsg wraps a protobuf message into a privval proto message.
@@ -46,6 +53,11 @@ func hasSignedCommit(valaddr tm_types.Address, commitsigs *[]tm_types.CommitSig)
 	}
 
 	return false
+}
+
+// isRankUpToDate checks whether the validator's rank is still up to date or obsolete.
+func isRankUpToDate(reqHeight int64, lastHeight int64, threshold int) bool {
+	return reqHeight-lastHeight < int64(threshold+1)
 }
 
 // handlePingRequest handles a PingRequest by returning a
@@ -102,6 +114,16 @@ func handleSignVoteRequest(ctx context.Context, req *tm_privvalproto.SignVoteReq
 		}), err
 	}
 
+	// If the requested height is at least {threshold+1} higher than last_signed_height,
+	// the node's rank has become obsolete due to a rank update in the set.
+	if !isRankUpToDate(req.Vote.Height, pv.State.LastHeight, pv.GetThreshold()) {
+		pv.Logger.Printf("[DEBUG] signctrl: (%v - %v) < %v", req.Vote.Height, pv.State.LastHeight, pv.GetThreshold())
+		return wrapMsg(&tm_privvalproto.SignedVoteResponse{
+			Vote:  tm_typesproto.Vote{},
+			Error: &tm_privvalproto.RemoteSignerError{Description: ErrRankObsolete.Error()},
+		}), ErrRankObsolete
+	}
+
 	// Only check the commitsigs once for each block height.
 	// Also, only start checking for block heights greater than 1.
 	// This is due to the genesis block not having any commitsigs.
@@ -117,6 +139,7 @@ func handleSignVoteRequest(ctx context.Context, req *tm_privvalproto.SignVoteReq
 
 		// Update the current height to the height of the request.
 		pv.BaseSignCtrled.SetCurrentHeight(req.Vote.Height)
+		pv.State.LastHeight = req.Vote.Height
 
 		// Check if the commitsigs in the block are signed by the validator.
 		if !hasSignedCommit(pv.TMFilePV.GetAddress(), &rb.Block.LastCommit.Signatures) {
@@ -177,6 +200,16 @@ func handleSignProposalRequest(ctx context.Context, req *tm_privvalproto.SignPro
 		}), err
 	}
 
+	// If the requested height is at least {threshold} higher than last_signed_height,
+	// the node's rank has become obsolete due to a rank update in the set.
+	if !isRankUpToDate(req.Proposal.Height, pv.State.LastHeight, pv.GetThreshold()) {
+		pv.Logger.Printf("[DEBUG] signctrl: (%v - %v) < %v", req.Proposal.Height, pv.State.LastHeight, pv.GetThreshold())
+		return wrapMsg(&tm_privvalproto.SignedProposalResponse{
+			Proposal: tm_typesproto.Proposal{},
+			Error:    &tm_privvalproto.RemoteSignerError{Description: ErrRankObsolete.Error()},
+		}), ErrRankObsolete
+	}
+
 	// Only check the commitsigs once for each block height.
 	// Also, only start checking for block heights greater than 1.
 	// This is due to the genesis block not having any commitsigs.
@@ -192,6 +225,7 @@ func handleSignProposalRequest(ctx context.Context, req *tm_privvalproto.SignPro
 
 		// Update the current height to the height of the request.
 		pv.BaseSignCtrled.SetCurrentHeight(req.Proposal.Height)
+		pv.State.LastHeight = req.Proposal.Height
 
 		// Check if the commitsigs in the block are signed by the validator.
 		if !hasSignedCommit(pv.TMFilePV.GetAddress(), &rb.Block.LastCommit.Signatures) {

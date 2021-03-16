@@ -30,6 +30,7 @@ var (
 				fmt.Printf("couldn't load %v:\n%v", config.File, err)
 				os.Exit(1)
 			}
+			cfgDir := config.Dir()
 
 			// Set the logger and its mininum log level.
 			logger := log.New(os.Stderr, "", 0)
@@ -40,21 +41,24 @@ var (
 			}
 			logger.SetOutput(filter)
 
+			// Load the state.
+			state, err := config.LoadOrGenState(cfgDir)
+			if err != nil {
+				fmt.Printf("couldn't load %v:\n%v\n", config.StateFile, err)
+				os.Exit(1)
+			}
+
 			// Initialize a new SCFilePV.
-			cfgDir := config.Dir()
 			pv := privval.NewSCFilePV(
 				logger,
 				cfg,
+				&state,
 				*tm_privval.LoadOrGenFilePV(
 					privval.KeyFilePath(cfgDir),
 					privval.StateFilePath(cfgDir),
 				),
 				&http.Server{Addr: ":8080"},
 			)
-			if err := pv.CheckAndLoadLastRank(cfgDir, logger); err != nil {
-				fmt.Printf("couldn't load %v: %v\n", privval.LastRankFile, err)
-				os.Exit(1)
-			}
 
 			// Start the SignCTRL service.
 			if err := pv.Start(); err != nil {
@@ -68,14 +72,9 @@ var (
 
 			select {
 			case <-pv.Quit(): // Used for self-induced shutdown
-				pv.Logger.Println("[INFO] signctrl: Shutting SignCTRL down... ⏻ (quit)")
-
-				// The last_rank.json should only be created for user/os interrupts, so delete it if
-				// the node shut itself down on its own.
-				// TODO: Later, when no more shutdowns are needed, this can be removed.
-				os.Remove(privval.LastRankFilePath(cfgDir))
+				pv.Logger.Println("[INFO] signctrl: Shutting SignCTRL down... \u23FB (quit)")
 			case <-sigs: // The sigs channel is only used for OS interrupt signals
-				pv.Logger.Println("[INFO] signctrl: Shutting SignCTRL down... ⏻ (user/os interrupt)")
+				pv.Logger.Println("[INFO] signctrl: Shutting SignCTRL down... \u23FB (user/os interrupt)")
 				pv.Stop()
 			}
 

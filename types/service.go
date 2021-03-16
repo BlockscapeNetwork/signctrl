@@ -26,7 +26,7 @@ type Service interface {
 	// An error is returned if the service is already stopped.
 	// If OnStop() returns an error, it will also be returned by Stop().
 	Stop() error
-	OnStop()
+	OnStop() error
 
 	// Return true if the service is running, and false if not.
 	IsRunning() bool
@@ -113,7 +113,7 @@ func (bs *BaseService) Start() error {
 
 // OnStart does nothing. This way, users don't need to call BaseService.OnStart().
 // Implements the Service interface.
-func (bs *BaseService) OnStart() {}
+func (bs *BaseService) OnStart() error { return nil }
 
 // Stop stops a service and closes the quit channel. An error is returned if the
 // service is already stopped.
@@ -133,7 +133,7 @@ func (bs *BaseService) Stop() error {
 
 // OnStop does nothing. This way, users don't need to call BaseService.OnStop().
 // Implements the Service interface.
-func (bs *BaseService) OnStop() {}
+func (bs *BaseService) OnStop() error { return nil }
 
 // IsRunning returns true or false, depending on whether the service is running
 // or not.

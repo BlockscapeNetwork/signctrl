@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -55,11 +56,87 @@ type Base struct {
 	RetryDialAfter string `mapstructure:"retry_dial_after"`
 }
 
+// validate validates the configuration's base section.
+func (b Base) validate() error {
+	var errs string
+	if match, _ := regexp.MatchString(logLevelsToRegExp(&LogLevels), b.LogLevel); !match {
+		errs += fmt.Sprintf("\tlog_level must be one of the following: %v\n", LogLevels)
+	}
+	if b.SetSize < 2 {
+		errs += "\tset_size must be 2 or higher\n"
+	}
+	if b.Threshold < 1 {
+		errs += "\tthreshold must be 1 or higher\n"
+	}
+	if b.StartRank < 1 {
+		errs += "\tstart_rank must be 1 or higher\n"
+	}
+	protocol := regexp.MustCompile(`(tcp|unix)://`).FindString(b.ValidatorListenAddress)
+	if protocol == "" {
+		errs += "\tvalidator_laddr is missing the protocol\n"
+	} else if protocol == "tcp://" {
+		host, _, err := net.SplitHostPort(strings.TrimPrefix(b.ValidatorListenAddress, protocol))
+		if err != nil {
+			errs += "\tvalidator_laddr is not in the host:port format\n"
+		} else {
+			if ip := net.ParseIP(host); ip == nil {
+				errs += "\tvalidator_laddr is not a valid IPv4 address\n"
+			}
+		}
+	} else if protocol == "unix://" {
+		if !strings.HasSuffix(b.ValidatorListenAddress, ".sock") {
+			errs += "\nvalidator_laddr is not a unix domain socket address\n"
+		}
+	}
+	if !strings.HasPrefix(b.ValidatorListenAddressRPC, "tcp://") {
+		errs += "\tvalidator_laddr_rpc is missing the protocol\n"
+	} else {
+		host, _, err := net.SplitHostPort(strings.Trim(b.ValidatorListenAddressRPC, "tcp://"))
+		if err != nil {
+			errs += "\tvalidator_laddr_rpc is not in the host:port format\n"
+		} else {
+			if ip := net.ParseIP(host); ip == nil {
+				errs += "\tvalidator_laddr_rpc is not a valid IPv4 address\n"
+			}
+		}
+	}
+	if b.RetryDialAfter == "" {
+		errs += "\tretry_dial_after must not be empty\n"
+	} else {
+		time := regexp.MustCompile(`[1-9][0-9]+`).FindString(b.RetryDialAfter)
+		if time == "" {
+			errs += "\tretry_dial_after is missing the time\n"
+		}
+		timeUnit := regexp.MustCompile(`s|m|h`).FindString(b.RetryDialAfter)
+		if timeUnit == "" {
+			errs += "\tretry_dial_after is missing the unit of time\n"
+		}
+	}
+	if errs != "" {
+		return errors.New(errs)
+	}
+
+	return nil
+}
+
 // PrivValidator defines the types of private validators that sign incoming sign
 // requests.
 type PrivValidator struct {
 	// ChainID is the chain that the validator validates for.
 	ChainID string `mapstructure:"chain_id"`
+}
+
+// validate validates the configuration's privval section.
+func (p PrivValidator) validate() error {
+	var errs string
+	if p.ChainID == "" {
+		errs += "\tchain_id must not be empty\n"
+	}
+	if errs != "" {
+		return errors.New(errs)
+	}
+
+	return nil
 }
 
 // Config defines the structure of SignCTRL's configuration file.
@@ -69,6 +146,22 @@ type Config struct {
 
 	// Privval defines the [privval] section of the configuration file.
 	Privval PrivValidator `mapstructure:"privval"`
+}
+
+// validate validates the configuration.
+func (c Config) validate() error {
+	var errs string
+	if err := c.Base.validate(); err != nil {
+		errs += err.Error()
+	}
+	if err := c.Privval.validate(); err != nil {
+		errs += err.Error()
+	}
+	if errs != "" {
+		return errors.New(errs)
+	}
+
+	return nil
 }
 
 // Dir returns the configuration directory in use. It is always set in the following
@@ -91,7 +184,7 @@ func Dir() string {
 
 // FilePath returns the absolute path to the configuration file.
 func FilePath(cfgDir string) string {
-	return cfgDir + "/" + File
+	return filepath.Join(cfgDir, File)
 }
 
 // GetRetryDialTime converts the string representation of RetryDialAfter into
@@ -115,107 +208,16 @@ func GetRetryDialTime(timeString string) time.Duration {
 
 // logLevelsToRegExp returns a regular expression for the validation of log levels.
 func logLevelsToRegExp(levels *[]logutils.LogLevel) string {
-	var regExp string
+	regExp := ""
+	maxLevels := len(*levels) - 1
 	for i, lvl := range *levels {
 		regExp += string(lvl)
-		if i < len(*levels)-1 {
+		if i < maxLevels {
 			regExp += "|"
 		}
 	}
 
 	return regExp
-}
-
-// validateBase validates the configuration's base section.
-func validateBase(c Config) error {
-	var errs string
-	if match, _ := regexp.MatchString(logLevelsToRegExp(&LogLevels), c.Base.LogLevel); !match {
-		errs += fmt.Sprintf("\tlog_level must be one of the following: %v\n", LogLevels)
-	}
-	if c.Base.SetSize < 2 {
-		errs += "\tset_size must be 2 or higher\n"
-	}
-	if c.Base.Threshold < 1 {
-		errs += "\tthreshold must be 1 or higher\n"
-	}
-	if c.Base.StartRank < 1 {
-		errs += "\tstart_rank must be 1 or higher\n"
-	}
-	protocol := regexp.MustCompile(`(tcp|unix)://`).FindString(c.Base.ValidatorListenAddress)
-	if protocol == "" {
-		errs += "\tvalidator_laddr is missing the protocol\n"
-	} else if protocol == "tcp://" {
-		host, _, err := net.SplitHostPort(strings.TrimPrefix(c.Base.ValidatorListenAddress, protocol))
-		if err != nil {
-			errs += "\tvalidator_laddr is not in the host:port format\n"
-		} else {
-			if ip := net.ParseIP(host); ip == nil {
-				errs += "\tvalidator_laddr is not a valid IPv4 address\n"
-			}
-		}
-	} else if protocol == "unix://" {
-		if !strings.HasSuffix(c.Base.ValidatorListenAddress, ".sock") {
-			errs += "\nvalidator_laddr is not a unix domain socket address\n"
-		}
-	}
-	if !strings.HasPrefix(c.Base.ValidatorListenAddressRPC, "tcp://") {
-		errs += "\tvalidator_laddr_rpc is missing the protocol\n"
-	} else {
-		host, _, err := net.SplitHostPort(strings.Trim(c.Base.ValidatorListenAddressRPC, "tcp://"))
-		if err != nil {
-			errs += "\tvalidator_laddr_rpc is not in the host:port format\n"
-		} else {
-			if ip := net.ParseIP(host); ip == nil {
-				errs += "\tvalidator_laddr_rpc is not a valid IPv4 address\n"
-			}
-		}
-	}
-	if c.Base.RetryDialAfter == "" {
-		errs += "\tretry_dial_after must not be empty\n"
-	} else {
-		time := regexp.MustCompile(`[1-9][0-9]+`).FindString(c.Base.RetryDialAfter)
-		if time == "" {
-			errs += "\tretry_dial_after is missing the time\n"
-		}
-		timeUnit := regexp.MustCompile(`s|m|h`).FindString(c.Base.RetryDialAfter)
-		if timeUnit == "" {
-			errs += "\tretry_dial_after is missing the unit of time\n"
-		}
-	}
-	if errs != "" {
-		return errors.New(errs)
-	}
-
-	return nil
-}
-
-// validatePrivValidator validates the configuration's privval section.
-func validatePrivValidator(c Config) error {
-	var errs string
-	if c.Privval.ChainID == "" {
-		errs += "\tchain_id must not be empty\n"
-	}
-	if errs != "" {
-		return errors.New(errs)
-	}
-
-	return nil
-}
-
-// validate validates the configuration.
-func validate(c Config) error {
-	var errs string
-	if err := validateBase(c); err != nil {
-		errs += err.Error()
-	}
-	if err := validatePrivValidator(c); err != nil {
-		errs += err.Error()
-	}
-	if errs != "" {
-		return errors.New(errs)
-	}
-
-	return nil
 }
 
 // Load loads and validates the configuration file.
@@ -226,7 +228,7 @@ func Load() (c Config, err error) {
 	if err = viper.Unmarshal(&c); err != nil {
 		return Config{}, err
 	}
-	if err = validate(c); err != nil {
+	if err = c.validate(); err != nil {
 		return Config{}, err
 	}
 
