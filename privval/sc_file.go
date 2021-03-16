@@ -110,6 +110,7 @@ func (pv *SCFilePV) run() {
 
 			var err error
 			if pv.SecretConn, err = connection.RetryDial(
+				config.Dir(),
 				pv.Config.Base.ValidatorListenAddress,
 				pv.Logger,
 			); err != nil {
@@ -164,6 +165,7 @@ func (pv *SCFilePV) OnStart() (err error) {
 
 	// Dial the validator.
 	if pv.SecretConn, err = connection.RetryDial(
+		config.Dir(),
 		pv.Config.Base.ValidatorListenAddress,
 		pv.Logger,
 	); err != nil {
