@@ -54,7 +54,7 @@ var (
 				logger,
 				cfg,
 				&state,
-				*tm_privval.LoadOrGenFilePV(
+				tm_privval.LoadOrGenFilePV(
 					privval.KeyFilePath(cfgDir),
 					privval.StateFilePath(cfgDir),
 				),

@@ -14,8 +14,8 @@ import (
 	"github.com/BlockscapeNetwork/signctrl/connection"
 	"github.com/BlockscapeNetwork/signctrl/types"
 	tm_protoio "github.com/tendermint/tendermint/libs/protoio"
-	tm_privval "github.com/tendermint/tendermint/privval"
 	tm_privvalproto "github.com/tendermint/tendermint/proto/tendermint/privval"
+	tm_types "github.com/tendermint/tendermint/types"
 )
 
 const (
@@ -43,7 +43,7 @@ type SCFilePV struct {
 	Logger     *log.Logger
 	Config     config.Config
 	State      *config.State
-	TMFilePV   tm_privval.FilePV
+	TMFilePV   tm_types.PrivValidator
 	SecretConn net.Conn
 	HTTP       *http.Server
 	Gauges     types.Gauges
@@ -60,7 +60,7 @@ func StateFilePath(cfgDir string) string {
 }
 
 // NewSCFilePV creates a new instance of SCFilePV.
-func NewSCFilePV(logger *log.Logger, cfg config.Config, state *config.State, tmpv tm_privval.FilePV, http *http.Server) *SCFilePV {
+func NewSCFilePV(logger *log.Logger, cfg config.Config, state *config.State, tmpv tm_types.PrivValidator, http *http.Server) *SCFilePV {
 	pv := &SCFilePV{
 		Logger:   logger,
 		Config:   cfg,
