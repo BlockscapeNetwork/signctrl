@@ -1,6 +1,7 @@
 package privval
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -8,9 +9,31 @@ import (
 	"testing"
 
 	"github.com/BlockscapeNetwork/signctrl/config"
+	tm_crypto "github.com/tendermint/tendermint/crypto"
 	tm_ed25519 "github.com/tendermint/tendermint/crypto/ed25519"
 	tm_privval "github.com/tendermint/tendermint/privval"
+	tm_prototypes "github.com/tendermint/tendermint/proto/tendermint/types"
+	tm_types "github.com/tendermint/tendermint/types"
 )
+
+type TestFilePV struct{}
+
+func NewTestFilePV() *TestFilePV {
+	return &TestFilePV{}
+}
+
+func (tpv *TestFilePV) GetPubKey() (tm_crypto.PubKey, error) {
+	priv := tm_ed25519.GenPrivKey()
+	return priv.PubKey(), nil
+}
+
+func (tpv *TestFilePV) SignVote(chainID string, vote *tm_prototypes.Vote) error {
+	return errors.New("")
+}
+
+func (tpv *TestFilePV) SignProposal(chainID string, proposal *tm_prototypes.Proposal) error {
+	return errors.New("")
+}
 
 func testConfig(t *testing.T) config.Config {
 	t.Helper()
@@ -38,10 +61,10 @@ func testState(t *testing.T) *config.State {
 	}
 }
 
-func testFilePV(t *testing.T) tm_privval.FilePV {
+func testFilePV(t *testing.T) tm_types.PrivValidator {
 	t.Helper()
 	priv := tm_ed25519.GenPrivKey()
-	return tm_privval.FilePV{
+	return &tm_privval.FilePV{
 		Key: tm_privval.FilePVKey{
 			Address: priv.PubKey().Address(),
 			PubKey:  priv.PubKey(),
