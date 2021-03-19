@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/BlockscapeNetwork/signctrl/config"
+	"github.com/stretchr/testify/assert"
 	tm_crypto "github.com/tendermint/tendermint/crypto"
 	tm_ed25519 "github.com/tendermint/tendermint/crypto/ed25519"
 	tm_privval "github.com/tendermint/tendermint/privval"
@@ -53,9 +54,9 @@ func testConfig(t *testing.T) config.Config {
 	}
 }
 
-func testState(t *testing.T) *config.State {
+func testState(t *testing.T) config.State {
 	t.Helper()
-	return &config.State{
+	return config.State{
 		LastHeight: 1,
 		LastRank:   1,
 	}
@@ -89,4 +90,14 @@ func mockSCFilePV(t *testing.T) *SCFilePV {
 		testFilePV(t),
 		&http.Server{Addr: fmt.Sprintf(":%v", DefaultHTTPPort)},
 	)
+}
+
+func TestKeyFilePath(t *testing.T) {
+	path := KeyFilePath("/tmp")
+	assert.Equal(t, "/tmp/priv_validator_key.json", path)
+}
+
+func TestStateFilePath(t *testing.T) {
+	path := StateFilePath("/tmp")
+	assert.Equal(t, "/tmp/priv_validator_state.json", path)
 }
