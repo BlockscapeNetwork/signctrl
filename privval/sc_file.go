@@ -41,7 +41,7 @@ type SCFilePV struct {
 
 	Logger     *log.Logger
 	Config     config.Config
-	State      *config.State
+	State      config.State
 	TMFilePV   tm_types.PrivValidator
 	SecretConn net.Conn
 	HTTP       *http.Server
@@ -59,7 +59,7 @@ func StateFilePath(cfgDir string) string {
 }
 
 // NewSCFilePV creates a new instance of SCFilePV.
-func NewSCFilePV(logger *log.Logger, cfg config.Config, state *config.State, tmpv tm_types.PrivValidator, http *http.Server) *SCFilePV {
+func NewSCFilePV(logger *log.Logger, cfg config.Config, state config.State, tmpv tm_types.PrivValidator, http *http.Server) *SCFilePV {
 	pv := &SCFilePV{
 		Logger:   logger,
 		Config:   cfg,

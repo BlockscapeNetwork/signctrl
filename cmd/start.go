@@ -53,7 +53,7 @@ var (
 			pv := privval.NewSCFilePV(
 				logger,
 				cfg,
-				&state,
+				state,
 				tm_privval.LoadOrGenFilePV(
 					privval.KeyFilePath(cfgDir),
 					privval.StateFilePath(cfgDir),
