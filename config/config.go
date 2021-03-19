@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -183,13 +184,13 @@ func Dir() string {
 
 // FilePath returns the absolute path to the configuration file.
 func FilePath(cfgDir string) string {
-	return cfgDir + "/" + File
+	return filepath.Join(cfgDir, File)
 }
 
 // GetRetryDialTime converts the string representation of RetryDialAfter into
 // time.Duration and returns it.
 func GetRetryDialTime(timeString string) time.Duration {
-	t := regexp.MustCompile(`[1-9][0-9]+`).FindString(timeString)
+	t := regexp.MustCompile(`0|[1-9][0-9]*`).FindString(timeString)
 	tConv, _ := strconv.Atoi(t)
 
 	tUnit := regexp.MustCompile(`s|m|h`).FindString(timeString)
@@ -207,10 +208,11 @@ func GetRetryDialTime(timeString string) time.Duration {
 
 // logLevelsToRegExp returns a regular expression for the validation of log levels.
 func logLevelsToRegExp(levels *[]logutils.LogLevel) string {
-	var regExp string
+	regExp := ""
+	maxLevels := len(*levels) - 1
 	for i, lvl := range *levels {
 		regExp += string(lvl)
-		if i < len(*levels)-1 {
+		if i < maxLevels {
 			regExp += "|"
 		}
 	}

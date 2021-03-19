@@ -12,7 +12,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/BlockscapeNetwork/signctrl/config"
 	tm_ed25519 "github.com/tendermint/tendermint/crypto/ed25519"
 	tm_p2pconn "github.com/tendermint/tendermint/p2p/conn"
 )
@@ -53,7 +52,6 @@ func retryDialTCP(address string, connkey tm_ed25519.PrivKey, sigs chan os.Signa
 // returns the connection.
 func retryDialUnix(address string, sigs chan os.Signal, logger *log.Logger) (net.Conn, error) {
 	addrWithoutProtocol := strings.TrimPrefix(address, "unix://")
-	os.RemoveAll(addrWithoutProtocol)
 
 	for {
 		select {
@@ -68,6 +66,7 @@ func retryDialUnix(address string, sigs chan os.Signal, logger *log.Logger) (net
 			}
 
 			// After the first dial, dial in intervals of 1 second.
+			os.RemoveAll(addrWithoutProtocol)
 			RetryDialInterval = time.Second
 			logger.Println("[DEBUG] signctrl: Retry dialing...")
 		}
@@ -75,7 +74,7 @@ func retryDialUnix(address string, sigs chan os.Signal, logger *log.Logger) (net
 }
 
 // RetryDial keeps dialing the given address until success and returns the connection.
-func RetryDial(address string, logger *log.Logger) (net.Conn, error) {
+func RetryDial(cfgDir, address string, logger *log.Logger) (net.Conn, error) {
 	logger.Printf("[INFO] signctrl: Dialing %v... (Use Ctrl+C to abort)", address)
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -85,7 +84,7 @@ func RetryDial(address string, logger *log.Logger) (net.Conn, error) {
 	case "tcp":
 		// Load the connection key from the config directory which is needed to establish
 		// a secret/encrypted connection to the validator.
-		connKey, err := LoadConnKey(config.Dir())
+		connKey, err := LoadConnKey(cfgDir)
 		if err != nil {
 			return nil, fmt.Errorf("[ERR] signctrl: couldn't load conn.key: %v", err)
 		}

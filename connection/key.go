@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	tm_ed25519 "github.com/tendermint/tendermint/crypto/ed25519"
 )
@@ -19,7 +20,7 @@ const (
 
 // KeyFilePath returns the absolute path to the connection key file.
 func KeyFilePath(cfgDir string) string {
-	return cfgDir + "/" + KeyFile
+	return filepath.Join(cfgDir, KeyFile)
 }
 
 // LoadConnKey loads the connection key from the connection key file.

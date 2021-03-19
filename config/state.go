@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	tm_json "github.com/tendermint/tendermint/libs/json"
 )
@@ -42,7 +43,7 @@ func (s State) validate() error {
 
 // StateFilePath returns the absolute path to the signctrl_state.json file.
 func StateFilePath(cfgDir string) string {
-	return cfgDir + "/" + StateFile
+	return filepath.Join(cfgDir, StateFile)
 }
 
 // LoadOrGenState loads the contents of the signctrl_state.json file and returns them

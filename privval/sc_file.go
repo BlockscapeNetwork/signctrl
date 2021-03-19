@@ -2,12 +2,11 @@ package privval
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"log"
 	"net"
 	"net/http"
-	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/BlockscapeNetwork/signctrl/config"
@@ -51,12 +50,12 @@ type SCFilePV struct {
 
 // KeyFilePath returns the absolute path to the priv_validator_key.json file.
 func KeyFilePath(cfgDir string) string {
-	return cfgDir + "/" + KeyFile
+	return filepath.Join(cfgDir, KeyFile)
 }
 
 // StateFilePath returns the absolute path to the priv_validator_state.json file.
 func StateFilePath(cfgDir string) string {
-	return cfgDir + "/" + StateFile
+	return filepath.Join(cfgDir, StateFile)
 }
 
 // NewSCFilePV creates a new instance of SCFilePV.
@@ -110,6 +109,7 @@ func (pv *SCFilePV) run() {
 
 			var err error
 			if pv.SecretConn, err = connection.RetryDial(
+				config.Dir(),
 				pv.Config.Base.ValidatorListenAddress,
 				pv.Logger,
 			); err != nil {
@@ -164,6 +164,7 @@ func (pv *SCFilePV) OnStart() (err error) {
 
 	// Dial the validator.
 	if pv.SecretConn, err = connection.RetryDial(
+		config.Dir(),
 		pv.Config.Base.ValidatorListenAddress,
 		pv.Logger,
 	); err != nil {
@@ -178,7 +179,7 @@ func (pv *SCFilePV) OnStart() (err error) {
 
 // OnStop terminates the main loop of the SignCtrled PrivValidator.
 // Implements the Service interface.
-func (pv *SCFilePV) OnStop() {
+func (pv *SCFilePV) OnStop() error {
 	pv.Logger.Printf("[INFO] signctrl: Stopping SignCTRL on rank %v...\n", pv.GetRank())
 
 	// Close the http server.
@@ -188,9 +189,11 @@ func (pv *SCFilePV) OnStop() {
 	// Save rank to last_rank.json file if the shutdown was not self-induced.
 	pv.State.LastRank = pv.GetRank()
 	if err := pv.State.Save(config.Dir()); err != nil {
-		fmt.Printf("[ERR] signctrl: couldn't save state to %v: %v", config.StateFile, err)
-		os.Exit(1)
+		pv.Logger.Printf("[ERR] signctrl: couldn't save state to %v: %v\n", config.StateFile, err)
+		return err
 	}
+
+	return nil
 }
 
 // OnMissedTooMany sets the prometheus gauge for the validator's counter for missed
