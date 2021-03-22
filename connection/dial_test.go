@@ -58,7 +58,8 @@ func startMockTCPServer(t *testing.T, laddr string, connKey ed25519.PrivateKey, 
 
 func TestRetryDialTCP_NoConnKey(t *testing.T) {
 	cfgDir := "./test_dial_tcp_withconnkey"
-	os.MkdirAll(cfgDir, 0700)
+	err := os.MkdirAll(cfgDir, 0700)
+	assert.NoError(t, err)
 	defer os.RemoveAll(cfgDir)
 
 	port, _ := getFreePort(t)
@@ -73,10 +74,11 @@ func TestRetryDialTCP_NoConnKey(t *testing.T) {
 
 func TestRetryDialTCP_WithConnKey(t *testing.T) {
 	cfgDir := "./test_dial_tcp_withconnkey"
-	os.MkdirAll(cfgDir, 0700)
+	err := os.MkdirAll(cfgDir, 0700)
+	assert.NoError(t, err)
 	defer os.RemoveAll(cfgDir)
 
-	err := CreateBase64ConnKey(cfgDir)
+	err = CreateBase64ConnKey(cfgDir)
 	assert.NoError(t, err)
 
 	port, _ := getFreePort(t)
@@ -112,7 +114,8 @@ func startMockUnixServer(t *testing.T, laddr string, delay time.Duration, wg *sy
 func TestRetryDialUnix(t *testing.T) {
 	cfgDir := "./test_dial_unix"
 	sockAddr := fmt.Sprintf("%v/test.sock", cfgDir)
-	os.MkdirAll(cfgDir, 0700)
+	err := os.MkdirAll(cfgDir, 0700)
+	assert.NoError(t, err)
 	defer os.RemoveAll(cfgDir)
 
 	var wg sync.WaitGroup

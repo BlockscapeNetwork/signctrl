@@ -58,5 +58,8 @@ var (
 func init() {
 	rootCmd.AddCommand(initCmd)
 	initCmd.Flags().BoolVar(&newPrivval, "new-pv", false, "Creates a new priv_validator_key.json and a priv_validator_state.json file in the configuration directory")
-	viper.BindPFlag("new-pv", initCmd.Flags().Lookup("new-pv"))
+	if err := viper.BindPFlag("new-pv", initCmd.Flags().Lookup("new-pv")); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }

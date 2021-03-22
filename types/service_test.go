@@ -50,7 +50,10 @@ func TestWait(t *testing.T) {
 		waitCh <- struct{}{}
 	}()
 
-	go ts.Stop()
+	go func() {
+		err := ts.Stop()
+		assert.NoError(t, err)
+	}()
 
 	select {
 	case <-waitCh:
@@ -67,7 +70,10 @@ func TestQuit(t *testing.T) {
 	err := ts.Start()
 	assert.NoError(t, err)
 
-	go ts.Stop()
+	go func() {
+		err := ts.Stop()
+		assert.NoError(t, err)
+	}()
 
 	select {
 	case <-ts.Quit():

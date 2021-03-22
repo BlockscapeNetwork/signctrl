@@ -25,11 +25,11 @@ func (pv *SCFilePV) statusHandler(rw http.ResponseWriter, r *http.Request) {
 		Threshold: pv.GetThreshold(),
 	})
 	if err != nil {
-		rw.Write(nil)
+		_, _ = rw.Write(nil)
 		return
 	}
 
-	rw.Write(bytes)
+	_, _ = rw.Write(bytes)
 }
 
 // StartHTTPServer starts an HTTP server.

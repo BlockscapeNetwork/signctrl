@@ -14,7 +14,8 @@ func TestKeyFilePath(t *testing.T) {
 
 func TestCreateAndLoadConnKey(t *testing.T) {
 	cfgDir := "./key_test_createandload"
-	os.MkdirAll(cfgDir, PermConnKeyFile)
+	err := os.MkdirAll(cfgDir, PermConnKeyFile)
+	assert.NoError(t, err)
 	defer os.RemoveAll(cfgDir)
 
 	// Fail to load conn.key.

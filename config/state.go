@@ -54,7 +54,9 @@ func LoadOrGenState(cfgDir string) (State, error) {
 			LastHeight: 1,
 			LastRank:   0,
 		}
-		state.Save(cfgDir)
+		if err := state.Save(cfgDir); err != nil {
+			return State{}, err
+		}
 
 		return state, nil
 	}

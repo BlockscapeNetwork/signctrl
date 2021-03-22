@@ -144,7 +144,9 @@ func (pv *SCFilePV) run() {
 				if err == types.ErrMustShutdown || err == ErrRankObsolete {
 					pv.Logger.Printf("[DEBUG] signctrl: Terminating run goroutine: %v\n", err)
 					cancel()
-					pv.Stop()
+					if err := pv.Stop(); err != nil {
+						pv.Logger.Printf("[ERR] signctrl: %v", err)
+					}
 					pv.SecretConn.Close()
 					return
 				}

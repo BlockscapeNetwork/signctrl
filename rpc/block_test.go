@@ -84,9 +84,11 @@ func TestQueryBlock(t *testing.T) {
 			assert.Equal(t, "1", height)
 
 			bytes, _ := tm_json.Marshal(testBlockResult(t))
-			rw.Write(bytes)
+			_, _ = rw.Write(bytes)
 		})
-		http.ListenAndServe(strings.TrimPrefix(addr, "tcp://"), nil)
+		if err := http.ListenAndServe(strings.TrimPrefix(addr, "tcp://"), nil); err != nil {
+			return
+		}
 	}()
 
 	rb, err := QueryBlock(context.Background(), addr, 1, log.New(ioutil.Discard, "", 0))

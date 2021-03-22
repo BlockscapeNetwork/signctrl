@@ -75,7 +75,10 @@ var (
 				pv.Logger.Println("[INFO] signctrl: Shutting SignCTRL down... \u23FB (quit)")
 			case <-sigs: // The sigs channel is only used for OS interrupt signals
 				pv.Logger.Println("[INFO] signctrl: Shutting SignCTRL down... \u23FB (user/os interrupt)")
-				pv.Stop()
+				if err := pv.Stop(); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
 			}
 
 			// TODO: The current logger is async which is why some of the last log messages before
