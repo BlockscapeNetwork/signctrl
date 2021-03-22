@@ -1,5 +1,6 @@
 # SignCTRL
-
+![CI](https://github.com/BlockscapeNetwork/signctrl/actions/workflows/go.yml/badge.svg)
+[![Codecov](https://codecov.io/gh/BlockscapeNetwork/signctrl/branch/master/graph/badge.svg)](https://codecov.io/gh/BlockscapeNetwork/signctrl)
 [![Go Report Card](https://goreportcard.com/badge/github.com/blockscapenetwork/signctrl)](https://goreportcard.com/report/github.com/blockscapenetwork/signctrl)
 [![License](https://img.shields.io/badge/License-Apache%202.0-olive.svg)](https://opensource.org/licenses/Apache-2.0)
 
