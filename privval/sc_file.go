@@ -88,14 +88,11 @@ func NewSCFilePV(logger *log.Logger, cfg config.Config, state config.State, tmpv
 func (pv *SCFilePV) run() {
 	retryDialTimeout := config.GetRetryDialTime(pv.Config.Base.RetryDialAfter)
 	timeout := time.NewTimer(retryDialTimeout)
-	var ctx context.Context
-	var cancel context.CancelFunc
 
 	for {
 		select {
 		case <-pv.Quit():
 			pv.Logger.Printf("[DEBUG] signctrl: Terminating run goroutine: service stopped")
-			cancel()
 			// Note: Don't use pv.Stop() in here, as it closes the pv.Quit() channel.
 			return
 
@@ -117,7 +114,6 @@ func (pv *SCFilePV) run() {
 				pv.Logger,
 			); err != nil {
 				pv.Logger.Printf("[ERR] signctrl: couldn't dial validator: %v\n", err)
-				cancel()
 				// Note: Don't use pv.Stop() in here, as RetryDial can only be stopped via SIGINT/SIGTERM.
 				return
 			}
@@ -133,9 +129,8 @@ func (pv *SCFilePV) run() {
 			}
 
 			timeout.Reset(retryDialTimeout)
-			cancel()
 
-			ctx, cancel = context.WithCancel(context.Background())
+			ctx, cancel := context.WithCancel(context.Background())
 			resp, err := HandleRequest(ctx, &msg, pv)
 			w := tm_protoio.NewDelimitedWriter(pv.SecretConn)
 			if _, err := w.WriteMsg(resp); err != nil {
@@ -145,16 +140,15 @@ func (pv *SCFilePV) run() {
 				pv.Logger.Printf("[ERR] signctrl: couldn't handle request: %v\n", err)
 				if err == types.ErrMustShutdown || err == ErrRankObsolete {
 					pv.Logger.Printf("[DEBUG] signctrl: Terminating run goroutine: %v\n", err)
-					cancel()
 					if err := pv.Stop(); err != nil {
 						pv.Logger.Printf("[ERR] signctrl: %v", err)
 					}
 					if err := pv.SecretConn.Close(); err != nil {
 						pv.Logger.Printf("[ERR] signctrl: %v", err)
 					}
-					return
 				}
 			}
+			cancel()
 		}
 	}
 }
