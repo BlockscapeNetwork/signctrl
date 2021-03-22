@@ -107,7 +107,9 @@ func (pv *SCFilePV) run() {
 			pv.LockCounter()
 
 			// Close the connection and establish a new one.
-			pv.SecretConn.Close()
+			if err := pv.SecretConn.Close(); err != nil {
+				pv.Logger.Printf("[ERR] signctrl: %v", err)
+			}
 
 			var err error
 			if pv.SecretConn, err = connection.RetryDial(
@@ -148,7 +150,9 @@ func (pv *SCFilePV) run() {
 					if err := pv.Stop(); err != nil {
 						pv.Logger.Printf("[ERR] signctrl: %v", err)
 					}
-					pv.SecretConn.Close()
+					if err := pv.SecretConn.Close(); err != nil {
+						pv.Logger.Printf("[ERR] signctrl: %v", err)
+					}
 					return
 				}
 			}
