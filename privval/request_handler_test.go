@@ -281,14 +281,16 @@ func testBlockEndpoint(t *testing.T, port int, result *rpc.BlockResult, quitCh c
 	mux := http.NewServeMux()
 	mux.HandleFunc("/block", func(rw http.ResponseWriter, r *http.Request) {
 		bytes, _ := tm_json.Marshal(result)
-		rw.Write(bytes)
+		_, _ = rw.Write(bytes)
 	})
 
 	server := http.Server{Addr: fmt.Sprintf(":%v", port), Handler: mux}
 	defer server.Close()
 
 	listener, _ := net.Listen("tcp", server.Addr)
-	go server.Serve(listener)
+	go func() {
+		_ = server.Serve(listener)
+	}()
 	<-quitCh
 }
 

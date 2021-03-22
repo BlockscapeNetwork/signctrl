@@ -8,7 +8,8 @@ import (
 
 func TestGetStatus(t *testing.T) {
 	pv := mockSCFilePV(t)
-	pv.StartHTTPServer()
+	err := pv.StartHTTPServer()
+	assert.NoError(t, err)
 
 	sr, err := GetStatus()
 	assert.NotNil(t, sr)
