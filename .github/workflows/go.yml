@@ -1,4 +1,4 @@
-name: Build & Test
+name: Build, Test & Coverage
 
 on:
   push:
@@ -21,5 +21,8 @@ jobs:
     - name: Build
       run: go build -v ./...
 
-    - name: Test
-      run: go test -v ./...
+    - name: Run tests and coverage
+      run: go test -race -coverprofile=coverage.txt -covermode=atomic
+    
+    - name: Upload coverage to Codecov
+      run: bash <(curl -s https://codecov.io/bash)
