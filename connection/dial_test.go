@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -55,35 +56,43 @@ func startMockTCPServer(t *testing.T, laddr string, connKey ed25519.PrivateKey, 
 	return nil
 }
 
-func TestRetryDialTCP(t *testing.T) {
-	_, priv, _ := ed25519.GenerateKey(rand.Reader)
+func TestRetryDialTCP_NoConnKey(t *testing.T) {
+	cfgDir := "./test_dial_tcp_withconnkey"
+	os.MkdirAll(cfgDir, 0700)
+	defer os.RemoveAll(cfgDir)
 
-	// Fail loading conn.key.
 	port, _ := getFreePort(t)
 	laddr := fmt.Sprintf("127.0.0.1:%v", port)
+	_, priv, _ := ed25519.GenerateKey(rand.Reader)
 	go startMockTCPServer(t, laddr, priv, 0)
 
-	conn, err := RetryDial(".", "tcp://"+laddr, log.New(ioutil.Discard, "", 0))
+	conn, err := RetryDial(cfgDir, "tcp://"+laddr, log.New(ioutil.Discard, "", 0))
 	assert.Nil(t, conn)
 	assert.Error(t, err)
+}
 
-	// Succeed loading conn.key.
-	err = CreateBase64ConnKey(".")
-	defer os.Remove("./conn.key")
+func TestRetryDialTCP_WithConnKey(t *testing.T) {
+	cfgDir := "./test_dial_tcp_withconnkey"
+	os.MkdirAll(cfgDir, 0700)
+	defer os.RemoveAll(cfgDir)
+
+	err := CreateBase64ConnKey(cfgDir)
 	assert.NoError(t, err)
 
-	port, _ = getFreePort(t)
-	laddr = fmt.Sprintf("127.0.0.1:%v", port)
+	port, _ := getFreePort(t)
+	laddr := fmt.Sprintf("127.0.0.1:%v", port)
+	_, priv, _ := ed25519.GenerateKey(rand.Reader)
 	go startMockTCPServer(t, laddr, priv, 1100*time.Millisecond)
 
-	conn, err = RetryDial(".", "tcp://"+laddr, log.New(ioutil.Discard, "", 0))
+	conn, err := RetryDial(cfgDir, "tcp://"+laddr, log.New(ioutil.Discard, "", 0))
 	assert.NotNil(t, conn)
 	assert.NoError(t, err)
 }
 
-func startMockUnixServer(t *testing.T, laddr string, delay time.Duration) error {
+func startMockUnixServer(t *testing.T, laddr string, delay time.Duration, wg *sync.WaitGroup) error {
 	t.Helper()
 	time.Sleep(delay)
+	defer wg.Done()
 
 	listener, err := net.Listen("unix", laddr)
 	if err != nil {
@@ -101,11 +110,20 @@ func startMockUnixServer(t *testing.T, laddr string, delay time.Duration) error 
 }
 
 func TestRetryDialUnix(t *testing.T) {
-	go startMockUnixServer(t, "/tmp/test.sock", time.Second)
-	defer os.Remove("/tmp/test.sock")
-	conn, err := RetryDial(".", "unix:///tmp/test.sock", log.New(ioutil.Discard, "", 0))
+	cfgDir := "./test_dial_unix"
+	sockAddr := fmt.Sprintf("%v/test.sock", cfgDir)
+	os.MkdirAll(cfgDir, 0700)
+	defer os.RemoveAll(cfgDir)
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go startMockUnixServer(t, sockAddr, 1100*time.Millisecond, &wg)
+
+	conn, err := RetryDial(cfgDir, "unix://"+sockAddr, log.New(ioutil.Discard, "", 0))
 	assert.NotNil(t, conn)
 	assert.NoError(t, err)
+
+	wg.Wait()
 }
 
 func TestRetryDialUnknown(t *testing.T) {
