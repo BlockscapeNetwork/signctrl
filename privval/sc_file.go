@@ -88,7 +88,8 @@ func NewSCFilePV(logger *log.Logger, cfg config.Config, state config.State, tmpv
 func (pv *SCFilePV) run() {
 	retryDialTimeout := config.GetRetryDialTime(pv.Config.Base.RetryDialAfter)
 	timeout := time.NewTimer(retryDialTimeout)
-	ctx, cancel := context.WithCancel(context.Background())
+	var ctx context.Context
+	var cancel context.CancelFunc
 
 	for {
 		select {
@@ -105,7 +106,9 @@ func (pv *SCFilePV) run() {
 			pv.LockCounter()
 
 			// Close the connection and establish a new one.
-			pv.SecretConn.Close()
+			if err := pv.SecretConn.Close(); err != nil {
+				pv.Logger.Printf("[ERR] signctrl: %v", err)
+			}
 
 			var err error
 			if pv.SecretConn, err = connection.RetryDial(
@@ -143,8 +146,12 @@ func (pv *SCFilePV) run() {
 				if err == types.ErrMustShutdown || err == ErrRankObsolete {
 					pv.Logger.Printf("[DEBUG] signctrl: Terminating run goroutine: %v\n", err)
 					cancel()
-					pv.Stop()
-					pv.SecretConn.Close()
+					if err := pv.Stop(); err != nil {
+						pv.Logger.Printf("[ERR] signctrl: %v", err)
+					}
+					if err := pv.SecretConn.Close(); err != nil {
+						pv.Logger.Printf("[ERR] signctrl: %v", err)
+					}
 					return
 				}
 			}

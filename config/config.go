@@ -91,7 +91,7 @@ func (b Base) validate() error {
 	if !strings.HasPrefix(b.ValidatorListenAddressRPC, "tcp://") {
 		errs += "\tvalidator_laddr_rpc is missing the protocol\n"
 	} else {
-		host, _, err := net.SplitHostPort(strings.Trim(b.ValidatorListenAddressRPC, "tcp://"))
+		host, _, err := net.SplitHostPort(strings.TrimPrefix(b.ValidatorListenAddressRPC, "tcp://"))
 		if err != nil {
 			errs += "\tvalidator_laddr_rpc is not in the host:port format\n"
 		} else {

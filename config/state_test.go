@@ -53,7 +53,9 @@ func TestLoadOrGenState(t *testing.T) {
 
 	// Load valid.
 	state = *testState(t)
-	state.Save(".")
+	err = state.Save(".")
+	assert.NoError(t, err)
+
 	state, err = LoadOrGenState(".")
 	assert.Equal(t, state, *testState(t))
 	assert.NoError(t, err)

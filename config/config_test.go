@@ -58,6 +58,12 @@ func testInvalidBase(t *testing.T, base Base) {
 	assert.Error(t, err)
 	base.ValidatorListenAddress = testConfig(t).Base.ValidatorListenAddress
 
+	// Valid protocol (unix), but invalid suffix in Base.ValidatorListenAddress.
+	base.ValidatorListenAddress = "unix:///test"
+	err = base.validate()
+	assert.Error(t, err)
+	base.ValidatorListenAddress = testConfig(t).Base.ValidatorListenAddress
+
 	// Invalid host:port format in Base.ValidatorListenAddress.
 	base.ValidatorListenAddress = "tcp://127.0.0.1"
 	err = base.validate()
@@ -88,7 +94,13 @@ func testInvalidBase(t *testing.T, base Base) {
 	assert.Error(t, err)
 	base.ValidatorListenAddressRPC = testConfig(t).Base.ValidatorListenAddressRPC
 
-	// Invalid Base.RetryDialAfter.
+	// Invalid Base.RetryDialAfter (empty).
+	base.RetryDialAfter = ""
+	err = base.validate()
+	assert.Error(t, err)
+	base.RetryDialAfter = testConfig(t).Base.RetryDialAfter
+
+	// Invalid format in Base.RetryDialAfter.
 	base.RetryDialAfter = "01d"
 	err = base.validate()
 	assert.Error(t, err)
@@ -108,6 +120,12 @@ func TestValidateConfig(t *testing.T) {
 	cfg := testConfig(t)
 	err := cfg.validate()
 	assert.NoError(t, err)
+
+	// Invalid Config.
+	cfg.Base.LogLevel = "INVALID"
+	cfg.Privval.ChainID = ""
+	err = cfg.validate()
+	assert.Error(t, err)
 
 	// Invalid Config.
 	testInvalidBase(t, cfg.Base)
