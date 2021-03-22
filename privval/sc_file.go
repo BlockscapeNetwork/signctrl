@@ -89,7 +89,8 @@ func NewSCFilePV(logger *log.Logger, cfg config.Config, state *config.State, tmp
 func (pv *SCFilePV) run() {
 	retryDialTimeout := config.GetRetryDialTime(pv.Config.Base.RetryDialAfter)
 	timeout := time.NewTimer(retryDialTimeout)
-	ctx, cancel := context.WithCancel(context.Background())
+	var ctx context.Context
+	var cancel context.CancelFunc
 
 	for {
 		select {
