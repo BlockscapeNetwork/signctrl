@@ -65,7 +65,10 @@ func TestRetryDialTCP_NoConnKey(t *testing.T) {
 	port, _ := getFreePort(t)
 	laddr := fmt.Sprintf("127.0.0.1:%v", port)
 	_, priv, _ := ed25519.GenerateKey(rand.Reader)
-	go startMockTCPServer(t, laddr, priv, 0)
+	go func() {
+		err := startMockTCPServer(t, laddr, priv, 0)
+		assert.NoError(t, err)
+	}()
 
 	conn, err := RetryDial(cfgDir, "tcp://"+laddr, log.New(ioutil.Discard, "", 0))
 	assert.Nil(t, conn)
@@ -84,7 +87,10 @@ func TestRetryDialTCP_WithConnKey(t *testing.T) {
 	port, _ := getFreePort(t)
 	laddr := fmt.Sprintf("127.0.0.1:%v", port)
 	_, priv, _ := ed25519.GenerateKey(rand.Reader)
-	go startMockTCPServer(t, laddr, priv, 1100*time.Millisecond)
+	go func() {
+		err := startMockTCPServer(t, laddr, priv, 1100*time.Millisecond)
+		assert.NoError(t, err)
+	}()
 
 	conn, err := RetryDial(cfgDir, "tcp://"+laddr, log.New(ioutil.Discard, "", 0))
 	assert.NotNil(t, conn)
@@ -120,7 +126,10 @@ func TestRetryDialUnix(t *testing.T) {
 
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go startMockUnixServer(t, sockAddr, 1100*time.Millisecond, &wg)
+	go func() {
+		err := startMockUnixServer(t, sockAddr, 1100*time.Millisecond, &wg)
+		assert.NoError(t, err)
+	}()
 
 	conn, err := RetryDial(cfgDir, "unix://"+sockAddr, log.New(ioutil.Discard, "", 0))
 	assert.NotNil(t, conn)
