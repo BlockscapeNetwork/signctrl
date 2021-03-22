@@ -69,7 +69,9 @@ func TestQueryBlock_Cancel(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	quitCh := make(chan struct{})
 	go func() {
-		QueryBlock(ctx, addr, 1, log.New(ioutil.Discard, "", 0))
+		rb, err := QueryBlock(ctx, addr, 1, log.New(ioutil.Discard, "", 0))
+		assert.Nil(t, rb)
+		assert.Error(t, err)
 		quitCh <- struct{}{}
 	}()
 	cancel()
