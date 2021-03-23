@@ -41,7 +41,7 @@ func testInvalidBase(t *testing.T, base Base) {
 	base.SetSize = testConfig(t).Base.SetSize
 
 	// Invalid Base.Threshold.
-	base.Threshold = 0
+	base.Threshold = 1
 	err = base.validate()
 	assert.Error(t, err)
 	base.Threshold = testConfig(t).Base.Threshold

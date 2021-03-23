@@ -65,8 +65,8 @@ func (b Base) validate() error {
 	if b.SetSize < 2 {
 		errs += "\tset_size must be 2 or higher\n"
 	}
-	if b.Threshold < 1 {
-		errs += "\tthreshold must be 1 or higher\n"
+	if b.Threshold < 2 {
+		errs += "\tthreshold must be 2 or higher\n"
 	}
 	if b.StartRank < 1 {
 		errs += "\tstart_rank must be 1 or higher\n"

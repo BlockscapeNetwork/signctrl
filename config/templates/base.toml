@@ -18,7 +18,7 @@ set_size = 2
 # a rank update in the set.
 # This value must be the same across all validators
 # in the set.
-# Must be 1 or higher.
+# Must be 2 or higher.
 threshold = 10
 
 # Rank of the validator on startup.
