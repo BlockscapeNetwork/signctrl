@@ -1,6 +1,6 @@
 # Migration Guide
 
-This is a step-by-step guide on how to migrate from an existing node setup to a SignCTRL setup. For this guide, we're going to assume a single-node setup.
+This is a step-by-step guide on how to migrate from an existing node setup to a SignCTRL setup. For this guide, we're going to assume a single-node setup with no external signing service.
 
 > :information_source: Please follow the [Setup Guide](../guides/setup.md) first, until you're ready to run your validator with SignCTRL.
 
@@ -14,9 +14,9 @@ First, please follow the [Setup Guide](../guides/setup.md) to prepare the binari
 
 > :information_source: Replace all occurrences of `simd` with the name of your binary.
 
-The best/safest way to migrate to SignCTRL is to migrate your already running single-node validator first. Make sure you assign `rank = 1` to it in its `config.toml`.
+Make sure you assigned `start_rank = 1` to your validator in its `config.toml`.
 
-In order for SignCTRL to take effect, first stop your node via
+In order for SignCTRL to take effect, first stop your already running single-node validator via
 
 ```shell
 $ sudo systemctl stop simd
@@ -28,7 +28,9 @@ then, start SignCTRL via
 $ sudo systemctl start signctrl
 ```
 
-and finally, start the validator again via
+SignCTRL now waits for the validator to start up so it can dial it to establish an encrypted connection.
+
+Finally, start the validator again via
 
 ```shell
 $ sudo systemctl start simd
@@ -39,4 +41,4 @@ $ sudo systemctl start simd
 > $ sudo systemctl stop simd; sleep 0.5s; sudo systemctl start signctrl; sleep 0.5s; sudo systemctl start simd
 > ```
 
-If you've successfully migrated your single-node validator to SignCTRL, you can proceed starting the rest of the validators in the set (in no particular order) via the same commands.
+If you've successfully migrated your single-node validator to SignCTRL, you can proceed starting the rest of the validators in the set (in no particular order) in the same fashion.
