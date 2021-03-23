@@ -65,6 +65,10 @@ var (
 			// Start the SignCTRL service.
 			if err := pv.Start(); err != nil {
 				fmt.Println(err)
+				if err := pv.Stop(); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
 				os.Exit(1)
 			}
 
