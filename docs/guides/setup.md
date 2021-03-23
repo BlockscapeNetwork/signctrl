@@ -11,6 +11,14 @@ In order to set up your node, you can follow Tendermint's official documentation
 * [Setting up the keyring](https://docs.cosmos.network/master/run-node/keyring.html)
 * [Running a Node](https://docs.cosmos.network/master/run-node/run-node.html)
 
+Lastly, you need to configure your validator node to listen for connections from an external PrivValidator service. Add the address SignCTRL is going to run on (defaults to tcp://127.0.0.1:3000) to Tendermint's `config.toml`
+
+```toml
+# TCP or UNIX socket address for Tendermint to listen on for
+# connections from an external PrivValidator process
+priv_validator_laddr = "tcp://127.0.0.1:3000"
+```
+
 ## SignCTRL Setup
 
 Each validator node runs in tandem with its own SignCTRL daemon, so each and every validator in the set needs to have its own configuration.
@@ -28,19 +36,19 @@ $ signctrl init
 This will create the following files in your configuration directory:
 
 ```text
-$HOME/.mintctrl/
+$HOME/.signctrl/
 ├── config.toml
 └── conn.key
 ```
 
-The `config.toml` is the configuration file for SignCTRL. We will be taking a look at it in great detail in the **Configuration** section.
+The `config.toml` is the configuration file for SignCTRL. The **Configuration** section covers it in detail.
 
 The `conn.key` file is a secret key that is used to establish an encrypted connection between SignCTRL and the validator.
 
 The last thing we need to do is import the validator node's `priv_validator_key.json` and `priv_validator_state.json` into the configuration directory. Your directory should now look like this:
 
 ```text
-$HOME/.mintctrl/
+$HOME/.signctrl/
 ├── config.toml
 ├── conn.key
 ├── priv_validator_key.json
@@ -54,12 +62,11 @@ $HOME/.mintctrl/
 In the previous section, we've created a `config.toml` file in our configuration directory.
 
 ```toml
-#################################################
-### Init defines the configuration parameters ###
-### that SignCTRL needs on initialization.    ###
-#################################################
+#############################################################
+###              Base Configuration Options               ###
+#############################################################
 
-[init]
+[base]
 
 # Minimum log level for SignCTRL logs.
 # Must be either DEBUG, INFO, WARN or ERR.
@@ -83,7 +90,7 @@ threshold = 10
 # until the threshold is exceeded and ranks are
 # updated.
 # Must be 1 or higher.
-rank = 0
+start_rank = 0
 
 # TCP socket address the validator listens on for
 # an external PrivValidator process.
@@ -102,10 +109,9 @@ validator_laddr_rpc = "tcp://127.0.0.1:26657"
 # minutes and 'h' for hours.
 retry_dial_after = "15s"
 
-####################################################
-### Privval defines the types of private         ###
-### validators that sign incoming sign requests. ###
-####################################################
+#############################################################
+###        Private Validator Configuration Options        ###
+#############################################################
 
 [privval]
 
@@ -113,12 +119,12 @@ retry_dial_after = "15s"
 chain_id = ""
 ```
 
-The initial `config.toml` provides a set of default values for most fields. Please make sure to customize the fields `rank` and `chain_id` to your individual needs after generation.
+The initial `config.toml` provides a set of default values for most fields. Please make sure to customize the fields `start_rank` and `chain_id` to your individual needs after generation.
 
 Furthermore, there are a couple of things to consider:
 
 * `set_size`, `threshold` and `chain_id` must be shared values across all validators in the set
-* `rank` must be unique, so no two validators in the set can have the same rank
+* `start_rank` must be unique, so no two validators in the set can have the same rank
 
 #### Example Configuration
 
@@ -133,12 +139,12 @@ The following two configurations are an example for a SignCTRL set of two valida
 <td>
 
 ```toml
-[init]
+[base]
 
 log_level = "INFO"
 set_size = 2 # Shared value
 threshold = 5 # Shared value
-rank = 1 # Unique
+start_rank = 1 # Unique
 validator_laddr = "tcp://127.0.0.1:3000"
 validator_laddr_rpc = "tcp://127.0.0.1:26657"
 retry_dial_after = "15s"
@@ -152,12 +158,12 @@ chain_id = "testchain" # Shared value
 <td>
 
 ```toml
-[init]
+[base]
 
 log_level = "INFO"
 set_size = 2 # Shared value
 threshold = 5 # Shared value
-rank = 2 # Unique
+start_rank = 2 # Unique
 validator_laddr = "tcp://127.0.0.1:3000"
 validator_laddr_rpc = "tcp://127.0.0.1:26657"
 retry_dial_after = "15s"
@@ -216,4 +222,4 @@ $ sudo systemctl simd start
 > $ sudo systemctl start signctrl; sleep 0.5s; sudo systemctl start simd
 > ```
 
-> :information_source: It doesn't matter which order you start your validators in. Ranks 2..n will always wait for a signature from rank 1 before they start counting missed blocks in a row and consequently updating their ranks.
+> :information_source: It doesn't matter which order you start your validators in. Ranks 2..n will always wait for a signature from rank 1 before they start counting blocks missed in a row and consequently updating their ranks.

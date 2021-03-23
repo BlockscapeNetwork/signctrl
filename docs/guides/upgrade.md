@@ -45,7 +45,7 @@ $ signctrl init
 This will give you
 
 ```text
-/path/to/.mintctrl/
+/path/to/.signctrl/
 ├── config.toml
 └── conn.key
 ```
@@ -57,40 +57,21 @@ This will give you
 Now, that you have your new `.signctrl/` configuration directory, you can copy over the `priv_validator_key.json` and `priv_validator_state.json` files via
 
 ```shell
-$ cp /path/to/./signctrl_old/*.json /path/to/.signctrl
+$ cp /path/to/.signctrl_old/priv_validator_*.json /path/to/.signctrl
 ```
 
 #### Compare the config.toml files
 
-There is currently no automatic way of porting over old configuration settings into new formats, so for now, this process will remain manual. One way to go about it is to open both config.toml files side by side, copy over known fields from the old config.toml and finally fill in the new fields.
-
-> :warning: **IMPORTANT WARNING** :warning:
-> 
-> **Before you restart** a node, please double-check the node's `rank`.
-> It's possible that the rank specified in the `last_rank.json` becomes **obsolete** due to a rank update that happened while the node was stopped. 
-> Please, always check the logs to see which rank the validator is currently at. You'll need a minimum log level of INFO for this.
+There is currently no automatic way of porting over old configuration settings into new formats, so for now, this process will remain manual. Open both config.toml files side by side, copy over known fields from the old config.toml and finally fill in the new fields.
 
 ## Rolling Update
 
 > :information_source: Replace all occurrences of `simd` with the name of your binary.
 
-Alright, we're all set up for the upgrade! The beauty of SignCTRL is that it can be upgraded with minimal or no downtime at all (depending on your ability to quickly copy and paste commands into the terminal, so keep the commands below ready in a text editor).
+Alright, we're all set up for the upgrade! The beauty of SignCTRL is that it can be upgraded with minimal or no downtime at all.
 
-First thing you need to do is to stop the validator and the SignCTRL daemon (in this order) via
-
-```shell
-$ sudo systemctl stop simd
-$ sudo systemctl stop signctrl
-```
-
-and start them back up again (in reverse order) via
+Just restart the SignCTRL daemon via
 
 ```shell
-$ sudo systemctl start signctrl
-$ sudo systemctl start simd
+$ sudo systemctl restart signctrl
 ```
-
-> For convenience, you can also chain all the commands above with small delays in between:
-> ```shell
-> $ sudo systemctl stop simd; sleep 0.5s; sudo systemctl stop signctrl; sleep 0.5s; sudo systemctl start signctrl; sleep 0.5s; sudo systemctl start simd
-> ```

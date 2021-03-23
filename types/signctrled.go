@@ -139,6 +139,8 @@ func (bsc *BaseSignCtrled) Missed() error {
 		// that the next block will not contain the validator's signature. This is due
 		// to a block containing the commit of the previous height which we know wasn't
 		// signed. Therefore, skip ahead.
+		// This is also the reason why the minimum threshold for blocks missed in a row
+		// is at 2.
 		bsc.currentHeight++
 		return ErrThresholdExceeded
 	}
