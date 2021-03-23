@@ -45,7 +45,7 @@ $ signctrl init
 This will give you
 
 ```text
-/path/to/.mintctrl/
+/path/to/.signctrl/
 ├── config.toml
 └── conn.key
 ```

@@ -28,7 +28,7 @@ $ signctrl init
 This will create the following files in your configuration directory:
 
 ```text
-$HOME/.mintctrl/
+$HOME/.signctrl/
 ├── config.toml
 └── conn.key
 ```
@@ -40,7 +40,7 @@ The `conn.key` file is a secret key that is used to establish an encrypted conne
 The last thing we need to do is import the validator node's `priv_validator_key.json` and `priv_validator_state.json` into the configuration directory. Your directory should now look like this:
 
 ```text
-$HOME/.mintctrl/
+$HOME/.signctrl/
 ├── config.toml
 ├── conn.key
 ├── priv_validator_key.json
