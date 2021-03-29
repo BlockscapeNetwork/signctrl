@@ -1,4 +1,4 @@
-# Freqeuently Asked Questions
+# Frequently Asked Questions
 
 **How can I use my existing keypair with SignCTRL?**
 
