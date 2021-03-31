@@ -56,6 +56,32 @@ type Base struct {
 	RetryDialAfter string `mapstructure:"retry_dial_after"`
 }
 
+// validateAddress validates the configuration's addresses.
+func validateAddress(addr string, addrName string) error {
+	protocol := regexp.MustCompile(`(tcp|unix)://`).FindString(addr)
+	switch protocol {
+	case "":
+		return fmt.Errorf("%v is missing the protocol", addrName)
+
+	case "tcp://":
+		host, _, err := net.SplitHostPort(strings.TrimPrefix(addr, protocol))
+		if err != nil {
+			return fmt.Errorf("%v is not in the host:port format", addrName)
+		} else {
+			if ip := net.ParseIP(host); ip == nil {
+				return fmt.Errorf("%v is not a valid IPv4 address", addrName)
+			}
+		}
+
+	case "unix://":
+		if !strings.HasSuffix(addr, ".sock") {
+			return fmt.Errorf("%v is not a unix domain socket address", addrName)
+		}
+	}
+
+	return nil
+}
+
 // validate validates the configuration's base section.
 func (b Base) validate() error {
 	var errs string
@@ -71,34 +97,11 @@ func (b Base) validate() error {
 	if b.StartRank < 1 {
 		errs += "\tstart_rank must be 1 or higher\n"
 	}
-	protocol := regexp.MustCompile(`(tcp|unix)://`).FindString(b.ValidatorListenAddress)
-	if protocol == "" {
-		errs += "\tvalidator_laddr is missing the protocol\n"
-	} else if protocol == "tcp://" {
-		host, _, err := net.SplitHostPort(strings.TrimPrefix(b.ValidatorListenAddress, protocol))
-		if err != nil {
-			errs += "\tvalidator_laddr is not in the host:port format\n"
-		} else {
-			if ip := net.ParseIP(host); ip == nil {
-				errs += "\tvalidator_laddr is not a valid IPv4 address\n"
-			}
-		}
-	} else if protocol == "unix://" {
-		if !strings.HasSuffix(b.ValidatorListenAddress, ".sock") {
-			errs += "\nvalidator_laddr is not a unix domain socket address\n"
-		}
+	if err := validateAddress(b.ValidatorListenAddress, "validator_laddr"); err != nil {
+		errs += fmt.Sprintf("\t%v\n", err.Error())
 	}
-	if !strings.HasPrefix(b.ValidatorListenAddressRPC, "tcp://") {
-		errs += "\tvalidator_laddr_rpc is missing the protocol\n"
-	} else {
-		host, _, err := net.SplitHostPort(strings.TrimPrefix(b.ValidatorListenAddressRPC, "tcp://"))
-		if err != nil {
-			errs += "\tvalidator_laddr_rpc is not in the host:port format\n"
-		} else {
-			if ip := net.ParseIP(host); ip == nil {
-				errs += "\tvalidator_laddr_rpc is not a valid IPv4 address\n"
-			}
-		}
+	if err := validateAddress(b.ValidatorListenAddressRPC, "validator_laddr_rpc"); err != nil {
+		errs += fmt.Sprintf("\t%v\n", err.Error())
 	}
 	if b.RetryDialAfter == "" {
 		errs += "\tretry_dial_after must not be empty\n"
