@@ -5,13 +5,13 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"os"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/BlockscapeNetwork/signctrl/types"
 	"github.com/stretchr/testify/assert"
 	tm_ed25519 "github.com/tendermint/tendermint/crypto/ed25519"
 	tm_p2pconn "github.com/tendermint/tendermint/p2p/conn"
@@ -70,7 +70,7 @@ func TestRetryDialTCP_NoConnKey(t *testing.T) {
 		assert.NoError(t, err)
 	}()
 
-	conn, err := RetryDial(cfgDir, "tcp://"+laddr, log.New(ioutil.Discard, "", 0))
+	conn, err := RetryDial(cfgDir, "tcp://"+laddr, types.NewSyncLogger(ioutil.Discard, "", 0))
 	assert.Nil(t, conn)
 	assert.Error(t, err)
 }
@@ -92,7 +92,7 @@ func TestRetryDialTCP_WithConnKey(t *testing.T) {
 		assert.NoError(t, err)
 	}()
 
-	conn, err := RetryDial(cfgDir, "tcp://"+laddr, log.New(ioutil.Discard, "", 0))
+	conn, err := RetryDial(cfgDir, "tcp://"+laddr, types.NewSyncLogger(ioutil.Discard, "", 0))
 	assert.NotNil(t, conn)
 	assert.NoError(t, err)
 }
@@ -131,7 +131,7 @@ func TestRetryDialUnix(t *testing.T) {
 		assert.NoError(t, err)
 	}()
 
-	conn, err := RetryDial(cfgDir, "unix://"+sockAddr, log.New(ioutil.Discard, "", 0))
+	conn, err := RetryDial(cfgDir, "unix://"+sockAddr, types.NewSyncLogger(ioutil.Discard, "", 0))
 	assert.NotNil(t, conn)
 	assert.NoError(t, err)
 
@@ -139,7 +139,7 @@ func TestRetryDialUnix(t *testing.T) {
 }
 
 func TestRetryDialUnknown(t *testing.T) {
-	conn, err := RetryDial(".", "invalid://127.0.0.1:3000", log.New(ioutil.Discard, "", 0))
+	conn, err := RetryDial(".", "invalid://127.0.0.1:3000", types.NewSyncLogger(ioutil.Discard, "", 0))
 	assert.Nil(t, conn)
 	assert.Error(t, err)
 }

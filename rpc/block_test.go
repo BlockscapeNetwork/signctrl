@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"strings"
 	"testing"
 
+	"github.com/BlockscapeNetwork/signctrl/types"
 	"github.com/stretchr/testify/assert"
 	tm_json "github.com/tendermint/tendermint/libs/json"
 	tm_coretypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -58,7 +58,7 @@ func testBlockResult(t *testing.T) *BlockResult {
 func TestQueryBlock_InvalidHeight(t *testing.T) {
 	port, _ := getFreePort(t)
 	addr := fmt.Sprintf("tcp://127.0.0.1:%v", port)
-	rb, err := QueryBlock(context.Background(), addr, 0, log.New(ioutil.Discard, "", 0))
+	rb, err := QueryBlock(context.Background(), addr, 0, types.NewSyncLogger(ioutil.Discard, "", 0))
 	assert.Nil(t, rb)
 	assert.Error(t, err)
 }
@@ -69,7 +69,7 @@ func TestQueryBlock_Cancel(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	quitCh := make(chan struct{})
 	go func() {
-		rb, err := QueryBlock(ctx, addr, 1, log.New(ioutil.Discard, "", 0))
+		rb, err := QueryBlock(ctx, addr, 1, types.NewSyncLogger(ioutil.Discard, "", 0))
 		assert.Nil(t, rb)
 		assert.Error(t, err)
 		quitCh <- struct{}{}
@@ -93,7 +93,7 @@ func TestQueryBlock(t *testing.T) {
 		}
 	}()
 
-	rb, err := QueryBlock(context.Background(), addr, 1, log.New(ioutil.Discard, "", 0))
+	rb, err := QueryBlock(context.Background(), addr, 1, types.NewSyncLogger(ioutil.Discard, "", 0))
 	assert.NotNil(t, rb)
 	assert.NoError(t, err)
 }

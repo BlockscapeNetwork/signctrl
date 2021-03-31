@@ -3,7 +3,6 @@ package connection
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -12,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/BlockscapeNetwork/signctrl/types"
 	tm_ed25519 "github.com/tendermint/tendermint/crypto/ed25519"
 	tm_p2pconn "github.com/tendermint/tendermint/p2p/conn"
 )
@@ -29,7 +29,7 @@ var (
 
 // retryDialTCP keeps dialing the given TCP socket address until success, using the
 // given connkey for encryption and returns the secret connection.
-func retryDialTCP(address string, connkey tm_ed25519.PrivKey, sigs chan os.Signal, logger *log.Logger) (net.Conn, error) {
+func retryDialTCP(address string, connkey tm_ed25519.PrivKey, sigs chan os.Signal, logger *types.SyncLogger) (net.Conn, error) {
 	for {
 		select {
 		case <-sigs:
@@ -37,20 +37,20 @@ func retryDialTCP(address string, connkey tm_ed25519.PrivKey, sigs chan os.Signa
 
 		case <-time.After(RetryDialInterval):
 			if conn, err := net.Dial("tcp", strings.TrimPrefix(address, "tcp://")); err == nil {
-				logger.Println("[INFO] signctrl: Successfully dialed the validator ✓")
+				logger.Info("Successfully dialed the validator ✓")
 				return tm_p2pconn.MakeSecretConnection(conn, connkey)
 			}
 
 			// After the first dial, dial in intervals of 1 second.
 			RetryDialInterval = time.Second
-			logger.Println("[DEBUG] signctrl: Retry dialing...")
+			logger.Debug("Retry dialing...")
 		}
 	}
 }
 
 // retryDialUnix keeps dialing the given unix domain socket address until success and
 // returns the connection.
-func retryDialUnix(address string, sigs chan os.Signal, logger *log.Logger) (net.Conn, error) {
+func retryDialUnix(address string, sigs chan os.Signal, logger *types.SyncLogger) (net.Conn, error) {
 	addrWithoutProtocol := strings.TrimPrefix(address, "unix://")
 
 	for {
@@ -61,21 +61,21 @@ func retryDialUnix(address string, sigs chan os.Signal, logger *log.Logger) (net
 		case <-time.After(RetryDialInterval):
 			unixAddr := &net.UnixAddr{Name: addrWithoutProtocol, Net: "unix"}
 			if conn, err := net.DialUnix("unix", nil, unixAddr); err == nil {
-				logger.Println("[INFO] signctrl: Successfully dialed the validator ✓")
+				logger.Info("Successfully dialed the validator ✓")
 				return conn, nil
 			}
 
 			// After the first dial, dial in intervals of 1 second.
 			os.RemoveAll(addrWithoutProtocol)
 			RetryDialInterval = time.Second
-			logger.Println("[DEBUG] signctrl: Retry dialing...")
+			logger.Debug("Retry dialing...")
 		}
 	}
 }
 
 // RetryDial keeps dialing the given address until success and returns the connection.
-func RetryDial(cfgDir, address string, logger *log.Logger) (net.Conn, error) {
-	logger.Printf("[INFO] signctrl: Dialing %v... (Use Ctrl+C to abort)", address)
+func RetryDial(cfgDir, address string, logger *types.SyncLogger) (net.Conn, error) {
+	logger.Info("Dialing %v... (Use Ctrl+C to abort)", address)
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
@@ -86,7 +86,7 @@ func RetryDial(cfgDir, address string, logger *log.Logger) (net.Conn, error) {
 		// a secret/encrypted connection to the validator.
 		connKey, err := LoadConnKey(cfgDir)
 		if err != nil {
-			return nil, fmt.Errorf("[ERR] signctrl: couldn't load conn.key: %v", err)
+			return nil, fmt.Errorf("couldn't load conn.key: %v", err)
 		}
 		return retryDialTCP(address, connKey, sigs, logger)
 
