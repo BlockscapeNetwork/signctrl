@@ -67,10 +67,9 @@ func validateAddress(addr string, addrName string) error {
 		host, _, err := net.SplitHostPort(strings.TrimPrefix(addr, protocol))
 		if err != nil {
 			return fmt.Errorf("%v is not in the host:port format", addrName)
-		} else {
-			if ip := net.ParseIP(host); ip == nil {
-				return fmt.Errorf("%v is not a valid IPv4 address", addrName)
-			}
+		}
+		if ip := net.ParseIP(host); ip == nil {
+			return fmt.Errorf("%v is not a valid IPv4 address", addrName)
 		}
 
 	case "unix://":
