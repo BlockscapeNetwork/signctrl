@@ -134,6 +134,7 @@ func (pv *SCFilePV) run() {
 			timeout.Reset(retryDialTimeout)
 			cancel()
 
+			ctx, cancel = context.WithCancel(context.Background())
 			resp, err := HandleRequest(ctx, &msg, pv)
 			w := tm_protoio.NewDelimitedWriter(pv.SecretConn)
 			if _, err := w.WriteMsg(resp); err != nil {
