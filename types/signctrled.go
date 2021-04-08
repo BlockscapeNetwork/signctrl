@@ -3,7 +3,6 @@ package types
 import (
 	"errors"
 	"io/ioutil"
-	"log"
 )
 
 var (
@@ -34,7 +33,7 @@ type SignCtrled interface {
 
 // BaseSignCtrled is a base implementation of SignCtrled.
 type BaseSignCtrled struct {
-	Logger        *log.Logger
+	Logger        *SyncLogger
 	counterLocked bool
 	currentHeight int64
 	missedInARow  int
@@ -45,9 +44,9 @@ type BaseSignCtrled struct {
 }
 
 // NewBaseSignCtrled creates a new instance of BaseSignCtrled.
-func NewBaseSignCtrled(logger *log.Logger, threshold int, rank int, impl SignCtrled) *BaseSignCtrled {
+func NewBaseSignCtrled(logger *SyncLogger, threshold int, rank int, impl SignCtrled) *BaseSignCtrled {
 	if logger == nil {
-		logger = log.New(ioutil.Discard, "", 0)
+		logger = NewSyncLogger(ioutil.Discard, "", 0)
 	}
 
 	return &BaseSignCtrled{
@@ -66,7 +65,7 @@ func NewBaseSignCtrled(logger *log.Logger, threshold int, rank int, impl SignCtr
 // takes place.
 func (bsc *BaseSignCtrled) LockCounter() {
 	if !bsc.counterLocked {
-		bsc.Logger.Println("[INFO] signctrl: Looking for first commitsig from validator after reconnect, stop counting missed blocks in a row...")
+		bsc.Logger.Info("Looking for first commitsig from validator after reconnect, stop counting missed blocks in a row...")
 		bsc.counterLocked = true
 	}
 }
@@ -77,7 +76,7 @@ func (bsc *BaseSignCtrled) LockCounter() {
 // takes place.
 func (bsc *BaseSignCtrled) UnlockCounter() {
 	if bsc.counterLocked {
-		bsc.Logger.Println("[INFO] signctrl: Found first commitsig from validator since fully synced, start counting missed blocks in a row...")
+		bsc.Logger.Info("Found first commitsig from validator since fully synced, start counting missed blocks in a row...")
 		bsc.counterLocked = false
 	}
 }
@@ -127,9 +126,9 @@ func (bsc *BaseSignCtrled) Missed() error {
 
 	bsc.missedInARow++
 	if bsc.missedInARow < bsc.threshold {
-		bsc.Logger.Printf("[INFO] signctrl: Missed a block (%v/%v)", bsc.missedInARow, bsc.threshold)
+		bsc.Logger.Info("Missed a block (%v/%v)", bsc.missedInARow, bsc.threshold)
 	} else if bsc.missedInARow == bsc.threshold {
-		bsc.Logger.Printf("[INFO] signctrl: Missed too many blocks in a row (%v/%v)", bsc.missedInARow, bsc.threshold)
+		bsc.Logger.Info("Missed too many blocks in a row (%v/%v)", bsc.missedInARow, bsc.threshold)
 		bsc.OnMissedTooMany()
 		if err := bsc.Promote(); err != nil {
 			return err
@@ -156,7 +155,7 @@ func (bsc *BaseSignCtrled) OnMissedTooMany() {}
 // Implements the SignCtrled interface.
 func (bsc *BaseSignCtrled) Reset() {
 	if bsc.missedInARow > 0 {
-		bsc.Logger.Println("[DEBUG] signctrl: Reset counter for missed blocks in a row")
+		bsc.Logger.Debug("Reset counter for missed blocks in a row")
 		bsc.missedInARow = 0
 	}
 }
@@ -171,7 +170,7 @@ func (bsc *BaseSignCtrled) Promote() error {
 		return ErrMustShutdown
 	}
 
-	bsc.Logger.Printf("[INFO] signctrl: Promote validator (%v -> %v)", bsc.rank, bsc.rank-1)
+	bsc.Logger.Info("Promote validator (%v -> %v)", bsc.rank, bsc.rank-1)
 	bsc.rank--
 	bsc.Reset()
 	bsc.OnPromote()

@@ -3,7 +3,6 @@ package types
 import (
 	"errors"
 	"io/ioutil"
-	"log"
 )
 
 var (
@@ -71,7 +70,7 @@ Typical usage:
 	}
 */
 type BaseService struct {
-	Logger  *log.Logger
+	Logger  *SyncLogger
 	name    string
 	running bool
 	quit    chan struct{}
@@ -81,9 +80,9 @@ type BaseService struct {
 }
 
 // NewBaseService creates a new instance of BaseService.
-func NewBaseService(logger *log.Logger, name string, impl Service) *BaseService {
+func NewBaseService(logger *SyncLogger, name string, impl Service) *BaseService {
 	if logger == nil {
-		logger = log.New(ioutil.Discard, "", 0)
+		logger = NewSyncLogger(ioutil.Discard, "", 0)
 	}
 
 	return &BaseService{
@@ -101,7 +100,7 @@ func (bs *BaseService) Start() error {
 		return ErrAlreadyStarted
 	}
 
-	bs.Logger.Printf("[DEBUG] signctrl: Starting %v service", bs.name)
+	bs.Logger.Debug("Starting %v service", bs.name)
 	bs.running = true
 	bs.quit = make(chan struct{})
 	if err := bs.impl.OnStart(); err != nil {
@@ -123,7 +122,7 @@ func (bs *BaseService) Stop() error {
 		return ErrAlreadyStopped
 	}
 
-	bs.Logger.Printf("[DEBUG] signctrl: Stopping %v service", bs.name)
+	bs.Logger.Debug("Stopping %v service", bs.name)
 	bs.running = false
 	if err := bs.impl.OnStop(); err != nil {
 		return err
