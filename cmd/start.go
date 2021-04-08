@@ -61,7 +61,7 @@ var (
 
 			// Start the SignCTRL service.
 			if err := pv.Start(); err != nil {
-				fmt.Println(err)
+				logger.Error(err.Error())
 				os.Exit(1)
 			}
 
@@ -75,7 +75,7 @@ var (
 			case <-sigs: // The sigs channel is only used for OS interrupt signals
 				pv.Logger.Info("Shutting SignCTRL down... \u23FB (user/os interrupt)")
 				if err := pv.Stop(); err != nil {
-					fmt.Println(err)
+					logger.Error(err.Error())
 					os.Exit(1)
 				}
 			}
