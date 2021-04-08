@@ -4,11 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"testing"
 
 	"github.com/BlockscapeNetwork/signctrl/config"
+	"github.com/BlockscapeNetwork/signctrl/types"
 	"github.com/stretchr/testify/assert"
 	tm_crypto "github.com/tendermint/tendermint/crypto"
 	tm_ed25519 "github.com/tendermint/tendermint/crypto/ed25519"
@@ -84,7 +84,7 @@ func testFilePV(t *testing.T) tm_types.PrivValidator {
 func mockSCFilePV(t *testing.T) *SCFilePV {
 	t.Helper()
 	return NewSCFilePV(
-		log.New(ioutil.Discard, "", 0),
+		types.NewSyncLogger(ioutil.Discard, "", 0),
 		testConfig(t),
 		testState(t),
 		testFilePV(t),
