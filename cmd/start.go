@@ -2,13 +2,11 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/BlockscapeNetwork/signctrl/config"
 	"github.com/BlockscapeNetwork/signctrl/privval"
@@ -34,9 +32,9 @@ var (
 			cfgDir := config.Dir()
 
 			// Set the logger and its mininum log level.
-			logger := log.New(os.Stderr, "", 0)
+			logger := types.NewSyncLogger(os.Stderr, "", 0)
 			filter := &logutils.LevelFilter{
-				Levels:   config.LogLevels,
+				Levels:   types.LogLevels,
 				MinLevel: logutils.LogLevel(cfg.Base.LogLevel),
 				Writer:   os.Stderr,
 			}
@@ -64,7 +62,7 @@ var (
 
 			// Start the SignCTRL service.
 			if err := pv.Start(); err != nil {
-				fmt.Println(err)
+				logger.Error(err.Error())
 				if err := pv.Stop(); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -78,20 +76,14 @@ var (
 
 			select {
 			case <-pv.Quit(): // Used for self-induced shutdown
-				pv.Logger.Println("[INFO] signctrl: Shutting SignCTRL down... \u23FB (quit)")
+				pv.Logger.Info("Shutting SignCTRL down... \u23FB (quit)")
 			case <-sigs: // The sigs channel is only used for OS interrupt signals
-				pv.Logger.Println("[INFO] signctrl: Shutting SignCTRL down... \u23FB (user/os interrupt)")
+				pv.Logger.Info("Shutting SignCTRL down... \u23FB (user/os interrupt)")
+				if err := pv.Stop(); err != nil {
+					logger.Error(err.Error())
+					os.Exit(1)
+				}
 			}
-
-			if err := pv.Stop(); err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			// TODO: The current logger is async which is why some of the last log messages before
-			// shutdown aren't printed out. Make the logger sync. For now, wait a second for everything
-			// to be printed out.
-			time.Sleep(time.Second)
 
 			// Terminate the process gracefully with exit code 0.
 			os.Exit(0)

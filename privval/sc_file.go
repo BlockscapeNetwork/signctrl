@@ -3,7 +3,6 @@ package privval
 import (
 	"context"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"path/filepath"
@@ -39,7 +38,7 @@ type SCFilePV struct {
 	types.BaseService
 	types.BaseSignCtrled
 
-	Logger     *log.Logger
+	Logger     *types.SyncLogger
 	Config     config.Config
 	State      config.State
 	TMFilePV   tm_types.PrivValidator
@@ -59,7 +58,7 @@ func StateFilePath(cfgDir string) string {
 }
 
 // NewSCFilePV creates a new instance of SCFilePV.
-func NewSCFilePV(logger *log.Logger, cfg config.Config, state config.State, tmpv tm_types.PrivValidator, http *http.Server) *SCFilePV {
+func NewSCFilePV(logger *types.SyncLogger, cfg config.Config, state config.State, tmpv tm_types.PrivValidator, http *http.Server) *SCFilePV {
 	pv := &SCFilePV{
 		Logger:   logger,
 		Config:   cfg,
@@ -92,19 +91,19 @@ func (pv *SCFilePV) run() {
 	for {
 		select {
 		case <-pv.Quit():
-			pv.Logger.Printf("[DEBUG] signctrl: Terminating run goroutine: service stopped")
+			pv.Logger.Debug("Terminating run goroutine: service stopped")
 			// Note: Don't use pv.Stop() in here, as it closes the pv.Quit() channel.
 			return
 
 		case <-timeout.C:
-			pv.Logger.Printf("[INFO] signctrl: Lost connection to the validator... (no message for %v)\n", retryDialTimeout.String())
+			pv.Logger.Info("Lost connection to the validator... (no message for %v)\n", retryDialTimeout.String())
 
 			// Lock the counter for missed blocks in a row again.
 			pv.LockCounter()
 
 			// Close the connection and establish a new one.
 			if err := pv.SecretConn.Close(); err != nil {
-				pv.Logger.Printf("[ERR] signctrl: %v", err)
+				pv.Logger.Error("%v", err)
 			}
 
 			var err error
@@ -113,7 +112,7 @@ func (pv *SCFilePV) run() {
 				pv.Config.Base.ValidatorListenAddress,
 				pv.Logger,
 			); err != nil {
-				pv.Logger.Printf("[ERR] signctrl: couldn't dial validator: %v\n", err)
+				pv.Logger.Error("couldn't dial validator: %v\n", err)
 				// Note: Don't use pv.Stop() in here, as RetryDial can only be stopped via SIGINT/SIGTERM.
 				return
 			}
@@ -123,7 +122,7 @@ func (pv *SCFilePV) run() {
 			r := tm_protoio.NewDelimitedReader(pv.SecretConn, maxRemoteSignerMsgSize)
 			if _, err := r.ReadMsg(&msg); err != nil {
 				if err != io.EOF {
-					pv.Logger.Printf("[ERR] signctrl: couldn't read message: %v\n", err)
+					pv.Logger.Error("couldn't read message: %v\n", err)
 				}
 				continue
 			}
@@ -134,17 +133,17 @@ func (pv *SCFilePV) run() {
 			resp, err := HandleRequest(ctx, &msg, pv)
 			w := tm_protoio.NewDelimitedWriter(pv.SecretConn)
 			if _, err := w.WriteMsg(resp); err != nil {
-				pv.Logger.Printf("[ERR] signctrl: couldn't write message: %v\n", err)
+				pv.Logger.Error("couldn't write message: %v\n", err)
 			}
 			if err != nil {
-				pv.Logger.Printf("[ERR] signctrl: couldn't handle request: %v\n", err)
+				pv.Logger.Error("couldn't handle request: %v\n", err)
 				if err == types.ErrMustShutdown || err == ErrRankObsolete {
-					pv.Logger.Printf("[DEBUG] signctrl: Terminating run goroutine: %v\n", err)
+					pv.Logger.Debug("Terminating run goroutine: %v\n", err)
 					if err := pv.Stop(); err != nil {
-						pv.Logger.Printf("[ERR] signctrl: %v", err)
+						pv.Logger.Error("%v", err)
 					}
 					if err := pv.SecretConn.Close(); err != nil {
-						pv.Logger.Printf("[ERR] signctrl: %v", err)
+						pv.Logger.Error("%v", err)
 					}
 				}
 			}
@@ -156,7 +155,7 @@ func (pv *SCFilePV) run() {
 // OnStart starts the main loop of the SignCtrled PrivValidator.
 // Implements the Service interface.
 func (pv *SCFilePV) OnStart() (err error) {
-	pv.Logger.Printf("[INFO] signctrl: Starting SignCTRL on rank %v...\n", pv.GetRank())
+	pv.Logger.Info("Starting SignCTRL on rank %v...\n", pv.GetRank())
 
 	// Start http server.
 	if err := pv.StartHTTPServer(); err != nil {
@@ -181,16 +180,16 @@ func (pv *SCFilePV) OnStart() (err error) {
 // OnStop terminates the main loop of the SignCtrled PrivValidator.
 // Implements the Service interface.
 func (pv *SCFilePV) OnStop() error {
-	pv.Logger.Printf("[INFO] signctrl: Stopping SignCTRL on rank %v...\n", pv.GetRank())
+	pv.Logger.Info("Stopping SignCTRL on rank %v...\n", pv.GetRank())
 
 	// Close the http server.
-	pv.Logger.Println("[INFO] signctrl: Stopping the HTTP server...")
+	pv.Logger.Info("Stopping the HTTP server...")
 	pv.HTTP.Close()
 
 	// Save rank to last_rank.json file if the shutdown was not self-induced.
 	pv.State.LastRank = pv.GetRank()
 	if err := pv.State.Save(config.Dir()); err != nil {
-		pv.Logger.Printf("[ERR] signctrl: couldn't save state to %v: %v\n", config.StateFile, err)
+		pv.Logger.Error("couldn't save state to %v: %v\n", config.StateFile, err)
 		return err
 	}
 
@@ -201,13 +200,13 @@ func (pv *SCFilePV) OnStop() error {
 // blocks in a row.
 // Implements the SignCtrled interface.
 func (pv *SCFilePV) OnMissedTooMany() {
-	pv.Logger.Printf("[DEBUG] signctrl: Setting signctrl_missed_blocks_in_a_row gauge to %v\n", pv.GetMissedInARow())
+	pv.Logger.Debug("Setting signctrl_missed_blocks_in_a_row gauge to %v\n", pv.GetMissedInARow())
 	pv.Gauges.MissedInARowGauge.Set(float64(pv.GetMissedInARow()))
 }
 
 // OnPromote sets the prometheus gauge for the validator's rank.
 // Implements the SignCtrled interface.
 func (pv *SCFilePV) OnPromote() {
-	pv.Logger.Printf("[DEBUG] signctrl: Setting signctrl_rank gauge to %v\n", pv.GetRank())
+	pv.Logger.Debug("Setting signctrl_rank gauge to %v\n", pv.GetRank())
 	pv.Gauges.RankGauge.Set(float64(pv.GetRank()))
 }

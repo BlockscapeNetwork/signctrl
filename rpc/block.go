@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"regexp"
 
+	"github.com/BlockscapeNetwork/signctrl/types"
 	tm_json "github.com/tendermint/tendermint/libs/json"
 	tm_coretypes "github.com/tendermint/tendermint/rpc/core/types"
 )
@@ -28,7 +28,7 @@ type resultChannelResponse struct {
 }
 
 // QueryBlock gets the block for the specified height.
-func QueryBlock(ctx context.Context, rpcladdr string, height int64, logger *log.Logger) (*tm_coretypes.ResultBlock, error) {
+func QueryBlock(ctx context.Context, rpcladdr string, height int64, logger *types.SyncLogger) (*tm_coretypes.ResultBlock, error) {
 	if height < 1 {
 		return nil, fmt.Errorf("block height %v does not exist", height)
 	}
@@ -40,7 +40,7 @@ func QueryBlock(ctx context.Context, rpcladdr string, height int64, logger *log.
 
 	go func() {
 		// Query the block.
-		logger.Printf("[DEBUG] signctrl: GET %v", url)
+		logger.Debug("GET %v", url)
 		req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 		if err != nil {
 			resultCh <- &resultChannelResponse{nil, err}
@@ -75,10 +75,10 @@ func QueryBlock(ctx context.Context, rpcladdr string, height int64, logger *log.
 	// Wait for the query to return a result or be canceled.
 	select {
 	case <-ctx.Done():
-		logger.Printf("[DEBUG] signctrl: Canceled GET %v", url)
+		logger.Debug("Canceled GET %v", url)
 		return nil, fmt.Errorf("request was canceled")
 	case rcr := <-resultCh:
-		logger.Printf("[DEBUG] signctrl: Received result for GET %v", url)
+		logger.Debug("Received result for GET %v", url)
 		return rcr.result, rcr.err
 	}
 }

@@ -10,10 +10,10 @@ SignCTRL is a high availability solution for Tendermint that enables the creatio
 
 ## Why SignCTRL?
 
-1) Built-in double-signing protection.
-2) Very lightweight due to not introducing any additional communication overhead for coordination work.
-3) No more sentry nodes are needed, as the validators in the set back each other up.
-4) A minimal setup requires only two nodes to be run.
+1) Built-in double-signing protection
+2) Very lightweight (no additional communication overhead for coordination work)
+3) No more sentry nodes are needed, as the validators in the set back each other up
+4) Minimal setup requires only two nodes
 
 ## Requirements
 
@@ -25,7 +25,7 @@ SignCTRL is a high availability solution for Tendermint that enables the creatio
 Get the repository via
 
 ```shell
-$ git clone https://github.com/BlockscapeNetwork/signctrl && cd signctrl
+$ git clone https://github.com/BlockscapeNetwork/signctrl
 ```
 
 ## Build & Install
@@ -45,7 +45,8 @@ $ make install
 
 ## Getting Started
 
-To get started, please see the [Guides/Tutorials](docs/guides/README.md).
+To get started, please see the [Guides/Tutorials](docs/guides/README.md).</br>
+If you get stuck, see the [FAQ](docs/core/faq.md).
 
 ## Documentation
 

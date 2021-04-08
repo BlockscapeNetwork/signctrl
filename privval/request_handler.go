@@ -71,14 +71,14 @@ func isRankUpToDate(reqHeight int64, lastHeight int64, threshold int) bool {
 // handlePingRequest handles a PingRequest by returning a
 // PingResponse.
 func handlePingRequest(pv *SCFilePV) (*tm_privvalproto.Message, error) {
-	pv.Logger.Println("[DEBUG] signctrl: Received PingRequest")
+	pv.Logger.Debug("Received PingRequest")
 	return wrapMsg(&tm_privvalproto.PingResponse{}), nil
 }
 
 // handlePubKeyRequest handles a PubKeyRequest by returning a
 // PubKeyResponse.
 func handlePubKeyRequest(req *tm_privvalproto.PubKeyRequest, pv *SCFilePV) (*tm_privvalproto.Message, error) {
-	pv.Logger.Printf("[DEBUG] signctrl: Received PubKeyRequest: %v", req) // TODO: Add toString() for tm_privvalproto.PubKeyRequest
+	pv.Logger.Debug("Received PubKeyRequest: %v", req) // TODO: Add toString() for tm_privvalproto.PubKeyRequest
 
 	// Check if the PubKeyRequest is for the chain ID specified
 	// in the config.toml.
@@ -167,7 +167,7 @@ func handleSignRequest(ctx context.Context, msg *tm_privvalproto.Message, pv *SC
 	// If the requested height is at least {threshold}+1 higher than last_signed_height,
 	// the node's rank has become obsolete due to a rank update in the set.
 	if !isRankUpToDate(reqData.height, pv.State.LastHeight, pv.GetThreshold()) {
-		pv.Logger.Printf("[DEBUG] signctrl: The requested height differs too much from the last height (%v - %v >= %v)", reqData.height, pv.State.LastHeight, pv.GetThreshold()+1)
+		pv.Logger.Debug("The requested height differs too much from the last height (%v - %v >= %v)", reqData.height, pv.State.LastHeight, pv.GetThreshold()+1)
 		return buildResponse(msg, &tm_privvalproto.RemoteSignerError{Description: ErrRankObsolete.Error()}), ErrRankObsolete
 	}
 
@@ -218,7 +218,7 @@ func handleSignRequest(ctx context.Context, msg *tm_privvalproto.Message, pv *SC
 			return buildResponse(msg, &tm_privvalproto.RemoteSignerError{Description: err.Error()}), err
 		}
 
-		pv.Logger.Printf("[INFO] signctrl: Signed %v for block height %v", req.Vote.Type, req.Vote.Height)
+		pv.Logger.Info("Signed %v for block height %v", req.Vote.Type, req.Vote.Height)
 		return buildResponse(wrapMsg(&tm_privvalproto.SignVoteRequest{Vote: req.Vote, ChainId: req.GetChainId()}), nil), nil
 
 	case *tm_privvalproto.Message_SignProposalRequest:
@@ -230,7 +230,7 @@ func handleSignRequest(ctx context.Context, msg *tm_privvalproto.Message, pv *SC
 			return buildResponse(msg, &tm_privvalproto.RemoteSignerError{Description: err.Error()}), err
 		}
 
-		pv.Logger.Printf("[INFO] signctrl: Signed %v for block height %v", req.Proposal.Type, req.Proposal.Height)
+		pv.Logger.Info("Signed %v for block height %v", req.Proposal.Type, req.Proposal.Height)
 		return buildResponse(wrapMsg(&tm_privvalproto.SignProposalRequest{Proposal: req.Proposal, ChainId: req.GetChainId()}), nil), nil
 
 	default:
