@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/BlockscapeNetwork/signctrl/config"
 	"github.com/BlockscapeNetwork/signctrl/privval"
@@ -84,6 +85,9 @@ var (
 					os.Exit(1)
 				}
 			}
+
+			// Wait for all log messages to be printed out.
+			time.Sleep(500 * time.Millisecond)
 
 			// Terminate the process gracefully with exit code 0.
 			os.Exit(0)
