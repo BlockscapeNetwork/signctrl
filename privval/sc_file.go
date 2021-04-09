@@ -145,6 +145,9 @@ func (pv *SCFilePV) run() {
 					if err := pv.SecretConn.Close(); err != nil {
 						pv.Logger.Error("%v", err)
 					}
+
+					cancel()
+					return
 				}
 			}
 			cancel()
