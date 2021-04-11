@@ -78,7 +78,7 @@ func handlePingRequest(pv *SCFilePV) (*tm_privvalproto.Message, error) {
 // handlePubKeyRequest handles a PubKeyRequest by returning a
 // PubKeyResponse.
 func handlePubKeyRequest(req *tm_privvalproto.PubKeyRequest, pv *SCFilePV) (*tm_privvalproto.Message, error) {
-	pv.Logger.Debug("Received PubKeyRequest: %v", req) // TODO: Add toString() for tm_privvalproto.PubKeyRequest
+	pv.Logger.Debug("Received PubKeyRequest: %v", req)
 
 	// Check if the PubKeyRequest is for the chain ID specified
 	// in the config.toml.
