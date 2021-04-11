@@ -156,6 +156,14 @@ func buildResponse(msg *tm_privvalproto.Message, rse *tm_privvalproto.RemoteSign
 // handleSignRequest handles SignVoteRequests and SignProposalRequests by
 // returning either a SignedVoteResponse or a SignedProposalResponse.
 func handleSignRequest(ctx context.Context, msg *tm_privvalproto.Message, pv *SCFilePV) (*tm_privvalproto.Message, error) {
+	switch msg.Sum.(type) {
+	case *tm_privvalproto.Message_SignVoteRequest:
+		pv.Logger.Debug("Received SignVoteRequest: %v", msg.GetSignVoteRequest())
+	case *tm_privvalproto.Message_SignProposalRequest:
+		pv.Logger.Debug("Received SignProposalRequest", msg.GetSignProposalRequest())
+	}
+
+	// Extract data shared between vote and proposal requests.
 	reqData := getSharedSignRequestData(msg)
 
 	// Check if the request is for the chain ID specified in the config.toml.
