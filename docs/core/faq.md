@@ -4,9 +4,15 @@
 
 Just copy and paste your `priv_validator_key.json` and `priv_validator_state.json` into your SignCTRL configuration directory.
 
-### What are pitfalls I need to watch out for?
+### What should I check before I start my validators?
 
-The biggest pitfall for SignCTRL is the misconfiguration of the validator's ranks. Before starting any validator in the set, **always** make sure no two validators are assigned to the same `start_rank`. Other than that, there is nothing more to watch out for.
+Before starting any validator in the set, **always** make sure no two validators are assigned to the same `start_rank`.
+
+### My SignCTRL node has shut down and my validator is listening for a new connection. What do I do?
+
+If your SignCTRL node has shut down, it is paramount that the **validator daemon is restarted before SignCTRL is restarted**.
+
+> :warning: Do NOT leave the validator daemon running and start SignCTRL! This will lead to double-signing!
 
 ### Which order should I start my validators in?
 
