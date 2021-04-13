@@ -6,7 +6,7 @@
 
 SignCTRL is a high availability solution for Tendermint that enables the creation of a highly available, self-managing set of validators that uses the blockchain itself as a perfectly synchronous communication line for double-signing protection.
 
-> :warning: Be mindful of key security as SignCTRL currently only supports Tendermint's file-based signer. Make sure to properly secure your validator instance from unauthorized access.
+> :warning: SignCTRL is still beta-software and not considered production-ready software. Use at your own risk.
 
 ## Why SignCTRL?
 
@@ -51,3 +51,11 @@ If you get stuck, see the [FAQ](docs/core/faq.md).
 ## Documentation
 
 The documentation can be found [here](docs/README.md).
+
+## Security
+
+Security and management of any key material is outside the scope of this service. Always consider your own security and risk profile when dealing with sensitive keys, services, or infrastructure.
+
+## No Liability
+
+As far as the law allows, this software comes as is, without any warranty or condition, and no contributor will be liable to anyone for any damages related to this software or this license, under any kind of legal claim.
