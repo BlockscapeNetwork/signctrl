@@ -34,7 +34,7 @@ func (sl *SyncLogger) SetOutput(w io.Writer) {
 func (sl *SyncLogger) Debug(format string, v ...interface{}) {
 	sl.Lock()
 	defer sl.Unlock()
-	taggedFormat := fmt.Sprintf("[DEBUG]\tsignctrl: %v", format)
+	taggedFormat := fmt.Sprintf("[DEBUG] signctrl: %v", format)
 	_ = sl.logger.Output(2, fmt.Sprintf(taggedFormat, v...))
 }
 
@@ -42,7 +42,7 @@ func (sl *SyncLogger) Debug(format string, v ...interface{}) {
 func (sl *SyncLogger) Info(format string, v ...interface{}) {
 	sl.Lock()
 	defer sl.Unlock()
-	taggedFormat := fmt.Sprintf("[INFO]\tsignctrl: %v", format)
+	taggedFormat := fmt.Sprintf("[INFO]  signctrl: %v", format)
 	_ = sl.logger.Output(2, fmt.Sprintf(taggedFormat, v...))
 }
 
@@ -50,7 +50,7 @@ func (sl *SyncLogger) Info(format string, v ...interface{}) {
 func (sl *SyncLogger) Warn(format string, v ...interface{}) {
 	sl.Lock()
 	defer sl.Unlock()
-	taggedFormat := fmt.Sprintf("[WARN]\tsignctrl: %v", format)
+	taggedFormat := fmt.Sprintf("[WARN]  signctrl: %v", format)
 	_ = sl.logger.Output(2, fmt.Sprintf(taggedFormat, v...))
 }
 
@@ -58,6 +58,6 @@ func (sl *SyncLogger) Warn(format string, v ...interface{}) {
 func (sl *SyncLogger) Error(format string, v ...interface{}) {
 	sl.Lock()
 	defer sl.Unlock()
-	taggedFormat := fmt.Sprintf("[ERR]\tsignctrl: %v", format)
+	taggedFormat := fmt.Sprintf("[ERR]   signctrl: %v", format)
 	_ = sl.logger.Output(2, fmt.Sprintf(taggedFormat, v...))
 }
