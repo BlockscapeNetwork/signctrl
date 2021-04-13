@@ -14,6 +14,8 @@ If your SignCTRL node has shut down, it is paramount that the **validator daemon
 
 > :warning: Do NOT leave the validator daemon running and start SignCTRL! This will lead to double-signing!
 
+This is merely a workaround for now. The issue is further investigated in [this issue](https://github.com/BlockscapeNetwork/signctrl/issues/24).
+
 ### Which order should I start my validators in?
 
 It doesn't matter which order you start your validators in. Starting ranks `2..n` prior to rank `1` is just as safe to do as vice-versa because ranks `2..n` will always wait for rank `1` to sign at least one block before they start counting blocks missed in a row.
