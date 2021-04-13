@@ -12,8 +12,8 @@ import (
 	"github.com/BlockscapeNetwork/signctrl/connection"
 	"github.com/BlockscapeNetwork/signctrl/types"
 	tm_protoio "github.com/tendermint/tendermint/libs/protoio"
-	tm_privval "github.com/tendermint/tendermint/privval"
 	tm_privvalproto "github.com/tendermint/tendermint/proto/tendermint/privval"
+	tm_types "github.com/tendermint/tendermint/types"
 )
 
 const (
@@ -40,8 +40,8 @@ type SCFilePV struct {
 
 	Logger     *types.SyncLogger
 	Config     config.Config
-	State      *config.State
-	TMFilePV   tm_privval.FilePV
+	State      config.State
+	TMFilePV   tm_types.PrivValidator
 	SecretConn net.Conn
 	HTTP       *http.Server
 	Gauges     types.Gauges
@@ -58,7 +58,7 @@ func StateFilePath(cfgDir string) string {
 }
 
 // NewSCFilePV creates a new instance of SCFilePV.
-func NewSCFilePV(logger *types.SyncLogger, cfg config.Config, state *config.State, tmpv tm_privval.FilePV, http *http.Server) *SCFilePV {
+func NewSCFilePV(logger *types.SyncLogger, cfg config.Config, state config.State, tmpv tm_types.PrivValidator, http *http.Server) *SCFilePV {
 	pv := &SCFilePV{
 		Logger:   logger,
 		Config:   cfg,
@@ -77,7 +77,6 @@ func NewSCFilePV(logger *types.SyncLogger, cfg config.Config, state *config.Stat
 		pv.Config.Base.StartRank,
 		pv,
 	)
-	pv.Gauges = types.RegisterGauges()
 
 	return pv
 }
@@ -88,13 +87,11 @@ func NewSCFilePV(logger *types.SyncLogger, cfg config.Config, state *config.Stat
 func (pv *SCFilePV) run() {
 	retryDialTimeout := config.GetRetryDialTime(pv.Config.Base.RetryDialAfter)
 	timeout := time.NewTimer(retryDialTimeout)
-	ctx, cancel := context.WithCancel(context.Background())
 
 	for {
 		select {
 		case <-pv.Quit():
 			pv.Logger.Debug("Terminating run goroutine: service stopped")
-			cancel()
 			// Note: Don't use pv.Stop() in here, as it closes the pv.Quit() channel.
 			return
 
@@ -116,7 +113,6 @@ func (pv *SCFilePV) run() {
 				pv.Logger,
 			); err != nil {
 				pv.Logger.Error("couldn't dial validator: %v\n", err)
-				cancel()
 				// Note: Don't use pv.Stop() in here, as RetryDial can only be stopped via SIGINT/SIGTERM.
 				return
 			}
@@ -132,9 +128,8 @@ func (pv *SCFilePV) run() {
 			}
 
 			timeout.Reset(retryDialTimeout)
-			cancel()
 
-			ctx, cancel = context.WithCancel(context.Background())
+			ctx, cancel := context.WithCancel(context.Background())
 			resp, err := HandleRequest(ctx, &msg, pv)
 			w := tm_protoio.NewDelimitedWriter(pv.SecretConn)
 			if _, err := w.WriteMsg(resp); err != nil {
@@ -144,16 +139,18 @@ func (pv *SCFilePV) run() {
 				pv.Logger.Error("couldn't handle request: %v\n", err)
 				if err == types.ErrMustShutdown || err == ErrRankObsolete {
 					pv.Logger.Debug("Terminating run goroutine: %v\n", err)
-					cancel()
 					if err := pv.Stop(); err != nil {
 						pv.Logger.Error("%v", err)
 					}
 					if err := pv.SecretConn.Close(); err != nil {
 						pv.Logger.Error("%v", err)
 					}
+
+					cancel()
 					return
 				}
 			}
+			cancel()
 		}
 	}
 }

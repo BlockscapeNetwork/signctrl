@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/BlockscapeNetwork/signctrl/config"
 	"github.com/BlockscapeNetwork/signctrl/privval"
@@ -51,17 +52,22 @@ var (
 			pv := privval.NewSCFilePV(
 				logger,
 				cfg,
-				&state,
-				*tm_privval.LoadOrGenFilePV(
+				state,
+				tm_privval.LoadOrGenFilePV(
 					privval.KeyFilePath(cfgDir),
 					privval.StateFilePath(cfgDir),
 				),
-				&http.Server{Addr: ":8080"},
+				&http.Server{Addr: fmt.Sprintf(":%v", privval.DefaultHTTPPort)},
 			)
+			pv.Gauges = types.RegisterGauges()
 
 			// Start the SignCTRL service.
 			if err := pv.Start(); err != nil {
 				logger.Error(err.Error())
+				if err := pv.Stop(); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
 				os.Exit(1)
 			}
 
@@ -79,6 +85,9 @@ var (
 					os.Exit(1)
 				}
 			}
+
+			// Wait for all log messages to be printed out.
+			time.Sleep(500 * time.Millisecond)
 
 			// Terminate the process gracefully with exit code 0.
 			os.Exit(0)
